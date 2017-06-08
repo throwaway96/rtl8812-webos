@@ -1658,14 +1658,15 @@ EXTRA_CFLAGS += -DCONFIG_CUSTOMIZED_COUNTRY_CHPLAN_MAP -DCONFIG_RTW_IOCTL_SET_CO
 #ARCH, CROSS_COMPILE, KSRC,and  MODDESTDIR are provided by external makefile
 ARCH ?= arm
 KVER ?= 4.4.3
-
+CROSS_COMPILE ?=
+KSRC ?= $(LINUX_SRC)
 #CROSS_COMPILE ?= /mnt/newdisk/LGE/arm-lg115x-linux-gnueabi-4.8-2016.03-x86_64/bin/arm-lg115x-linux-gnueabi-
 #KSRC ?= /mnt/newdisk/LGE/linux-rockhopper_k3lp_drd4tv_423
 
-CROSS_COMPILE ?= /home/realtek/Work/Customer/LGE_K3L/arm-lg115x-linux-gnueabi-4.8-2016.03-x86_64/bin/arm-lg115x-linux-gnueabi-
+#CROSS_COMPILE ?= /home/realtek/Work/Customer/LGE_K3L/arm-lg115x-linux-gnueabi-4.8-2016.03-x86_64/bin/arm-lg115x-linux-gnueabi-
 #CROSS_COMPILE ?= /home/realtek/Work/RTD_LG_K3L/arm-lg115x-linux-gnueabi-4.8-2016.03-x86_64/bin/arm-lg115x-linux-gnueabi-
 #KSRC ?= /home/realtek/Work/Customer/LGE_K3L/linux-lg115x_k3lp
-KSRC ?= /home/realtek/Work/Customer/LGE_K3L/linux-rockhopper_k3lp_drd4tv_423
+#KSRC ?= /home/realtek/Work/Customer/LGE_K3L/linux-rockhopper_k3lp_drd4tv_423
 #KSRC ?= /home/realtek/Work/Customer/LGE_K3L/linux-rockhopper_m16p_drd4tv_41202
 #KSRC ?= /home/realtek/Work/RTD_LG_K3L/linux-rockhopper_k3lp_drd4tv_423
 
