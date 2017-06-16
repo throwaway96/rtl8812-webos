@@ -5152,6 +5152,12 @@ static s32 cfg80211_rtw_remain_on_channel(struct wiphy *wiphy,
 		err = -EBUSY;
 		goto exit;
 	}
+
+	/* under site survey */
+	if (rtw_mi_check_fwstate(padapter, _FW_UNDER_SURVEY)) {
+		err = -EBUSY;
+		goto exit;
+	}
 #endif /* LGE_PRIVATE */
 
 	if (_FAIL == rtw_pwr_wakeup(padapter)) {
