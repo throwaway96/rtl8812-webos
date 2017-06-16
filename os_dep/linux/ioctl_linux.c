@@ -9084,6 +9084,7 @@ static int rtw_mp_efuse_get(struct net_device *dev,
 	u16 mask_len;
 	u8 mask_buf[64] = "";
 	int err;
+	char *pextra = NULL;
 #ifdef CONFIG_IOL
 	u8 org_fw_iol = padapter->registrypriv.fw_iol;/* 0:Disable, 1:enable, 2:by usb speed */
 #endif
@@ -9108,6 +9109,9 @@ static int rtw_mp_efuse_get(struct net_device *dev,
 		err = -EFAULT;
 		goto exit;
 	}
+
+	*(extra + wrqu->length) = '\0';
+
 #ifdef CONFIG_LPS
 	lps_mode = pwrctrlpriv->power_mgnt;/* keep org value */
 	rtw_pm_set_lps(padapter, PS_MODE_ACTIVE);
@@ -9160,16 +9164,17 @@ static int rtw_mp_efuse_get(struct net_device *dev,
 
 		sprintf(extra, "\n");
 		for (i = 0; i < cnt; i += 16) {
-			sprintf(extra, "%s0x%02x\t", extra, shift + i);
+			pextra = extra + strlen(extra);
+			pextra += sprintf(pextra, "0x%02x\t", shift + i);
 			for (j = 0; j < 8; j++)
-				sprintf(extra, "%s%02X ", extra, efuse[i + j]);
-			sprintf(extra, "%s\t", extra);
+				pextra += sprintf(pextra, "%02X ", efuse[i + j]);
+			pextra += sprintf(pextra, "\t");
 			for (; j < 16; j++)
-				sprintf(extra, "%s%02X ", extra, efuse[i + j]);
-			sprintf(extra, "%s\n", extra);
+				pextra += sprintf(pextra, "%02X ", efuse[i + j]);
+			pextra += sprintf(pextra, "\n");
 		}
 		if ((shift + cnt) < mapLen)
-			sprintf(extra, "%s\t...more (left:%d/%d)\n", extra, mapLen-(shift + cnt), mapLen);
+			pextra += sprintf(pextra, "\t...more (left:%d/%d)\n", mapLen-(shift + cnt), mapLen);
 
 	} else if (strcmp(tmp[0], "realmap") == 0) {
 		static u8 order = 0;
@@ -9210,16 +9215,17 @@ static int rtw_mp_efuse_get(struct net_device *dev,
 
 		sprintf(extra, "\n");
 		for (i = 0; i < cnt; i += 16) {
-			sprintf(extra, "%s0x%02x\t", extra, shift + i);
+			pextra = extra + strlen(extra);
+			pextra += sprintf(pextra, "0x%02x\t", shift + i);
 			for (j = 0; j < 8; j++)
-				sprintf(extra, "%s%02X ", extra, efuse[i + j]);
-			sprintf(extra, "%s\t", extra);
+				pextra += sprintf(pextra, "%02X ", efuse[i + j]);
+			pextra += sprintf(pextra, "\t");
 			for (; j < 16; j++)
-				sprintf(extra, "%s%02X ", extra, efuse[i + j]);
-			sprintf(extra, "%s\n", extra);
+				pextra += sprintf(pextra, "%02X ", efuse[i + j]);
+			pextra += sprintf(pextra, "\n");
 		}
 		if ((shift + cnt) < mapLen)
-			sprintf(extra, "%s\t...more (left:%d/%d)\n", extra, mapLen-(shift + cnt), mapLen);
+			pextra += sprintf(pextra, "\t...more (left:%d/%d)\n", mapLen-(shift + cnt), mapLen);
 	} else if (strcmp(tmp[0], "rmap") == 0) {
 		if ((tmp[1] == NULL) || (tmp[2] == NULL)) {
 			RTW_INFO("%s: rmap Fail!! Parameters error!\n", __FUNCTION__);
@@ -9254,9 +9260,10 @@ static int rtw_mp_efuse_get(struct net_device *dev,
 
 		/*		RTW_INFO("%s: data={", __FUNCTION__); */
 		*extra = 0;
+		pextra = extra;
 		for (i = 0; i < cnts; i++) {
 			/*			RTW_INFO("0x%02x ", data[i]); */
-			sprintf(extra, "%s0x%02X ", extra, data[i]);
+			pextra += sprintf(pextra, "0x%02X ", data[i]);
 		}
 		/*		RTW_INFO("}\n"); */
 	} else if (strcmp(tmp[0], "realraw") == 0) {
@@ -9287,16 +9294,17 @@ static int rtw_mp_efuse_get(struct net_device *dev,
 
 		sprintf(extra, "\n");
 		for (i = 0; i < cnt; i += 16) {
-			sprintf(extra, "%s0x%02x\t", extra, shift + i);
+			pextra = extra + strlen(extra);
+			pextra += sprintf(pextra, "0x%02x\t", shift + i);
 			for (j = 0; j < 8; j++)
-				sprintf(extra, "%s%02X ", extra, rawdata[i + j]);
-			sprintf(extra, "%s\t", extra);
+				pextra += sprintf(pextra, "%02X ", rawdata[i + j]);
+			pextra += sprintf(pextra, "\t");
 			for (; j < 16; j++)
-				sprintf(extra, "%s%02X ", extra, rawdata[i + j]);
-			sprintf(extra, "%s\n", extra);
+				pextra += sprintf(pextra, "%02X ", rawdata[i + j]);
+			pextra += sprintf(pextra, "\n");
 		}
 		if ((shift + cnt) < mapLen)
-			sprintf(extra, "%s\t...more (left:%d/%d)\n", extra, mapLen-(shift + cnt), mapLen);
+			pextra += sprintf(pextra, "\t...more (left:%d/%d)\n", mapLen-(shift + cnt), mapLen);
 
 	} else if (strcmp(tmp[0], "btrealraw") == 0) {
 		static u8 bt_raw_order = 0;
@@ -9334,16 +9342,17 @@ static int rtw_mp_efuse_get(struct net_device *dev,
 
 		sprintf(extra, "\n");
 		for (i = 0; i < cnt; i += 16) {
-			sprintf(extra, "%s0x%02x\t", extra, shift + i);
+			pextra = extra + strlen(extra);
+			pextra += sprintf(pextra, "0x%02x\t", shift + i);
 			for (j = 0; j < 8; j++)
-				sprintf(extra, "%s%02X ", extra, rawdata[i + j]);
-			sprintf(extra, "%s\t", extra);
+				pextra += sprintf(pextra, "%02X ", rawdata[i + j]);
+			pextra += sprintf(pextra, "\t");
 			for (; j < 16; j++)
-				sprintf(extra, "%s%02X ", extra, rawdata[i + j]);
-			sprintf(extra, "%s\n", extra);
+				pextra += sprintf(pextra, "%02X ", rawdata[i + j]);
+			pextra += sprintf(pextra, "\n");
 		}
 		if ((shift + cnt) < mapLen)
-			sprintf(extra, "%s\t...more (left:%d/%d)\n", extra, mapLen-(shift + cnt), mapLen);
+			pextra += sprintf(pextra, "\t...more (left:%d/%d)\n", mapLen-(shift + cnt), mapLen);
 
 	} else if (strcmp(tmp[0], "mac") == 0) {
 		if (hal_efuse_macaddr_offset(padapter) == -1) {
@@ -9369,12 +9378,13 @@ static int rtw_mp_efuse_get(struct net_device *dev,
 
 		/*		RTW_INFO("%s: MAC address={", __FUNCTION__); */
 		*extra = 0;
+		pextra = extra;
 		for (i = 0; i < cnts; i++) {
 			/*			RTW_INFO("%02X", data[i]); */
-			sprintf(extra, "%s%02X", extra, data[i]);
+			pextra += sprintf(pextra, "%02X", data[i]);
 			if (i != (cnts - 1)) {
 				/*				RTW_INFO(":"); */
-				sprintf(extra, "%s:", extra);
+				pextra += sprintf(pextra, ":");
 			}
 		}
 		/*		RTW_INFO("}\n"); */
@@ -9432,12 +9442,13 @@ static int rtw_mp_efuse_get(struct net_device *dev,
 
 		/*		RTW_INFO("%s: {VID,PID}={", __FUNCTION__); */
 		*extra = 0;
+		pextra = extra;
 		for (i = 0; i < cnts; i++) {
 			/*			RTW_INFO("0x%02x", data[i]); */
-			sprintf(extra, "%s0x%02X", extra, data[i]);
+			pextra += sprintf(pextra, "0x%02X", data[i]);
 			if (i != (cnts - 1)) {
 				/*				RTW_INFO(","); */
-				sprintf(extra, "%s,", extra);
+				pextra += sprintf(pextra, ",");
 			}
 		}
 		/*		RTW_INFO("}\n"); */
@@ -9468,19 +9479,20 @@ static int rtw_mp_efuse_get(struct net_device *dev,
 		sprintf(extra, "\n");
 		for (i = 0; i < 512; i += 16) { /* set 512 because the iwpriv's extra size have limit 0x7FF */
 			/*			RTW_INFO("0x%03x\t", i); */
-			sprintf(extra, "%s0x%03x\t", extra, i);
+			pextra = extra + strlen(extra);
+			pextra += sprintf(pextra, "0x%03x\t", i);
 			for (j = 0; j < 8; j++) {
 				/*				RTW_INFO("%02X ", pEfuseHal->BTEfuseInitMap[i+j]); */
-				sprintf(extra, "%s%02X ", extra, pEfuseHal->BTEfuseInitMap[i + j]);
+				pextra += sprintf(pextra, "%02X ", pEfuseHal->BTEfuseInitMap[i+j]);
 			}
 			/*			RTW_INFO("\t"); */
-			sprintf(extra, "%s\t", extra);
+			pextra += sprintf(pextra, "\t");
 			for (; j < 16; j++) {
 				/*				RTW_INFO("%02X ", pEfuseHal->BTEfuseInitMap[i+j]); */
-				sprintf(extra, "%s%02X ", extra, pEfuseHal->BTEfuseInitMap[i + j]);
+				pextra += sprintf(pextra, "%02X ", pEfuseHal->BTEfuseInitMap[i+j]);
 			}
 			/*			RTW_INFO("\n"); */
-			sprintf(extra, "%s\n", extra);
+			pextra += sprintf(pextra, "\n");
 		}
 		/*		RTW_INFO("\n"); */
 	} else if (strcmp(tmp[0], "btbmap") == 0) {
@@ -9497,19 +9509,20 @@ static int rtw_mp_efuse_get(struct net_device *dev,
 		sprintf(extra, "\n");
 		for (i = 512; i < 1024 ; i += 16) {
 			/*			RTW_INFO("0x%03x\t", i); */
-			sprintf(extra, "%s0x%03x\t", extra, i);
+			pextra = extra + strlen(extra);
+			pextra += sprintf(pextra, "0x%03x\t", i);
 			for (j = 0; j < 8; j++) {
 				/*				RTW_INFO("%02X ", data[i+j]); */
-				sprintf(extra, "%s%02X ", extra, pEfuseHal->BTEfuseInitMap[i + j]);
+				pextra += sprintf(pextra, "%02X ", pEfuseHal->BTEfuseInitMap[i+j]);
 			}
 			/*			RTW_INFO("\t"); */
-			sprintf(extra, "%s\t", extra);
+			pextra += sprintf(pextra, "\t");
 			for (; j < 16; j++) {
 				/*				RTW_INFO("%02X ", data[i+j]); */
-				sprintf(extra, "%s%02X ", extra, pEfuseHal->BTEfuseInitMap[i + j]);
+				pextra += sprintf(pextra, "%02X ", pEfuseHal->BTEfuseInitMap[i+j]);
 			}
 			/*			RTW_INFO("\n"); */
-			sprintf(extra, "%s\n", extra);
+			pextra += sprintf(pextra, "\n");
 		}
 		/*		RTW_INFO("\n"); */
 	} else if (strcmp(tmp[0], "btrmap") == 0) {
@@ -9557,10 +9570,11 @@ static int rtw_mp_efuse_get(struct net_device *dev,
 		}
 
 		*extra = 0;
+		pextra = extra;
 		/*		RTW_INFO("%s: bt efuse data={", __FUNCTION__); */
 		for (i = 0; i < cnts; i++) {
 			/*			RTW_INFO("0x%02x ", data[i]); */
-			sprintf(extra, "%s 0x%02X ", extra, data[i]);
+			pextra += sprintf(pextra, " 0x%02X ", data[i]);
 		}
 		/*		RTW_INFO("}\n"); */
 		RTW_INFO(FUNC_ADPT_FMT ": BT MAC=[%s]\n", FUNC_ADPT_ARG(padapter), extra);
@@ -9569,19 +9583,20 @@ static int rtw_mp_efuse_get(struct net_device *dev,
 		sprintf(extra, "\n");
 		for (i = 0; i < 512; i += 16) {
 			/*			RTW_INFO("0x%03x\t", i); */
-			sprintf(extra, "%s0x%03x\t", extra, i);
+			pextra = extra + strlen(extra);
+			pextra += sprintf(pextra, "0x%03x\t", i);
 			for (j = 0; j < 8; j++) {
 				/*				RTW_INFO("%02X ", pEfuseHal->fakeBTEfuseModifiedMap[i+j]); */
-				sprintf(extra, "%s%02X ", extra, pEfuseHal->fakeBTEfuseModifiedMap[i + j]);
+				pextra += sprintf(pextra, "%02X ", pEfuseHal->fakeBTEfuseModifiedMap[i+j]);
 			}
 			/*			RTW_INFO("\t"); */
-			sprintf(extra, "%s\t", extra);
+			pextra += sprintf(pextra, "\t");
 			for (; j < 16; j++) {
 				/*				RTW_INFO("%02X ", pEfuseHal->fakeBTEfuseModifiedMap[i+j]); */
-				sprintf(extra, "%s%02X ", extra, pEfuseHal->fakeBTEfuseModifiedMap[i + j]);
+				pextra += sprintf(pextra, "%02X ", pEfuseHal->fakeBTEfuseModifiedMap[i+j]);
 			}
 			/*			RTW_INFO("\n"); */
-			sprintf(extra, "%s\n", extra);
+			pextra += sprintf(pextra, "\n");
 		}
 		/*		RTW_INFO("\n"); */
 	} else if (strcmp(tmp[0], "btbfake") == 0) {
@@ -9589,19 +9604,20 @@ static int rtw_mp_efuse_get(struct net_device *dev,
 		sprintf(extra, "\n");
 		for (i = 512; i < 1024; i += 16) {
 			/*			RTW_INFO("0x%03x\t", i); */
-			sprintf(extra, "%s0x%03x\t", extra, i);
+			pextra = extra + strlen(extra);
+			pextra += sprintf(pextra, "0x%03x\t", i);
 			for (j = 0; j < 8; j++) {
 				/*				RTW_INFO("%02X ", pEfuseHal->fakeBTEfuseModifiedMap[i+j]); */
-				sprintf(extra, "%s%02X ", extra, pEfuseHal->fakeBTEfuseModifiedMap[i + j]);
+				pextra += sprintf(pextra, "%02X ", pEfuseHal->fakeBTEfuseModifiedMap[i+j]);
 			}
 			/*			RTW_INFO("\t"); */
-			sprintf(extra, "%s\t", extra);
+			pextra += sprintf(pextra, "\t");
 			for (; j < 16; j++) {
 				/*				RTW_INFO("%02X ", pEfuseHal->fakeBTEfuseModifiedMap[i+j]); */
-				sprintf(extra, "%s%02X ", extra, pEfuseHal->fakeBTEfuseModifiedMap[i + j]);
+				pextra += sprintf(pextra, "%02X ", pEfuseHal->fakeBTEfuseModifiedMap[i+j]);
 			}
 			/*			RTW_INFO("\n"); */
-			sprintf(extra, "%s\n", extra);
+			pextra += sprintf(pextra, "\n");
 		}
 		/*		RTW_INFO("\n"); */
 	} else if (strcmp(tmp[0], "wlrfkmap") == 0) {
@@ -9624,16 +9640,17 @@ static int rtw_mp_efuse_get(struct net_device *dev,
 
 		sprintf(extra, "\n");
 		for (i = 0; i < cnt; i += 16) {
-			sprintf(extra, "%s0x%02x\t", extra, shift + i);
+			pextra = extra + strlen(extra);
+			pextra += sprintf(pextra, "0x%02x\t", shift + i);
 			for (j = 0; j < 8; j++)
-				sprintf(extra, "%s%02X ", extra, efuse[i + j]);
-			sprintf(extra, "%s\t", extra);
+				pextra += sprintf(pextra, "%02X ", efuse[i + j]);
+			pextra += sprintf(pextra, "\t");
 			for (; j < 16; j++)
-				sprintf(extra, "%s%02X ", extra, efuse[i + j]);
-			sprintf(extra, "%s\n", extra);
+				pextra += sprintf(pextra, "%02X ", efuse[i + j]);
+			pextra += sprintf(pextra, "\n");
 		}
 		if ((shift + cnt) < mapLen)
-			sprintf(extra, "%s\t...more\n", extra);
+			pextra += sprintf(pextra, "\t...more\n");
 
 	} else if (strcmp(tmp[0], "wlrfkrmap") == 0) {
 		if ((tmp[1] == NULL) || (tmp[2] == NULL)) {
@@ -9655,9 +9672,10 @@ static int rtw_mp_efuse_get(struct net_device *dev,
 
 		/*		RTW_INFO("%s: data={", __FUNCTION__); */
 		*extra = 0;
+		pextra = extra;
 		for (i = 0; i < cnts; i++) {
 			RTW_INFO("wlrfkrmap = 0x%02x\n", pEfuseHal->fakeEfuseModifiedMap[addr + i]);
-			sprintf(extra, "%s0x%02X ", extra, pEfuseHal->fakeEfuseModifiedMap[addr + i]);
+			pextra += sprintf(pextra, "0x%02X ", pEfuseHal->fakeEfuseModifiedMap[addr+i]);
 		}
 	} else if (strcmp(tmp[0], "btrfkrmap") == 0) {
 		if ((tmp[1] == NULL) || (tmp[2] == NULL)) {
@@ -9679,9 +9697,10 @@ static int rtw_mp_efuse_get(struct net_device *dev,
 
 		/*		RTW_INFO("%s: data={", __FUNCTION__); */
 		*extra = 0;
+		pextra = extra;
 		for (i = 0; i < cnts; i++) {
 			RTW_INFO("wlrfkrmap = 0x%02x\n", pEfuseHal->fakeBTEfuseModifiedMap[addr + i]);
-			sprintf(extra, "%s0x%02X ", extra, pEfuseHal->fakeBTEfuseModifiedMap[addr + i]);
+			pextra += sprintf(pextra, "0x%02X ", pEfuseHal->fakeBTEfuseModifiedMap[addr+i]);
 		}
 	} else if (strcmp(tmp[0], "mask") == 0) {
 		*extra = 0;
@@ -9692,8 +9711,9 @@ static int rtw_mp_efuse_get(struct net_device *dev,
 			_rtw_memcpy(mask_buf, maskfileBuffer, mask_len);
 
 		sprintf(extra, "\n");
+		pextra = extra + strlen(extra);
 		for (i = 0; i < mask_len; i++)
-			sprintf(extra, "%s0x%02X\n", extra, mask_buf[i]);
+			pextra += sprintf(pextra, "0x%02X\n", mask_buf[i]);
 
 	} else
 		sprintf(extra, "Command not found!");
@@ -9758,6 +9778,8 @@ static int rtw_mp_efuse_set(struct net_device *dev,
 
 	if (copy_from_user(extra, wrqu->pointer, wrqu->length))
 		return -EFAULT;
+
+	*(extra + wrqu->length) = '\0';
 
 	EFUSE_GetEfuseDefinition(padapter, EFUSE_WIFI, TYPE_EFUSE_MAP_LEN , (void *)&wifimaplen, _FALSE);
 
@@ -12445,17 +12467,20 @@ static int rtw_test(
 	RTW_INFO("+%s\n", __func__);
 	len = wrqu->data.length;
 
-	pbuf = (u8 *)rtw_zmalloc(len);
+	pbuf = (u8 *)rtw_zmalloc(len + 1);
 	if (pbuf == NULL) {
 		RTW_INFO("%s: no memory!\n", __func__);
 		return -ENOMEM;
 	}
 
 	if (copy_from_user(pbuf, wrqu->data.pointer, len)) {
-		rtw_mfree(pbuf, len);
+		rtw_mfree(pbuf, len + 1);
 		RTW_INFO("%s: copy from user fail!\n", __func__);
 		return -EFAULT;
 	}
+
+	pbuf[len] = '\0';
+	
 	RTW_INFO("%s: string=\"%s\"\n", __func__, pbuf);
 
 	ptmp = (char *)pbuf;
@@ -13091,6 +13116,11 @@ static int _rtw_ioctl_wext_private(struct net_device *dev, union iwreq_data *wrq
 	buffer = rtw_zmalloc(4096);
 	if (NULL == buffer) {
 		err = -ENOMEM;
+		goto exit;
+	}
+
+	if (k >= num_priv_args) {
+		err = -EINVAL;
 		goto exit;
 	}
 

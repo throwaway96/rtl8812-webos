@@ -48,10 +48,14 @@ int rtw_mp_write_reg(struct net_device *dev,
 	u32 addr, data;
 	int ret;
 	PADAPTER padapter = rtw_netdev_priv(dev);
-	char input[wrqu->length];
+	char input[wrqu->length + 1];
+
+	_rtw_memset(input, 0, sizeof(input));
 
 	if (copy_from_user(input, wrqu->pointer, wrqu->length))
 		return -EFAULT;
+
+	input[wrqu->length] = '\0';
 
 	_rtw_memset(extra, 0, wrqu->length);
 
@@ -130,7 +134,7 @@ int rtw_mp_read_reg(struct net_device *dev,
 		    struct iw_request_info *info,
 		    struct iw_point *wrqu, char *extra)
 {
-	char input[wrqu->length];
+	char input[wrqu->length + 1];
 	char *pch, *pnext, *ptmp;
 	char *width_str;
 	char width;
@@ -138,14 +142,16 @@ int rtw_mp_read_reg(struct net_device *dev,
 	u32 addr = 0, strtout = 0;
 	u32 i = 0, j = 0, ret = 0, data32 = 0;
 	PADAPTER padapter = rtw_netdev_priv(dev);
-
+	char *pextra = extra;
 
 	if (wrqu->length > 128)
 		return -EFAULT;
 
+	_rtw_memset(input, 0, sizeof(input));
 	if (copy_from_user(input, wrqu->pointer, wrqu->length))
 		return -EFAULT;
 
+	input[wrqu->length] = '\0';
 	_rtw_memset(extra, 0, wrqu->length);
 	_rtw_memset(data, '\0', sizeof(data));
 	_rtw_memset(tmp, '\0', sizeof(tmp));
@@ -198,7 +204,7 @@ int rtw_mp_read_reg(struct net_device *dev,
 			if (*pnext != '\0') {
 				/*strtout = simple_strtoul(pnext , &ptmp, 16);*/
 				ret = sscanf(pnext, "%x", &strtout);
-				sprintf(extra, "%s %d" , extra , strtout);
+				pextra += sprintf(pextra, " %d", strtout);
 			} else
 				break;
 			pch = pnext;
@@ -230,7 +236,7 @@ int rtw_mp_read_reg(struct net_device *dev,
 			pnext++;
 			if (*pnext != '\0') {
 				ret = sscanf(pnext, "%x", &strtout);
-				sprintf(extra, "%s %d" , extra , strtout);
+				pextra += sprintf(pextra, " %d", strtout);
 			} else
 				break;
 			pch = pnext;
@@ -310,6 +316,7 @@ int rtw_mp_read_rf(struct net_device *dev,
 	u32 path, addr, strtou;
 	u32 ret, i = 0 , j = 0;
 	PADAPTER padapter = rtw_netdev_priv(dev);
+	char *pextra = extra;
 
 	if (wrqu->length > 128)
 		return -EFAULT;
@@ -349,7 +356,7 @@ int rtw_mp_read_rf(struct net_device *dev,
 		if (*pnext != '\0') {
 			/*strtou =simple_strtoul(pnext , &ptmp, 16);*/
 			ret = sscanf(pnext, "%x", &strtou);
-			sprintf(extra, "%s %d" , extra , strtou);
+			pextra += sprintf(pextra, " %d", strtou);
 		} else
 			break;
 		pch = pnext;
@@ -412,13 +419,15 @@ int rtw_mp_rate(struct net_device *dev,
 		struct iw_point *wrqu, char *extra)
 {
 	u32 rate = MPT_RATE_1M;
-	u8		input[wrqu->length];
+	u8		input[wrqu->length + 1];
 	PADAPTER padapter = rtw_netdev_priv(dev);
 	PMPT_CONTEXT		pMptCtx = &(padapter->mppriv.mpt_ctx);
 
+	_rtw_memset(input, 0, sizeof(input));
 	if (copy_from_user(input, wrqu->pointer, wrqu->length))
 		return -EFAULT;
 
+	input[wrqu->length] = '\0';
 	rate = rtw_mpRateParseFunc(padapter, input);
 	padapter->mppriv.rateidx = rate;
 
@@ -460,13 +469,15 @@ int rtw_mp_channel(struct net_device *dev,
 
 	PADAPTER padapter = rtw_netdev_priv(dev);
 	HAL_DATA_TYPE	*pHalData	= GET_HAL_DATA(padapter);
-	u8		input[wrqu->length];
+	u8		input[wrqu->length + 1];
 	u32	channel = 1;
 	int cur_ch_offset;
 
+	_rtw_memset(input, 0, sizeof(input));
 	if (copy_from_user(input, wrqu->pointer, wrqu->length))
 		return -EFAULT;
 
+	input[wrqu->length] = '\0';
 	channel = rtw_atoi(input);
 	/*RTW_INFO("%s: channel=%d\n", __func__, channel);*/
 	_rtw_memset(extra, 0, wrqu->length);
@@ -521,15 +532,19 @@ int rtw_mp_txpower_index(struct net_device *dev,
 			 struct iw_point *wrqu, char *extra)
 {
 	PADAPTER padapter = rtw_netdev_priv(dev);
-	char input[wrqu->length];
+	char input[wrqu->length + 1];
 	u32 rfpath;
 	u32 txpower_inx;
 
 	if (wrqu->length > 128)
 		return -EFAULT;
 
+	_rtw_memset(input, 0, sizeof(input));
+
 	if (copy_from_user(input, wrqu->pointer, wrqu->length))
 		return -EFAULT;
+
+	input[wrqu->length] = '\0';
 
 	rfpath = rtw_atoi(input);
 	txpower_inx = mpt_ProQueryCalTxPower(padapter, rfpath);
@@ -584,14 +599,16 @@ int rtw_mp_ant_tx(struct net_device *dev,
 		  struct iw_point *wrqu, char *extra)
 {
 	u8 i;
-	u8		input[wrqu->length];
+	u8		input[wrqu->length + 1];
 	u16 antenna = 0;
 	PADAPTER padapter = rtw_netdev_priv(dev);
 	HAL_DATA_TYPE	*pHalData = GET_HAL_DATA(padapter);
 
+	_rtw_memset(input, 0, sizeof(input));
 	if (copy_from_user(input, wrqu->pointer, wrqu->length))
 		return -EFAULT;
 
+	input[wrqu->length] = '\0';
 	sprintf(extra, "switch Tx antenna to %s", input);
 
 	for (i = 0; i < strlen(input); i++) {
@@ -630,12 +647,15 @@ int rtw_mp_ant_rx(struct net_device *dev,
 {
 	u8 i;
 	u16 antenna = 0;
-	u8		input[wrqu->length];
+	u8		input[wrqu->length + 1];
 	PADAPTER padapter = rtw_netdev_priv(dev);
 	HAL_DATA_TYPE	*pHalData = GET_HAL_DATA(padapter);
 
+	_rtw_memset(input, 0, sizeof(input));
 	if (copy_from_user(input, wrqu->pointer, wrqu->length))
 		return -EFAULT;
+
+	input[wrqu->length] = '\0';
 	/*RTW_INFO("%s: input=%s\n", __func__, input);*/
 	_rtw_memset(extra, 0, wrqu->length);
 
@@ -716,6 +736,7 @@ int rtw_mp_ctx(struct net_device *dev,
 	if (copy_from_user(extra, wrqu->pointer, wrqu->length))
 		return -EFAULT;
 
+	*(extra + wrqu->length) = '\0';
 	RTW_INFO("%s: in=%s\n", __func__, extra);
 #ifdef CONFIG_CONCURRENT_MODE
 	if (!is_primary_adapter(padapter)) {
@@ -806,11 +827,15 @@ int rtw_mp_disable_bt_coexist(struct net_device *dev,
 	HAL_DATA_TYPE	*pHalData = GET_HAL_DATA(padapter);
 	struct hal_ops *pHalFunc = &padapter->hal_func;
 
-	u8 input[wrqu->data.length];
+	u8 input[wrqu->data.length + 1];
 	u32 bt_coexist;
 
+	_rtw_memset(input, 0, sizeof(input));
+	
 	if (copy_from_user(input, wrqu->data.pointer, wrqu->data.length))
 		return -EFAULT;
+
+	input[wrqu->data.length] = '\0';
 
 	bt_coexist = rtw_atoi(input);
 
@@ -1057,11 +1082,13 @@ int rtw_mp_psd(struct net_device *dev,
 	       struct iw_point *wrqu, char *extra)
 {
 	PADAPTER padapter = rtw_netdev_priv(dev);
-	u8		input[wrqu->length];
+	u8		input[wrqu->length + 1];
 
+	_rtw_memset(input, 0, sizeof(input));
 	if (copy_from_user(input, wrqu->pointer, wrqu->length))
 		return -EFAULT;
 
+	input[wrqu->length] = '\0';
 	strcpy(extra, input);
 
 	wrqu->length = mp_query_psd(padapter, extra);
@@ -1364,6 +1391,7 @@ int rtw_mp_mon(struct net_device *dev,
 	if (copy_from_user(extra, wrqu->data.pointer, wrqu->data.length))
 		return -EFAULT;
 
+	*(extra + wrqu->data.length) = '\0';
 	rtw_pm_set_ips(padapter, IPS_NONE);
 	LeaveAllPowerSaveMode(padapter);
 
@@ -1408,6 +1436,7 @@ int rtw_mp_pretx_proc(PADAPTER padapter, u8 bStartTest, char *extra)
 	HAL_DATA_TYPE	*pHalData	= GET_HAL_DATA(padapter);
 	struct mp_priv *pmp_priv = &padapter->mppriv;
 	PMPT_CONTEXT		pMptCtx = &(padapter->mppriv.mpt_ctx);
+	char *pextra = extra;
 
 	switch (pmp_priv->mode) {
 
@@ -1417,7 +1446,8 @@ int rtw_mp_pretx_proc(PADAPTER padapter, u8 bStartTest, char *extra)
 			pmp_priv->mode = MP_ON;
 			sprintf(extra, "Stop continuous Tx");
 		} else if (pmp_priv->tx.stop == 1) {
-			sprintf(extra, "%s\nStart continuous DA=ffffffffffff len=1500 count=%u\n", extra, pmp_priv->tx.count);
+			pextra = extra + strlen(extra);
+			pextra += sprintf(pextra, "\nStart continuous DA=ffffffffffff len=1500 count=%u\n", pmp_priv->tx.count);
 			pmp_priv->tx.stop = 0;
 			SetPacketTx(padapter);
 		} else
@@ -1425,26 +1455,26 @@ int rtw_mp_pretx_proc(PADAPTER padapter, u8 bStartTest, char *extra)
 		return 0;
 	case MP_SINGLE_TONE_TX:
 		if (bStartTest != 0)
-			sprintf(extra, "%s\nStart continuous DA=ffffffffffff len=1500\n infinite=yes.", extra);
+			strcat(extra, "\nStart continuous DA=ffffffffffff len=1500\n infinite=yes.");
 		SetSingleToneTx(padapter, (u8)bStartTest);
 		break;
 	case MP_CONTINUOUS_TX:
 		if (bStartTest != 0)
-			sprintf(extra, "%s\nStart continuous DA=ffffffffffff len=1500\n infinite=yes.", extra);
+			strcat(extra, "\nStart continuous DA=ffffffffffff len=1500\n infinite=yes.");
 		SetContinuousTx(padapter, (u8)bStartTest);
 		break;
 	case MP_CARRIER_SUPPRISSION_TX:
 		if (bStartTest != 0) {
 			if (HwRateToMPTRate(pmp_priv->rateidx) <= MPT_RATE_11M)
-				sprintf(extra, "%s\nStart continuous DA=ffffffffffff len=1500\n infinite=yes.", extra);
+				strcat(extra, "\nStart continuous DA=ffffffffffff len=1500\n infinite=yes.");
 			else
-				sprintf(extra, "%s\nSpecify carrier suppression but not CCK rate", extra);
+				strcat(extra, "\nSpecify carrier suppression but not CCK rate");
 		}
 		SetCarrierSuppressionTx(padapter, (u8)bStartTest);
 		break;
 	case MP_SINGLE_CARRIER_TX:
 		if (bStartTest != 0)
-			sprintf(extra, "%s\nStart continuous DA=ffffffffffff len=1500\n infinite=yes.", extra);
+			strcat(extra, "\nStart continuous DA=ffffffffffff len=1500\n infinite=yes.");
 		SetSingleCarrierTx(padapter, (u8)bStartTest);
 		break;
 
@@ -1492,7 +1522,7 @@ int rtw_mp_tx(struct net_device *dev,
 	struct mp_priv *pmp_priv = &padapter->mppriv;
 	PMPT_CONTEXT		pMptCtx = &(padapter->mppriv.mpt_ctx);
 	struct registry_priv	*pregistrypriv = &padapter->registrypriv;
-
+	char *pextra = extra;
 	u32 bandwidth = 0, sg = 0, channel = 6, txpower = 40, rate = 108, ant = 0, txmode = 1, count = 0;
 	u8 i = 0, j = 0, bStartTest = 1, status = 0, Idx = 0, tmpU1B = 0;
 	u16 antenna = 0;
@@ -1522,13 +1552,13 @@ int rtw_mp_tx(struct net_device *dev,
 		return 0;
 	} else if (strncmp(extra, "setting", 7) == 0) {
 		_rtw_memset(extra, 0, wrqu->data.length);
-		sprintf(extra, "Current Setting :\n Channel:%d", pmp_priv->channel);
-		sprintf(extra, "%s\n Bandwidth:%d", extra, pmp_priv->bandwidth);
-		sprintf(extra, "%s\n Rate index:%d", extra, pmp_priv->rateidx);
-		sprintf(extra, "%s\n TxPower index:%d", extra, pmp_priv->txpoweridx);
-		sprintf(extra, "%s\n Antenna TxPath:%d", extra, pmp_priv->antenna_tx);
-		sprintf(extra, "%s\n Antenna RxPath:%d", extra, pmp_priv->antenna_rx);
-		sprintf(extra, "%s\n MP Mode:%d", extra, pmp_priv->mode);
+		pextra += sprintf(pextra, "Current Setting :\n Channel:%d", pmp_priv->channel);
+		pextra += sprintf(pextra, "\n Bandwidth:%d", pmp_priv->bandwidth);
+		pextra += sprintf(pextra, "\n Rate index:%d", pmp_priv->rateidx);
+		pextra += sprintf(pextra, "\n TxPower index:%d", pmp_priv->txpoweridx);
+		pextra += sprintf(pextra, "\n Antenna TxPath:%d", pmp_priv->antenna_tx);
+		pextra += sprintf(pextra, "\n Antenna RxPath:%d", pmp_priv->antenna_rx);
+		pextra += sprintf(pextra, "\n MP Mode:%d", pmp_priv->mode);
 		wrqu->data.length = strlen(extra);
 		return 0;
 #ifdef CONFIG_MP_VHT_HW_TX_MODE
@@ -1666,22 +1696,23 @@ int rtw_mp_tx(struct net_device *dev,
 		if (sscanf(extra, "ch=%d,bw=%d,rate=%d,pwr=%d,ant=%d,tx=%d", &channel, &bandwidth, &rate, &txpower, &ant, &txmode) < 6) {
 			RTW_INFO("Invalid format [ch=%d,bw=%d,rate=%d,pwr=%d,ant=%d,tx=%d]\n", channel, bandwidth, rate, txpower, ant, txmode);
 			_rtw_memset(extra, 0, wrqu->data.length);
-			sprintf(extra, "\n Please input correct format as bleow:\n");
-			sprintf(extra, "%s\t ch=%d,bw=%d,rate=%d,pwr=%d,ant=%d,tx=%d\n", extra, channel, bandwidth, rate, txpower, ant, txmode);
-			sprintf(extra, "%s\n [ ch : BGN = <1~14> , A or AC = <36~165> ]", extra);
-			sprintf(extra, "%s\n [ bw : Bandwidth: 0 = 20M, 1 = 40M, 2 = 80M ]", extra);
-			sprintf(extra, "%s\n [ rate :	CCK: 1 2 5.5 11M X 2 = < 2 4 11 22 >]", extra);
-			sprintf(extra, "%s\n [		OFDM: 6 9 12 18 24 36 48 54M X 2 = < 12 18 24 36 48 72 96 108>", extra);
-			sprintf(extra, "%s\n [		HT 1S2SS MCS0 ~ MCS15 : < [MCS0]=128 ~ [MCS7]=135 ~ [MCS15]=143 >", extra);
-			sprintf(extra, "%s\n [		HT 3SS MCS16 ~ MCS32 : < [MCS16]=144 ~ [MCS23]=151 ~ [MCS32]=159 >", extra);
-			sprintf(extra, "%s\n [		VHT 1SS MCS0 ~ MCS9 : < [MCS0]=160 ~ [MCS9]=169 >", extra);
-			sprintf(extra, "%s\n [ txpower : 1~63 power index", extra);
-			sprintf(extra, "%s\n [ ant : <A = 1, B = 2, C = 4, D = 8> ,2T ex: AB=3 BC=6 CD=12", extra);
-			sprintf(extra, "%s\n [ txmode : < 0 = CONTINUOUS_TX, 1 = PACKET_TX, 2 = SINGLE_TONE_TX, 3 = CARRIER_SUPPRISSION_TX, 4 = SINGLE_CARRIER_TX>\n", extra);
+			pextra += sprintf(pextra, "\n Please input correct format as bleow:\n");
+			pextra += sprintf(pextra, "\t ch=%d,bw=%d,rate=%d,pwr=%d,ant=%d,tx=%d\n", channel, bandwidth, rate, txpower, ant, txmode);
+			pextra += sprintf(pextra, "\n [ ch : BGN = <1~14> , A or AC = <36~165> ]");
+			pextra += sprintf(pextra, "\n [ bw : Bandwidth: 0 = 20M, 1 = 40M, 2 = 80M ]");
+			pextra += sprintf(pextra, "\n [ rate :	CCK: 1 2 5.5 11M X 2 = < 2 4 11 22 >]");
+			pextra += sprintf(pextra, "\n [		OFDM: 6 9 12 18 24 36 48 54M X 2 = < 12 18 24 36 48 72 96 108>");
+			pextra += sprintf(pextra, "\n [		HT 1S2SS MCS0 ~ MCS15 : < [MCS0]=128 ~ [MCS7]=135 ~ [MCS15]=143 >");
+			pextra += sprintf(pextra, "\n [		HT 3SS MCS16 ~ MCS32 : < [MCS16]=144 ~ [MCS23]=151 ~ [MCS32]=159 >");
+			pextra += sprintf(pextra, "\n [		VHT 1SS MCS0 ~ MCS9 : < [MCS0]=160 ~ [MCS9]=169 >");
+			pextra += sprintf(pextra, "\n [ txpower : 1~63 power index");
+			pextra += sprintf(pextra, "\n [ ant : <A = 1, B = 2, C = 4, D = 8> ,2T ex: AB=3 BC=6 CD=12");
+			pextra += sprintf(pextra, "\n [ txmode : < 0 = CONTINUOUS_TX, 1 = PACKET_TX, 2 = SINGLE_TONE_TX, 3 = CARRIER_SUPPRISSION_TX, 4 = SINGLE_CARRIER_TX>\n");
 			wrqu->data.length = strlen(extra);
 			return status;
 
 		} else {
+			char *pextra = extra;
 			RTW_INFO("Got format [ch=%d,bw=%d,rate=%d,pwr=%d,ant=%d,tx=%d]\n", channel, bandwidth, rate, txpower, ant, txmode);
 			_rtw_memset(extra, 0, wrqu->data.length);
 			sprintf(extra, "Change Current channel %d to channel %d", padapter->mppriv.channel , channel);
@@ -1693,13 +1724,14 @@ int rtw_mp_tx(struct net_device *dev,
 				bandwidth = CHANNEL_WIDTH_40;
 			else if (bandwidth == 2)
 				bandwidth = CHANNEL_WIDTH_80;
-			sprintf(extra, "%s\nChange Current Bandwidth %d to Bandwidth %d", extra, padapter->mppriv.bandwidth , bandwidth);
+			pextra = extra + strlen(pextra);
+			pextra += sprintf(pextra, "\nChange Current Bandwidth %d to Bandwidth %d", padapter->mppriv.bandwidth, bandwidth);
 			padapter->mppriv.bandwidth = (u8)bandwidth;
 			padapter->mppriv.preamble = sg;
 			SetBandwidth(padapter);
 			pHalData->current_channel_bw = bandwidth;
 
-			sprintf(extra, "%s\nSet power level :%d", extra, txpower);
+			pextra += sprintf(pextra, "\nSet power level :%d", txpower);
 			padapter->mppriv.txpoweridx = (u8)txpower;
 			pMptCtx->TxPwrLevel[ODM_RF_PATH_A] = (u8)txpower;
 			pMptCtx->TxPwrLevel[ODM_RF_PATH_B] = (u8)txpower;
@@ -1722,13 +1754,13 @@ int rtw_mp_tx(struct net_device *dev,
 			RTW_INFO("%s: rate index=%d\n", __func__, rate);
 			if (rate >= MPT_RATE_LAST)
 				return -EINVAL;
-			sprintf(extra, "%s\nSet data rate to %d index %d", extra, padapter->mppriv.rateidx, rate);
+			pextra += sprintf(pextra, "\nSet data rate to %d index %d", padapter->mppriv.rateidx, rate);
 
 			padapter->mppriv.rateidx = rate;
 			pMptCtx->mpt_rate_index = rate;
 			SetDataRate(padapter);
 
-			sprintf(extra, "%s\nSet Antenna Path :%d",  extra, ant);
+			pextra += sprintf(pextra, "\nSet Antenna Path :%d", ant);
 			switch (ant) {
 			case 1:
 				antenna = ANTENNA_A;
@@ -1809,7 +1841,7 @@ int rtw_mp_rx(struct net_device *dev,
 	HAL_DATA_TYPE	*pHalData	= GET_HAL_DATA(padapter);
 	struct mp_priv *pmp_priv = &padapter->mppriv;
 	PMPT_CONTEXT		pMptCtx = &(padapter->mppriv.mpt_ctx);
-
+	char *pextra = extra;
 	u32 bandwidth = 0, sg = 0, channel = 6, ant = 0;
 	u16 antenna = 0;
 	u8 bStartRx = 0;
@@ -1836,15 +1868,16 @@ int rtw_mp_rx(struct net_device *dev,
 	} else if (sscanf(extra, "ch=%d,bw=%d,ant=%d", &channel, &bandwidth, &ant) < 3) {
 		RTW_INFO("Invalid format [ch=%d,bw=%d,ant=%d]\n", channel, bandwidth, ant);
 		_rtw_memset(extra, 0, wrqu->data.length);
-		sprintf(extra, "\n Please input correct format as bleow:\n");
-		sprintf(extra, "%s\t ch=%d,bw=%d,ant=%d\n", extra, channel, bandwidth, ant);
-		sprintf(extra, "%s\n [ ch : BGN = <1~14> , A or AC = <36~165> ]", extra);
-		sprintf(extra, "%s\n [ bw : Bandwidth: 0 = 20M, 1 = 40M, 2 = 80M ]", extra);
-		sprintf(extra, "%s\n [ ant : <A = 1, B = 2, C = 4, D = 8> ,2T ex: AB=3 BC=6 CD=12", extra);
+		pextra += sprintf(pextra, "\n Please input correct format as bleow:\n");
+		pextra += sprintf(pextra, "\t ch=%d,bw=%d,ant=%d\n", channel, bandwidth, ant);
+		pextra += sprintf(pextra, "\n [ ch : BGN = <1~14> , A or AC = <36~165> ]");
+		pextra += sprintf(pextra, "\n [ bw : Bandwidth: 0 = 20M, 1 = 40M, 2 = 80M ]");
+		pextra += sprintf(pextra, "\n [ ant : <A = 1, B = 2, C = 4, D = 8> ,2T ex: AB=3 BC=6 CD=12");
 		wrqu->data.length = strlen(extra);
 		return 0;
 
 	} else {
+		char *pextra = extra;
 		bStartRx = 1;
 		RTW_INFO("Got format [ch=%d,bw=%d,ant=%d]\n", channel, bandwidth, ant);
 		_rtw_memset(extra, 0, wrqu->data.length);
@@ -1857,13 +1890,14 @@ int rtw_mp_rx(struct net_device *dev,
 			bandwidth = CHANNEL_WIDTH_40;
 		else if (bandwidth == 2)
 			bandwidth = CHANNEL_WIDTH_80;
-		sprintf(extra, "%s\nChange Current Bandwidth %d to Bandwidth %d", extra, padapter->mppriv.bandwidth , bandwidth);
+		pextra = extra + strlen(extra);
+		pextra += sprintf(pextra, "\nChange Current Bandwidth %d to Bandwidth %d", padapter->mppriv.bandwidth, bandwidth);
 		padapter->mppriv.bandwidth = (u8)bandwidth;
 		padapter->mppriv.preamble = sg;
 		SetBandwidth(padapter);
 		pHalData->current_channel_bw = bandwidth;
 
-		sprintf(extra, "%s\nSet Antenna Path :%d",  extra, ant);
+		pextra += sprintf(pextra, "\nSet Antenna Path :%d", ant);
 		switch (ant) {
 		case 1:
 			antenna = ANTENNA_A;
@@ -1914,7 +1948,7 @@ int rtw_mp_rx(struct net_device *dev,
 		pHalData->antenna_tx_path = antenna;
 		SetAntenna(padapter);
 
-		sprintf(extra, "%s\nstart Rx", extra);
+		strcat(extra, "\nstart Rx");
 		SetPacketRx(padapter, bStartRx, _FALSE);
 	}
 	wrqu->data.length = strlen(extra);
@@ -1962,6 +1996,7 @@ int rtw_efuse_mask_file(struct net_device *dev,
 	if (copy_from_user(extra, wrqu->data.pointer, wrqu->data.length))
 		return -EFAULT;
 
+	*(extra + wrqu->data.length) = '\0';
 	if (strncmp(extra, "off", 3) == 0 && strlen(extra) < 4) {
 		padapter->registrypriv.boffefusemask = 1;
 		sprintf(extra, "Turn off Efuse Mask\n");
@@ -2094,6 +2129,9 @@ int rtw_mp_SetBT(struct net_device *dev,
 
 	if (copy_from_user(extra, wrqu->data.pointer, wrqu->data.length))
 		return -EFAULT;
+
+	*(extra + wrqu->data.lenght) = '\0';
+	
 	if (strlen(extra) < 1)
 		return -EFAULT;
 
