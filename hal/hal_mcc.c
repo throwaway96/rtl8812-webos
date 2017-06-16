@@ -2478,6 +2478,9 @@ void rtw_hal_mcc_sw_status_check(PADAPTER padapter)
 	_enter_critical_mutex(&pmccobjpriv->mcc_mutex, NULL);
 
 	if (rtw_hal_check_mcc_status(padapter, MCC_STATUS_DOING_MCC)) {
+		
+		phy_set_bb_reg(padapter, 0xB58, BIT(0), 1);
+		phy_set_bb_reg(padapter, 0xB58, BIT(0), 0);
 
 		/* check noa enable or not */
 		for (i = 0; i < dvobj->iface_nums; i++) {
