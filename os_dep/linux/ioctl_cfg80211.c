@@ -2417,13 +2417,13 @@ static int cfg80211_rtw_scan(struct wiphy *wiphy
 		goto check_need_indicate_scan_done;
 	}
 #endif /* CONFIG_CONCURRENT_MODE */
-
+#if 0
 	/* busy traffic check*/
 	if (rtw_mi_busy_traffic_check(padapter, _TRUE)) {
 		need_indicate_scan_done = _TRUE;
 		goto check_need_indicate_scan_done;
 	}
-
+#endif
 #ifdef CONFIG_P2P
 	if (!rtw_p2p_chk_state(pwdinfo, P2P_STATE_NONE) && !rtw_p2p_chk_state(pwdinfo, P2P_STATE_IDLE)) {
 		rtw_p2p_set_state(pwdinfo, P2P_STATE_FIND_PHASE_SEARCH);
