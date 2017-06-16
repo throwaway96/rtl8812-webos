@@ -906,7 +906,7 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 		{
 			u8 val = 0;
 
-			RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s]"CLR_NONE"\n", command);
+			RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s]\n"CLR_NONE, command);
 
 			sscanf(command, "SET_MCHAN_SCHED_MODE %u", (unsigned int *)&val);
 			adapter_wdev_data(padapter)->mchan_sched_mode = val;
@@ -919,33 +919,32 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 	case LGE_PRIVATE_CMD_GET_CS_INFO:
 		{
 			struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
+			struct recv_priv *precvpriv = &(padapter->recvpriv);
+			char buf1[256] = { 0 };
+			char buf2[256] = { 0 };
 
-			RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s]"CLR_NONE"\n", command);
+			RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s]\n"CLR_NONE, command);
+			precvpriv->store_law_data_flag = _TRUE;
 
-			bytes_written = snprintf(command, priv_cmd.total_len,
-									 "\nGET_CS_INFO\n"
-									 "\t\tVerstion\t: %s\n"
-									 "\t\tCcode\t: KR\n"
-									 "\t\tCcodeRev\t: 980\n"
-									 "\t\tChannel\t: %u\n"
-									 "\t\tMCS\t: N/A\n"
-									 "\t\tMIMO\t: N/A\n"
-									 "\t\tRate\t: N/A\n"
-									 "\t\tRSSI\t: %d dBm\n"
-									 "\t\tNoise\t: %d dBm\n"
-									 "\t\tTxpwr\t: N/A\n"
-									 "\t\tNss\t: N/A\n"
-									 "\t\tBW\t: %s\n",
-									 DRIVERVERSION,
-									 pmlmeext->cur_channel,
-									 padapter->recvpriv.rssi,
-									 padapter->recvpriv.noise,
-									 ((pmlmeext->cur_wireless_mode & (BIT(6)|BIT(4)|BIT(3))) ?
-									 ((pmlmeext->cur_bwmode == CHANNEL_WIDTH_20) ? "20 MHz" :
-									 ((pmlmeext->cur_bwmode == CHANNEL_WIDTH_40) ? "40 MHz" :
-									 ((pmlmeext->cur_bwmode == CHANNEL_WIDTH_80) ? "80 MHz" :
-									  "N/A"))) : "N/A")
-									);
+			snprintf(buf1, 256,
+				 "\nGET_CS_INFO\n"
+				 "\t\tVerstion\t: %s\n"
+				 "\t\tCcode\t: %s\n"
+				 "\t\tCcodeRev\t: %u\n"
+				 "\t\tChannel\t: %u\n",
+				 DRIVERVERSION,
+				 adapter_wdev_data(padapter)->country,
+				 adapter_wdev_data(padapter)->ccode_version,
+				 pmlmeext->cur_channel
+				);
+
+			rtw_hal_set_odm_var(padapter, HAL_ODM_RX_Dframe_INFO, buf2, _TRUE);
+
+			strcat(command, buf1);
+			strcat(command, buf2);
+
+			bytes_written = strlen(command);
+
 			//RTW_INFO("LGE CMD[%s]\n", command);
 		}
 		break;
@@ -953,7 +952,7 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 		{
 			u8 val = 0;
 
-			RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s]"CLR_NONE"\n", command);
+			RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s]\n"CLR_NONE, command);
 
 			sscanf(command, "SET_WOWL %u", (unsigned int *)&val);
 			adapter_wdev_data(padapter)->wowl = val;
@@ -967,7 +966,7 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 			u8 val = 0;
 			struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
 
-			RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s]"CLR_NONE"\n", command);
+			RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s]\n"CLR_NONE, command);
 
 			sscanf(command, "WOWL_ACTIVATE %u", (unsigned int *)&val);
 			adapter_wdev_data(padapter)->wowl_activate = 1;
@@ -984,7 +983,7 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 		{
 			u8 val = 0;
 
-			RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s]"CLR_NONE"\n", command);
+			RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s]\n"CLR_NONE, command);
 
 			sscanf(command, "WOWL_ACTIVATE %u", (unsigned int *)&val);
 			adapter_wdev_data(padapter)->idle_mode = 1;

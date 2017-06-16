@@ -157,6 +157,8 @@ struct rtw_wdev_priv {
 #endif
 
 #ifdef LGE_PRIVATE
+	u8 country[3];
+	u8 ccode_version;
 	u8 mchan_sched_mode;
 	u8 wowl;
 	u8 wowl_activate;

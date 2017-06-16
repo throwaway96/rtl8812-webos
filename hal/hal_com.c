@@ -9209,6 +9209,13 @@ void SetHalODMVar(
 
 		/*_RTW_PRINT_SEL(sel , "HAL_ODM_RX_Dframe_INFO\n");*/
 #ifdef DBG_RX_DFRAME_RAW_DATA
+#ifdef LGE_PRIVATE
+		if (bSet) {
+			rtw_dump_rx_dframe_info2(Adapter, sel);
+			break;
+		}
+#endif /* LGE_PRIVATE */
+
 		rtw_dump_rx_dframe_info(Adapter, sel);
 #endif
 	}
@@ -9778,6 +9785,201 @@ void rtw_dump_rx_dframe_info(_adapter *padapter, void *sel)
 		_exit_critical_bh(&pstapriv->sta_hash_lock, &irqL);
 	}
 }
+
+#ifdef LGE_PRIVATE
+void rtw_dump_rx_dframe_info2(_adapter *padapter, void *sel)
+{
+
+	struct hdata_phyrate {
+		u8 rate_index;
+		u8 mcs;
+		u8 mimo;
+		u8 nss;
+		u16 bw20_lgi_phyrate; /* bw 20, Absolute value */
+		u16 bw20_sgi_phyrate; /* bw 20, Absolute value */
+		u16 bw40_lgi_phyrate; /* bw 40, Absolute value */
+		u16 bw40_sgi_phyrate; /* bw 40, Absolute value */
+		u16 bw80_lgi_phyrate; /* bw 80, Absolute value */
+		u16 bw80_sgi_phyrate; /* bw 80, Absolute value */
+		u16 bw160_lgi_phyrate; /* bw 160, Absolute value */
+		u16 bw160_sgi_phyrate; /* bw 160, Absolute value */
+	};
+
+	struct hdata_phyrate phyrate_tbl[] = {
+		/* CCK */
+		{ DESC_RATE1M, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 },
+		{ DESC_RATE2M, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0 },
+		{ DESC_RATE5_5M, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0 },
+		{ DESC_RATE11M, 0, 0, 0, 11, 0, 0, 0, 0, 0, 0, 0 },
+
+		/* OFDM */
+		{ DESC_RATE6M, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0 },
+		{ DESC_RATE9M, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0 },
+		{ DESC_RATE12M, 0, 0, 0, 12, 0, 0, 0, 0, 0, 0, 0 },
+		{ DESC_RATE18M, 0, 0, 0, 18, 0, 0, 0, 0, 0, 0, 0 },
+		{ DESC_RATE24M, 0, 0, 0, 24, 0, 0, 0, 0, 0, 0, 0 },
+		{ DESC_RATE36M, 0, 0, 0, 36, 0, 0, 0, 0, 0, 0, 0 },
+		{ DESC_RATE48M, 0, 0, 0, 48, 0, 0, 0, 0, 0, 0, 0 },
+		{ DESC_RATE54M, 0, 0, 0, 54, 0, 0, 0, 0, 0, 0, 0 },
+
+		/* MCS Rate */
+		{ DESC_RATEMCS0, 0, 1, 1, 6, 7, 13, 15, 0, 0, 0, 0 },
+		{ DESC_RATEMCS1, 1, 1, 1, 13, 14, 27, 30, 0, 0, 0, 0 },
+		{ DESC_RATEMCS2, 2, 1, 1, 19, 21, 40, 45, 0, 0, 0, 0 },
+		{ DESC_RATEMCS3, 3, 1, 1, 26, 28, 54, 60, 0, 0, 0, 0 },
+		{ DESC_RATEMCS4, 4, 1, 1, 39, 43, 81, 90, 0, 0, 0, 0 },
+		{ DESC_RATEMCS5, 5, 1, 1, 52, 57, 108, 120, 0, 0, 0, 0 },
+		{ DESC_RATEMCS6, 6, 1, 1, 58, 65, 121, 135, 0, 0, 0, 0 },
+		{ DESC_RATEMCS7, 7, 1, 1, 65, 52, 135, 150, 0, 0, 0, 0 },
+		{ DESC_RATEMCS8, 8, 1, 2, 13, 14, 27, 30, 0, 0, 0, 0 },
+		{ DESC_RATEMCS9, 9, 1, 2, 26, 28, 54, 60, 0, 0, 0, 0 },
+		{ DESC_RATEMCS10, 10, 1, 2, 39, 43, 81, 90, 0, 0, 0, 0 },
+		{ DESC_RATEMCS11, 11, 1, 2, 52, 57, 108, 120, 0, 0, 0, 0 },
+		{ DESC_RATEMCS12, 12, 1, 2, 78, 86, 162, 180, 0, 0, 0, 0 },
+		{ DESC_RATEMCS13, 13, 1, 2, 104, 115, 216, 240, 0, 0, 0, 0 },
+		{ DESC_RATEMCS14, 14, 1, 2, 117, 130, 243, 270, 0, 0, 0, 0 },
+		{ DESC_RATEMCS15, 15, 1, 2, 130, 144, 270, 300, 0, 0, 0, 0 },
+
+		/*
+		{ DESC_RATEMCS16, 16, 1, 3, 19, 21, 40, 45, 0, 0, 0, 0 },
+		{ DESC_RATEMCS17, 17, 1, 3, 39, 43, 81, 90, 0, 0, 0, 0 },
+		{ DESC_RATEMCS18, 18, 1, 3, 58, 65, 121, 135, 0, 0, 0, 0 },
+		{ DESC_RATEMCS19, 19, 1, 3, 78, 86, 162, 180, 0, 0, 0, 0 },
+		{ DESC_RATEMCS20, 20, 1, 3, 117, 130, 243, 270, 0, 0, 0, 0 },
+		{ DESC_RATEMCS21, 21, 1, 3, 156, 173, 324, 360, 0, 0, 0, 0 },
+		{ DESC_RATEMCS22, 22, 1, 3, 175, 195, 364, 405, 0, 0, 0, 0 },
+		{ DESC_RATEMCS23, 23, 1, 3, 195, 216, 405, 450, 0, 0, 0, 0 }, 
+		*/
+
+		/* VHT Rate */
+		{ DESC_RATEVHTSS1MCS0, 0, 0, 1,	6, 7, 13, 15, 29, 32, 58, 65 },
+		{ DESC_RATEVHTSS1MCS1, 1, 0, 1,	13, 14, 27, 30, 58, 65, 117, 130 },
+		{ DESC_RATEVHTSS1MCS2, 2, 0, 1,	19, 21, 40, 45, 87, 97, 175, 195 },
+		{ DESC_RATEVHTSS1MCS3, 3, 0, 1,	26, 28, 54, 60, 117, 130, 234, 260 },
+		{ DESC_RATEVHTSS1MCS4, 4, 0, 1,	39, 43, 81, 90, 175, 195, 351, 390 },
+		{ DESC_RATEVHTSS1MCS5, 5, 0, 1,	52, 57, 108, 120, 234, 260, 468, 520 },
+		{ DESC_RATEVHTSS1MCS6, 6, 0, 1,	58, 65, 121, 135, 263, 292, 526, 585 },
+		{ DESC_RATEVHTSS1MCS7, 7, 0, 1,	65, 52, 135, 150, 292, 325, 585, 650 },
+		{ DESC_RATEVHTSS1MCS8, 8, 0, 1, 78, 86, 162, 180, 351, 390, 702, 780 },
+		{ DESC_RATEVHTSS1MCS9, 9, 0, 1, 0, 0, 180, 200, 390, 433, 780, 866 },
+		{ DESC_RATEVHTSS2MCS0, 0, 1, 2,	13, 14, 27, 30, 58, 65, 117, 130 },
+		{ DESC_RATEVHTSS2MCS1, 1, 1, 2,	26, 28, 54, 60, 117, 130, 234, 260 },
+		{ DESC_RATEVHTSS2MCS2, 2, 1, 2,	39, 43, 81, 90, 175, 195, 351, 390 },
+		{ DESC_RATEVHTSS2MCS3, 3, 1, 2,	52, 57, 108, 120, 234, 260, 268, 520 },
+		{ DESC_RATEVHTSS2MCS4, 4, 1, 2,	78, 86, 162, 180, 351, 390, 702, 780 },
+		{ DESC_RATEVHTSS2MCS5, 5, 1, 2,	104, 115, 216, 240, 468, 520, 936, 1040 },
+		{ DESC_RATEVHTSS2MCS6, 6, 1, 2,	117, 130, 243, 270, 526, 585, 1053, 1170 },
+		{ DESC_RATEVHTSS2MCS7, 7, 1, 2,	130, 144, 270, 300, 585, 650, 1170, 1300 },
+		{ DESC_RATEVHTSS2MCS8, 8, 1, 2, 156, 173, 324, 360, 702, 780, 1404, 1560 },
+		{ DESC_RATEVHTSS2MCS9, 9, 1, 2, 0, 0, 360, 400, 780, 866, 1560, 1733 },
+
+		/*
+		{ DESC_RATEVHTSS3MCS0, 0, 1, 3,	19, 21, 40, 45, 87, 97, 175, 195 },
+		{ DESC_RATEVHTSS3MCS1, 1, 1, 3,	39, 43, 81, 90, 175, 195, 351, 390 },
+		{ DESC_RATEVHTSS3MCS2, 2, 1, 3, 58, 65, 121, 135,263, 292, 526, 585 },
+		{ DESC_RATEVHTSS3MCS3, 3, 1, 3, 78, 86, 162, 180,351, 390, 702, 780 },
+		{ DESC_RATEVHTSS3MCS4, 4, 1, 3,	117, 130, 243, 270, 526, 580, 1053, 1170 },
+		{ DESC_RATEVHTSS3MCS5, 5, 1, 3,	156, 173, 324, 360, 702, 780, 140, 1560 },
+		{ DESC_RATEVHTSS3MCS6, 6, 1, 3,	175, 195, 364, 405, 0, 0, 1579, 1755 },
+		{ DESC_RATEVHTSS3MCS7, 7, 1, 3,	195, 216, 405, 450, 877, 975, 1755, 1950 },
+		{ DESC_RATEVHTSS3MCS8, 8, 1, 3, 234, 260, 486, 540, 1053, 1170, 2106, 2340 },
+		{ DESC_RATEVHTSS3MCS9, 9, 1, 3, 260, 288, 540, 600, 1170, 1300, 0, 0 }, 
+		*/
+
+	};
+
+	_irqL irqL;
+	u8 isCCKrate, rf_path;
+	struct recv_priv *precvpriv = &(padapter->recvpriv);
+	PHAL_DATA_TYPE	pHalData =  GET_HAL_DATA(padapter);
+	struct sta_priv *pstapriv = &padapter->stapriv;
+	struct sta_info *psta;
+	struct sta_recv_dframe_info *psta_dframe_info;
+	int i, phy_rate;
+	_list	* plist,*phead;
+	char *BW;
+	u8 bc_addr[6] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+	u8 null_addr[6] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+
+	if (precvpriv->store_law_data_flag) {
+
+		_enter_critical_bh(&pstapriv->sta_hash_lock, &irqL);
+
+		for (i = 0; i < NUM_STA; i++) {
+			phead = &(pstapriv->sta_hash[i]);
+			plist = get_next(phead);
+
+			while ((rtw_end_of_queue_search(phead, plist)) == _FALSE) {
+
+				psta = LIST_CONTAINOR(plist, struct sta_info, hash_list);
+				plist = get_next(plist);
+
+				if (psta) {
+					psta_dframe_info = &psta->sta_dframe_info;
+					if ((_rtw_memcmp(psta->hwaddr, bc_addr, 6) !=   _TRUE)
+					    && (_rtw_memcmp(psta->hwaddr, null_addr, 6) !=  _TRUE)
+					    && (_rtw_memcmp(psta->hwaddr, adapter_mac_addr(padapter), 6) !=  _TRUE)) {
+
+						isCCKrate = (psta_dframe_info->sta_data_rate <= DESC_RATE11M) ? TRUE : FALSE;
+
+						switch (psta_dframe_info->sta_bw_mode) {
+
+						case CHANNEL_WIDTH_20:
+							BW = "20 MHz";
+							if (psta_dframe_info->sta_sgi) phy_rate = phyrate_tbl[psta_dframe_info->sta_data_rate].bw20_sgi_phyrate;
+							else phy_rate = phyrate_tbl[psta_dframe_info->sta_data_rate].bw20_lgi_phyrate;
+							break;
+
+						case CHANNEL_WIDTH_40:
+							BW = "40 MHz";
+							if (psta_dframe_info->sta_sgi) phy_rate = phyrate_tbl[psta_dframe_info->sta_data_rate].bw40_sgi_phyrate;
+							else phy_rate = phyrate_tbl[psta_dframe_info->sta_data_rate].bw40_lgi_phyrate;
+							break;
+
+						case CHANNEL_WIDTH_80:
+							BW = "80 MHz";
+							if (psta_dframe_info->sta_sgi) phy_rate = phyrate_tbl[psta_dframe_info->sta_data_rate].bw80_sgi_phyrate;
+							else phy_rate = phyrate_tbl[psta_dframe_info->sta_data_rate].bw80_lgi_phyrate;
+							break;
+
+						case CHANNEL_WIDTH_160:
+							BW = "160 MHz";
+							if (psta_dframe_info->sta_sgi) phy_rate = phyrate_tbl[psta_dframe_info->sta_data_rate].bw160_sgi_phyrate;
+							else phy_rate = phyrate_tbl[psta_dframe_info->sta_data_rate].bw160_lgi_phyrate;
+							break;
+
+						default:
+							BW = "N/A";
+							phy_rate = phyrate_tbl[psta_dframe_info->sta_data_rate].bw20_lgi_phyrate;
+							break;
+						}
+
+						snprintf(sel, 256,
+							 "\t\tMCS\t: %u\n"
+							 "\t\tMIMO\t: %s\n"
+							 "\t\tRate\t: %d mbps\n"
+							 "\t\tRSSI\t: %d dBm\n"
+							 "\t\tNoise\t: %d dBm\n"
+							 "\t\tTxpwr\t: %s\n"
+							 "\t\tNss\t: %u\n"
+							 "\t\tBW\t: %s\n",
+							 phyrate_tbl[psta_dframe_info->sta_data_rate].mcs,
+							 (phyrate_tbl[psta_dframe_info->sta_data_rate].mimo == 0) ? "None" : "SDM",
+							 phy_rate,
+							 padapter->recvpriv.rssi,
+							 padapter->recvpriv.noise,
+							 "48 qdBm", /* txpower, qdBm = 4 * dbm */
+							 phyrate_tbl[psta_dframe_info->sta_data_rate].nss,
+							 BW
+							);
+					}
+				}
+			}
+		}
+		_exit_critical_bh(&pstapriv->sta_hash_lock, &irqL);
+	}
+}
+#endif /* LGE_PRIVATE */
 #endif
 void rtw_store_phy_info(_adapter *padapter, union recv_frame *prframe)
 {

@@ -4681,7 +4681,7 @@ void rtw_dev_pno_debug(struct net_device *net)
 int rtw_lge_parse_country(_adapter *padapter, u8 *list_str)
 {
 	char *pch, *pnext, *pend,
-		*country = NULL, *ccode = NULL;
+		*country = NULL, *ccode_ver = NULL;
 	u8 index = 0, chplan_id = 0x7f;
 
 	pch = list_str;
@@ -4702,14 +4702,20 @@ int rtw_lge_parse_country(_adapter *padapter, u8 *list_str)
 			pch = pend + 1;
 			pend = strstr(pch, "\n");
 			*pend = '\0';
-			ccode = pch;
-		} else
-			break;
+			ccode_ver = pch;
+		} else break;
 	}
 
-	if (country != NULL)
-		if (rtw_set_country(padapter, country) == _FAIL)
+	if (country != NULL) {
+		if (rtw_set_country(padapter, country) == _FAIL) {
 			rtw_set_country(padapter, "LG");
+			strncpy(adapter_wdev_data(padapter)->country, "LGE", 3);
+			adapter_wdev_data(padapter)->ccode_version = 0;
+		} else {
+			strncpy(adapter_wdev_data(padapter)->country, country, 3);
+			adapter_wdev_data(padapter)->ccode_version = rtw_atoi(ccode_ver);
+		}
+	}
 
 	return 0;
 }
