@@ -3459,7 +3459,11 @@ restart:
 
 		oldfs = get_fs();
 		set_fs(KERNEL_DS);
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 7, 0))
+		err = sock_recvmsg(sock, &msg, MSG_DONTWAIT);
+#else
 		err = sock_recvmsg(sock, &msg, PAGE_SIZE, MSG_DONTWAIT);
+#endif
 		set_fs(oldfs);
 
 		if (err < 0)
