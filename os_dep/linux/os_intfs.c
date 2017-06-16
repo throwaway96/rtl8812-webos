@@ -2401,6 +2401,7 @@ int _netdev_vir_if_open(struct net_device *pnetdev)
 {
 	_adapter *padapter = (_adapter *)rtw_netdev_priv(pnetdev);
 	_adapter *primary_padapter = GET_PRIMARY_ADAPTER(padapter);
+	u8 enable = _TRUE;
 
 	RTW_INFO(FUNC_NDEV_FMT" , bup=%d\n", FUNC_NDEV_ARG(pnetdev), padapter->bup);
 
@@ -2462,6 +2463,10 @@ int _netdev_vir_if_open(struct net_device *pnetdev)
 	rtw_cfg80211_init_wdev_data(padapter);
 #endif
 
+#if (defined(CONFIG_RTL8822B) || defined(CONFIG_RTL8821C))
+	rtw_hal_set_hwreg(padapter, HW_VAR_BCN_FUNC, (u8 *)(&enable));
+#endif
+
 	padapter->bup = _TRUE;
 
 	padapter->net_closed = _FALSE;
@@ -2511,6 +2516,7 @@ static int netdev_vir_if_close(struct net_device *pnetdev)
 {
 	_adapter *padapter = (_adapter *)rtw_netdev_priv(pnetdev);
 	struct mlme_priv	*pmlmepriv = &padapter->mlmepriv;
+	u8 enable = _FALSE;
 
 	RTW_INFO(FUNC_NDEV_FMT" , bup=%d\n", FUNC_NDEV_ARG(pnetdev), padapter->bup);
 	padapter->net_closed = _TRUE;
@@ -2528,6 +2534,10 @@ static int netdev_vir_if_close(struct net_device *pnetdev)
 	rtw_scan_abort(padapter);
 	rtw_cfg80211_wait_scan_req_empty(padapter, 200);
 	adapter_wdev_data(padapter)->bandroid_scan = _FALSE;
+#endif
+
+#if (defined(CONFIG_RTL8822B) || defined(CONFIG_RTL8821C))
+	rtw_hal_set_hwreg(padapter, HW_VAR_BCN_FUNC, (u8 *)(&enable));
 #endif
 
 	return 0;

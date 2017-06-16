@@ -898,6 +898,8 @@ static void check_rx_count(PADAPTER p)
 {
 	PHAL_DATA_TYPE hal = GET_HAL_DATA(p);
 	struct self_dect *self_detection = &hal->self_detection;
+	u8 bb_detection = _TRUE;
+	u8 mac_detection = _TRUE;
 	u16 cur_bb_cck_cnt, cur_bb_ofdm_cnt, cur_bb_ht_cnt, cur_bb_vht_cnt;
 	u16 cur_mac_cck_cnt, cur_mac_ofdm_cnt, cur_mac_ht_cnt, cur_mac_vht_cnt;
 
@@ -923,19 +925,24 @@ static void check_rx_count(PADAPTER p)
 		self_detection->last_bb_ofdm_cnt == cur_bb_ofdm_cnt &&
 		self_detection->last_bb_ht_cnt == cur_bb_ht_cnt &&
 		self_detection->last_bb_vht_cnt == cur_bb_vht_cnt) {
-		self_detection->rx_cnt ++;
-		goto exit;
+		bb_detection = _FALSE;
 	}
 
 	if (self_detection->last_mac_cck_cnt == cur_mac_cck_cnt &&
 		self_detection->last_mac_ofdm_cnt == cur_mac_ofdm_cnt &&
 		self_detection->last_mac_ht_cnt == cur_mac_ht_cnt &&
 		self_detection->last_mac_vht_cnt == cur_mac_vht_cnt) {
-		self_detection->rx_cnt ++;
-		goto exit;
+		mac_detection = _FALSE;
 	}
 
-	self_detection->rx_cnt = 0;
+	if (bb_detection == _FALSE && mac_detection == _FALSE)
+		self_detection->rx_cnt++;
+	else if (bb_detection == _TRUE && mac_detection == _FALSE)
+		self_detection->rx_cnt++;
+	else if (bb_detection == _FALSE && mac_detection == _TRUE)
+		self_detection->rx_cnt = 0;
+	else 
+		self_detection->rx_cnt = 0;
 
 exit:
 	self_detection->last_bb_cck_cnt = cur_bb_cck_cnt;
