@@ -14380,6 +14380,14 @@ operation_by_state:
 		* SW parameter initialization
 		*/
 
+#ifdef LGE_PRIVATE
+		/* check if p2p interface is in busy traffic */
+		if (rtw_mi_busy_traffic_check(padapter, _FALSE))
+			mlmeext_assign_scan_backop_flags_sta(pmlmeext, SS_BACKOP_EN |SS_BACKOP_PS_ANNC | SS_BACKOP_TX_RESUME);
+		else
+			mlmeext_assign_scan_backop_flags_sta(pmlmeext, SS_BACKOP_PS_ANNC | SS_BACKOP_TX_RESUME);
+#endif
+
 		sitesurvey_res_reset(padapter, pparm);
 		mlmeext_set_scan_state(pmlmeext, SCAN_START);
 		goto operation_by_state;
