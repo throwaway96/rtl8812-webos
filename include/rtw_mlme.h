@@ -493,6 +493,8 @@ struct tdls_info {
 #ifdef CONFIG_WFD
 	struct wifi_display_info		*wfd_info;
 #endif
+
+	struct submit_ctx		*tdls_sctx;
 };
 
 struct tdls_txmgmt {

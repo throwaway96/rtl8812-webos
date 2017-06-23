@@ -4127,13 +4127,10 @@ ssize_t proc_set_tdls_enable(struct file *file, const char __user *buffer, size_
 		int num = sscanf(tmp, "%d ", &en_tdls);
 
 		if (pregpriv) {
-			rtw_set_tdls_enable(padapter, (en_tdls > 0) ? _TRUE : _FALSE);
-
-			if (rtw_is_tdls_enabled(padapter) == _FALSE) {
-				rtw_free_all_tdls_sta(padapter);
-				rtw_tdls_cmd(padapter, NULL, TDLS_RS_RCR);
-				rtw_reset_tdls_info(padapter);
-			}
+			if (en_tdls > 0)
+				rtw_enable_tdls_func(padapter);
+			else
+				rtw_disable_tdls_func(padapter, _FALSE);
 		}
 	}
 

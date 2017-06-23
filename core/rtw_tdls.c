@@ -62,6 +62,8 @@ void rtw_reset_tdls_info(_adapter *padapter)
 #ifdef CONFIG_WFD
 	ptdlsinfo->wfd_info = &padapter->wfd_info;
 #endif
+
+	ptdlsinfo->tdls_sctx = NULL;
 }
 
 int rtw_init_tdls_info(_adapter *padapter)
@@ -93,7 +95,7 @@ void rtw_free_tdls_info(struct tdls_info *ptdlsinfo)
 
 }
 
-void rtw_free_all_tdls_sta(_adapter *padapter)
+void rtw_free_all_tdls_sta(_adapter *padapter, u8 from_cmd_thread)
 {
 	struct sta_priv *pstapriv = &padapter->stapriv;
 	struct tdls_info *ptdlsinfo = &padapter->tdlsinfo;
@@ -103,6 +105,7 @@ void rtw_free_all_tdls_sta(_adapter *padapter)
 	struct sta_info *psta = NULL;
 	u8 tdls_sta[NUM_STA][ETH_ALEN];
 	u8 empty_hwaddr[ETH_ALEN] = { 0x00 };
+	struct submit_ctx sctx;
 
 	_rtw_memset(tdls_sta, 0x00, sizeof(tdls_sta));
 
@@ -124,8 +127,27 @@ void rtw_free_all_tdls_sta(_adapter *padapter)
 
 	for (index = 0; index < NUM_STA; index++) {
 		if (!_rtw_memcmp(tdls_sta[index], empty_hwaddr, ETH_ALEN)) {
-			RTW_INFO("issue tear down to "MAC_FMT"\n", MAC_ARG(tdls_sta[index]));
-			rtw_tdls_cmd(padapter, tdls_sta[index], TDLS_TEARDOWN_STA);
+
+			RTW_INFO("issue tear down to "MAC_FMT" by from_cmd_thread = %d \n", MAC_ARG(tdls_sta[index]), from_cmd_thread);
+			
+			if (from_cmd_thread == _TRUE) {
+				struct TDLSoption_param tdls_param;
+
+				_rtw_memcpy(&(tdls_param.addr), tdls_sta[index], ETH_ALEN);
+
+				tdls_param.option = TDLS_TEARDOWN_STA;
+				tdls_hdl(padapter, (unsigned char *)&(tdls_param));
+
+				tdls_param.option = TDLS_TEARDOWN_STA_LOCALLY;
+				tdls_hdl(padapter, (unsigned char *)&(tdls_param));
+			} else {
+				if (rtw_tdls_cmd(padapter, tdls_sta[index], TDLS_TEARDOWN_STA) == _SUCCESS) {
+					ptdlsinfo->tdls_sctx = &sctx;
+					rtw_sctx_init(ptdlsinfo->tdls_sctx, 1000);
+					rtw_sctx_wait(ptdlsinfo->tdls_sctx, __func__);
+					ptdlsinfo->tdls_sctx = NULL;
+				}
+			}
 		}
 	}
 }
@@ -165,17 +187,35 @@ u8 rtw_is_tdls_enabled(_adapter *padapter)
 
 void rtw_set_tdls_enable(_adapter *padapter, u8 enable)
 {
-	u8 en_tdls_tmp = padapter->registrypriv.en_tdls;
+	padapter->registrypriv.en_tdls = enable;
+	RTW_INFO("%s: en_tdls = %d\n", __func__, rtw_is_tdls_enabled(padapter));
+}
+
+void rtw_enable_tdls_func(_adapter *padapter)
+{
+	if (rtw_is_tdls_enabled(padapter) == _TRUE)
+		return;
 	
 #ifdef CONFIG_MCC_MODE
-	if ((enable == _TRUE) && (rtw_hal_check_mcc_status(padapter, MCC_STATUS_DOING_MCC) == _TRUE))
+	if (rtw_hal_check_mcc_status(padapter, MCC_STATUS_DOING_MCC) == _TRUE) {
 		RTW_INFO("[TDLS] MCC is running, can't enable TDLS !\n");
-	else
+		return;
+	}
 #endif
-		en_tdls_tmp = enable;
+	
+	rtw_set_tdls_enable(padapter, _TRUE);
+}
 
-	padapter->registrypriv.en_tdls = en_tdls_tmp;
-	RTW_INFO("%s: en_tdls = %d\n", __func__, rtw_is_tdls_enabled(padapter));
+void rtw_disable_tdls_func(_adapter *padapter, u8 from_cmd_thread)
+{
+	if (rtw_is_tdls_enabled(padapter) == _FALSE)
+		return;
+	
+	rtw_free_all_tdls_sta(padapter, from_cmd_thread);
+	rtw_tdls_cmd(padapter, NULL, TDLS_RS_RCR);
+	rtw_reset_tdls_info(padapter);
+	
+	rtw_set_tdls_enable(padapter, _FALSE);
 }
 
 u8 rtw_is_tdls_sta_existed(_adapter *padapter)
@@ -1131,11 +1171,6 @@ int issue_tdls_setup_req(_adapter *padapter, struct tdls_txmgmt *ptxmgmt, int wa
 	if (pmgntframe == NULL)
 		goto exit;
 
-#ifdef CONFIG_MCC_MODE
-	SET_MCC_EN_FLAG(padapter, _FALSE);
-	RTW_INFO("[TDLS] Begin TDLS operation, so disable MCC !\n");
-#endif
-
 	pattrib = &pmgntframe->attrib;
 	pmgntframe->frame_tag = DATA_FRAMETAG;
 	pattrib->ether_type = 0x890d;
@@ -1741,11 +1776,6 @@ sint On_TDLS_Setup_Req(_adapter *padapter, union recv_frame *precv_frame)
 
 	if (ptdlsinfo->sta_maximum == _TRUE)
 		goto exit;
-
-#ifdef CONFIG_MCC_MODE
-	SET_MCC_EN_FLAG(padapter, _FALSE);
-	RTW_INFO("[TDLS] Begin TDLS operation, so disable MCC !\n");
-#endif
 
 	_rtw_memset(&txmgmt, 0x00, sizeof(struct tdls_txmgmt));
 	psa = get_sa(ptr);

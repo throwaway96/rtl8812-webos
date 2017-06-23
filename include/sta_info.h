@@ -469,6 +469,9 @@ struct sta_info {
 	struct st_ctl_t st_ctl;
 };
 
+#define sta_tx_pkts(sta) \
+	(sta->sta_stats.tx_pkts)
+
 #define sta_rx_pkts(sta) \
 	(sta->sta_stats.rx_mgnt_pkts \
 	 + sta->sta_stats.rx_ctrl_pkts \

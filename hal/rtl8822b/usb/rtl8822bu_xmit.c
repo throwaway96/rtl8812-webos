@@ -207,6 +207,17 @@ static s32 update_txdesc(struct xmit_frame *pxmitframe, u8 *pmem, s32 sz, u8 bag
 			SET_TX_DESC_DATARATE_8822B(ptxdesc, MRateToHwRate(pmlmeext->tx_rate));
 		}
 
+#ifdef CONFIG_TDLS
+#ifdef CONFIG_XMIT_ACK
+		/* CCX-TXRPT ack for xmit data frames */
+		if (pxmitframe->ack_report) {
+			SET_TX_DESC_SPE_RPT_8822B(ptxdesc, 1);
+#ifdef DBG_CCX
+			RTW_INFO("%s set tx report\n", __func__);
+#endif
+		}
+#endif /* CONFIG_XMIT_ACK */
+#endif
 	} else if ((pxmitframe->frame_tag & 0x0f) == MGNT_FRAMETAG) {
 		/* RTW_INFO("pxmitframe->frame_tag == MGNT_FRAMETAG\n");	*/
 

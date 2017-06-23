@@ -11065,13 +11065,10 @@ static int rtw_tdls_enable(struct net_device *dev,
 
 	RTW_INFO("[%s] %s %d\n", __FUNCTION__, extra, wrqu->data.length - 1);
 
-	if (extra[0] == '0') {
-		rtw_set_tdls_enable(padapter, _FALSE);
-		rtw_free_all_tdls_sta(padapter);
-		rtw_tdls_cmd(padapter, NULL, TDLS_RS_RCR);
-		rtw_reset_tdls_info(padapter);
-	} else if (extra[0] == '1')
-		rtw_set_tdls_enable(padapter, _TRUE);
+	if (extra[0] == '0')
+		rtw_disable_tdls_func(padapter, _FALSE);
+	else if (extra[0] == '1')
+		rtw_enable_tdls_func(padapter);
 #endif /* CONFIG_TDLS */
 
 	return ret;

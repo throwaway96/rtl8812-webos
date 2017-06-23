@@ -12398,8 +12398,9 @@ u8 chk_ap_is_alive(_adapter *padapter, struct sta_info *psta)
 		 , pmlmeext->retry
 		);
 
-	RTW_INFO(FUNC_ADPT_FMT" tx_pkts:%llu, link_count:%u\n", FUNC_ADPT_ARG(padapter)
+	RTW_INFO(FUNC_ADPT_FMT" tx_pkts:%llu, %llu, link_count:%u\n", FUNC_ADPT_ARG(padapter)
 		 , padapter->xmitpriv.tx_pkts
+		 , sta_tx_pkts(psta)
 		 , pmlmeinfo->link_count
 		);
 #endif
@@ -12657,7 +12658,7 @@ void linked_status_chk(_adapter *padapter, u8 from_timer)
 			if (chk_ap_is_alive(padapter, psta) == _FALSE)
 				rx_chk = _FAIL;
 
-			if (pxmitpriv->last_tx_pkts == pxmitpriv->tx_pkts)
+			if (pxmitpriv->last_tx_pkts == sta_tx_pkts(psta))
 				tx_chk = _FAIL;
 
 #if defined(CONFIG_ACTIVE_KEEP_ALIVE_CHECK) && !defined(CONFIG_LPS_LCLK_WD_TIMER)
@@ -12741,7 +12742,7 @@ bypass_active_keep_alive:
 			if (tx_chk == _FAIL)
 				pmlmeinfo->link_count %= (link_count_limit + 1);
 			else {
-				pxmitpriv->last_tx_pkts = pxmitpriv->tx_pkts;
+				pxmitpriv->last_tx_pkts = sta_tx_pkts(psta);
 				pmlmeinfo->link_count = 0;
 			}
 
@@ -15867,11 +15868,6 @@ u8 tdls_hdl(_adapter *padapter, unsigned char *pbuf)
 		_rtw_memcpy(txmgmt.peer, ptdls_sta->hwaddr, ETH_ALEN);
 
 		issue_tdls_teardown(padapter, &txmgmt, _TRUE);
-
-		if (rtw_is_tdls_sta_existed(padapter) == _FALSE) {
-			SET_MCC_EN_FLAG(padapter, _TRUE);
-			RTW_INFO("[TDLS] Finish TDLS operation, so enable MCC !\n");
-		}
 		
 		break;
 	case TDLS_TEARDOWN_STA_LOCALLY:
@@ -15887,10 +15883,8 @@ u8 tdls_hdl(_adapter *padapter, unsigned char *pbuf)
 		rtw_sta_media_status_rpt(padapter, ptdls_sta, 0);
 		free_tdls_sta(padapter, ptdls_sta);
 
-		if (rtw_is_tdls_sta_existed(padapter) == _FALSE) {
-			SET_MCC_EN_FLAG(padapter, _TRUE);
-			RTW_INFO("[TDLS] Finish TDLS operation, so enable MCC !\n");
-		}
+		if (ptdlsinfo->tdls_sctx != NULL)
+			rtw_sctx_done(&(ptdlsinfo->tdls_sctx));
 		
 		break;
 	}

@@ -2075,8 +2075,9 @@ static void rtw_hal_mcc_stop_posthdl(PADAPTER padapter)
 #ifdef CONFIG_TDLS
 		if (MLME_IS_STA(iface)) {
 			if (iface->mcc_adapterpriv.backup_tdls_en) {
-				rtw_set_tdls_enable(iface, iface->mcc_adapterpriv.backup_tdls_en);
+				rtw_enable_tdls_func(iface);
 				RTW_INFO("%s: Disable MCC, Enable TDLS\n", __func__);
+				iface->mcc_adapterpriv.backup_tdls_en = _FALSE;
 			}
 		}
 #endif /* CONFIG_TDLS */
@@ -2101,7 +2102,7 @@ static void rtw_hal_mcc_start_posthdl(PADAPTER padapter)
 		if (MLME_IS_STA(iface)) {
 			if (rtw_is_tdls_enabled(iface)) {
 				iface->mcc_adapterpriv.backup_tdls_en = _TRUE;
-				rtw_set_tdls_enable(iface, _FALSE);
+				rtw_disable_tdls_func(iface, _TRUE);
 				RTW_INFO("%s: Enable MCC, Disable TDLS\n", __func__);
 			}
 		}
