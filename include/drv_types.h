@@ -1481,6 +1481,11 @@ struct _ADAPTER {
 #ifdef CONFIG_MCC_MODE
 	struct mcc_adapter_priv mcc_adapterpriv;
 #endif /* CONFIG_MCC_MODE */
+
+#ifdef LGE_PRIVATE
+	NDIS_802_11_SSID hidden_ssid[RTW_SSID_SCAN_AMOUNT];	
+#endif
+
 };
 
 #define adapter_to_dvobj(adapter) ((adapter)->dvobj)

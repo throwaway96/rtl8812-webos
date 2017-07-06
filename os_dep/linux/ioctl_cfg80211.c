@@ -2274,6 +2274,10 @@ static int cfg80211_rtw_scan(struct wiphy *wiphy
 	struct wifidirect_info *pwdinfo;
 #endif /* CONFIG_P2P */
 
+#ifdef LGE_PRIVATE
+	u8 ssid_exist = _FALSE, is_wildcard_ssid = _FALSE; 
+#endif
+
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 6, 0))
 	wdev = request->wdev;
 	#if defined(RTW_DEDICATED_P2P_DEVICE)
@@ -2438,6 +2442,10 @@ static int cfg80211_rtw_scan(struct wiphy *wiphy
 
 
 	_rtw_memset(ssid, 0, sizeof(NDIS_802_11_SSID) * RTW_SSID_SCAN_AMOUNT);
+#ifdef LGE_PRIVATE
+	ssid_exist = _FALSE;
+	is_wildcard_ssid = _FALSE;
+#endif
 	/* parsing request ssids, n_ssids */
 	for (i = 0; i < request->n_ssids && i < RTW_SSID_SCAN_AMOUNT; i++) {
 		#ifdef CONFIG_DEBUG_CFG80211
@@ -2445,8 +2453,33 @@ static int cfg80211_rtw_scan(struct wiphy *wiphy
 		#endif
 		_rtw_memcpy(ssid[i].Ssid, ssids[i].ssid, ssids[i].ssid_len);
 		ssid[i].SsidLength = ssids[i].ssid_len;
-	}
 
+#ifdef LGE_PRIVATE
+		if (ssids[i].ssid_len != 0)
+			ssid_exist = _TRUE;	
+		if (_rtw_memcmp((void *)(ssids[i].ssid), "DIRECT-", P2P_WILDCARD_SSID_LEN)) 
+			is_wildcard_ssid = _TRUE;
+#endif
+	}
+#ifdef LGE_PRIVATE
+	/* store hidden ssid list in driver, don't store P2P wildcard ssid */
+	if (!is_wildcard_ssid){
+		/* store whole ssid list in driver if there exist ssid from supplicant */
+		/* Use the ssid list in driver if there is no hidden AP ssid from supplicant */
+		if (ssid_exist) {
+			for (i = 0; i < request->n_ssids && i < RTW_SSID_SCAN_AMOUNT; i++) {
+				_rtw_memcpy(padapter->hidden_ssid[i].Ssid, ssids[i].ssid, ssids[i].ssid_len);
+				padapter->hidden_ssid[i].SsidLength = ssids[i].ssid_len;
+			}
+		} else {
+			for (i = 0; i < request->n_ssids && i < RTW_SSID_SCAN_AMOUNT; i++) {
+				_rtw_memcpy(ssid[i].Ssid, padapter->hidden_ssid[i].Ssid, padapter->hidden_ssid[i].SsidLength);
+				ssid[i].SsidLength = padapter->hidden_ssid[i].SsidLength;
+			}
+		}
+	}
+#endif
+	
         /* parsing channels, n_channels */
 	_rtw_memset(ch, 0, sizeof(struct rtw_ieee80211_channel) * RTW_CHANNEL_SCAN_AMOUNT);
 	for (i = 0; i < request->n_channels && i < RTW_CHANNEL_SCAN_AMOUNT; i++) {

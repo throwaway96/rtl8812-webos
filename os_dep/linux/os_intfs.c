@@ -1901,6 +1901,10 @@ u8 rtw_init_default_value(_adapter *padapter)
 	padapter->tsf.sync_port =  MAX_HW_PORT;
 	padapter->tsf.offset = 0;
 
+#ifdef LGE_PRIVATE
+	_rtw_memset(padapter->hidden_ssid, 0, sizeof(NDIS_802_11_SSID) * RTW_SSID_SCAN_AMOUNT);
+#endif
+
 	return ret;
 }
 
