@@ -14282,6 +14282,7 @@ void sitesurvey_set_igi(_adapter *adapter)
 
 	switch (mlmeext_scan_state(mlmeext)) {
 	case SCAN_ENTER:
+#if 0
 		#ifdef CONFIG_P2P
 		#ifdef CONFIG_IOCTL_CFG80211
 		if (adapter_wdev_data(adapter)->p2p_enabled == _TRUE && pwdinfo->driver_interface == DRIVER_CFG80211)
@@ -14292,6 +14293,7 @@ void sitesurvey_set_igi(_adapter *adapter)
 			igi = 0x28;
 		else
 		#endif /* CONFIG_P2P */
+#endif
 			igi = 0x1e;
 
 		/* record IGI status */
