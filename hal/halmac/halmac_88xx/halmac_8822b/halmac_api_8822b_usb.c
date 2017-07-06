@@ -17,6 +17,7 @@ halmac_mac_power_switch_8822b_usb(
 {
 	u8 interface_mask;
 	u8 value8;
+	u8 rpwm;
 	VOID *pDriver_adapter = NULL;
 	PHALMAC_API pHalmac_api;
 
@@ -35,6 +36,15 @@ halmac_mac_power_switch_8822b_usb(
 
 	interface_mask = HALMAC_PWR_INTF_USB_MSK;
 
+	pHalmac_adapter->rpwm_record = HALMAC_REG_READ_8(pHalmac_adapter, 0xFE58);
+
+	/* Check FW still exist or not */
+	if (0xC078 == HALMAC_REG_READ_16(pHalmac_adapter, REG_MCUFW_CTRL) && HALMAC_MAC_POWER_ON == halmac_power) {
+		/* Leave 32K */
+		rpwm = (u8)((pHalmac_adapter->rpwm_record ^ BIT(7)) & 0x80);
+		HALMAC_REG_WRITE_8(pHalmac_adapter, 0xFE58, rpwm);
+	}
+
 	value8 = HALMAC_REG_READ_8(pHalmac_adapter, REG_CR);
 	if (0xEA == value8) {
 		pHalmac_adapter->halmac_state.mac_power = HALMAC_MAC_POWER_OFF;
@@ -44,6 +54,7 @@ halmac_mac_power_switch_8822b_usb(
 		else
 			pHalmac_adapter->halmac_state.mac_power = HALMAC_MAC_POWER_ON;
 	}
+
 
 	/*Check if power switch is needed*/
 	if (halmac_power == HALMAC_MAC_POWER_ON && pHalmac_adapter->halmac_state.mac_power == HALMAC_MAC_POWER_ON) {
@@ -61,6 +72,8 @@ halmac_mac_power_switch_8822b_usb(
 			pHalmac_adapter->halmac_state.ps_state = HALMAC_PS_STATE_UNDEFINE;
 			pHalmac_adapter->halmac_state.dlfw_state = HALMAC_DLFW_NONE;
 			halmac_init_adapter_dynamic_para_88xx(pHalmac_adapter);
+
+			HALMAC_REG_WRITE_16(pHalmac_adapter, REG_MCUFW_CTRL, HALMAC_REG_READ_16(pHalmac_adapter, REG_MCUFW_CTRL) & ~BIT(15));
 		} else {
 			if (HALMAC_RET_SUCCESS != halmac_pwr_seq_parser_88xx(pHalmac_adapter, HALMAC_PWR_CUT_ALL_MSK, HALMAC_PWR_FAB_TSMC_MSK,
 				    interface_mask, halmac_8822b_card_enable_flow)) {
