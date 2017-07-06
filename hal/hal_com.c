@@ -3966,7 +3966,7 @@ static u8 rtw_hal_set_disconnect_decision_cmd(_adapter *adapter, u8 enable)
 {
 	struct hal_ops *pHalFunc = &adapter->hal_func;
 	u8 u1H2CDisconDecisionParm[H2C_DISCON_DECISION_LEN] = {0};
-	u8 adopt = 1, check_period = 10, trypkt_num = 0;
+	u8 adopt = 1, check_period = 100, trypkt_num = 0;
 	u8 ret = _FAIL;
 
 	SET_H2CCMD_DISCONDECISION_PARM_ENABLE(u1H2CDisconDecisionParm, enable);
