@@ -408,9 +408,6 @@ static inline u32 rotr(u32 val, int bits)
 
 /* ===== start - public domain SHA256 implementation ===== */
 
-/* This is based on SHA256 implementation in LibTomCrypt that was released into
- * public domain by Tom St Denis. */
-
 /* the K array */
 static const unsigned long K[64] = {
 	0x428a2f98UL, 0x71374491UL, 0xb5c0fbcfUL, 0xe9b5dba5UL, 0x3956c25bUL,
