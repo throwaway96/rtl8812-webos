@@ -797,7 +797,7 @@ typedef struct hal_com_data {
 #endif
 
 #ifdef CONFIG_BACKGROUND_NOISE_MONITOR
-	s16 noise[ODM_MAX_CHANNEL_NUM];
+	s16 noise[MAX_CHANNEL_NUM];
 #endif
 
 	struct hal_spec_t hal_spec;

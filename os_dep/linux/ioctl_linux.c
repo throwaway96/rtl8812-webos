@@ -730,7 +730,7 @@ static inline char   *iwe_stream_rssi_process(_adapter *padapter,
 	/* Add quality statistics */
 	iwe->cmd = IWEVQUAL;
 	iwe->u.qual.updated = IW_QUAL_QUAL_UPDATED | IW_QUAL_LEVEL_UPDATED
-#if defined(CONFIG_SIGNAL_DISPLAY_DBM) && defined(CONFIG_BACKGROUND_NOISE_MONITOR)
+#if defined(CONFIG_BACKGROUND_NOISE_MONITOR)
 			      | IW_QUAL_NOISE_UPDATED
 #else
 			      | IW_QUAL_NOISE_INVALID
@@ -771,12 +771,8 @@ static inline char   *iwe_stream_rssi_process(_adapter *padapter,
 #ifdef CONFIG_PLATFORM_ROCKCHIPS
 	iwe->u.qual.noise = -100; /* noise level suggest by zhf@rockchips */
 #else
-#if defined(CONFIG_SIGNAL_DISPLAY_DBM) && defined(CONFIG_BACKGROUND_NOISE_MONITOR)
-	{
-		s16 tmp_noise = 0;
-		rtw_hal_get_odm_var(padapter, HAL_ODM_NOISE_MONITOR, &(pnetwork->network.Configuration.DSConfig), &(tmp_noise));
-		iwe->u.qual.noise = tmp_noise ;
-	}
+#ifdef CONFIG_BACKGROUND_NOISE_MONITOR
+	iwe->u.qual.noise = rtw_noise_query_by_chan(padapter, pnetwork->network.Configuration.DSConfig);
 #else
 	iwe->u.qual.noise = 0; /* noise level */
 #endif
@@ -7088,19 +7084,11 @@ static int rtw_dbg_port(struct net_device *dev,
 			break;
 #ifdef CONFIG_BACKGROUND_NOISE_MONITOR
 		case 0x1e: {
-			HAL_DATA_TYPE	*pHalData = GET_HAL_DATA(padapter);
-			struct PHY_DM_STRUCT *pDM_Odm = &pHalData->odmpriv;
-			u8 chan = rtw_get_oper_ch(padapter);
 			RTW_INFO("===========================================\n");
-			odm_inband_noise_monitor(pDM_Odm, _TRUE, 0x1e, 100);
-			RTW_INFO("channel(%d),noise_a = %d, noise_b = %d , noise_all:%d\n",
-				chan, pDM_Odm->noise_level.noise[ODM_RF_PATH_A],
-				pDM_Odm->noise_level.noise[ODM_RF_PATH_B],
-				 pDM_Odm->noise_level.noise_all);
+			rtw_noise_measure_curchan(padapter);
 			RTW_INFO("===========================================\n");
-
 		}
-			break;
+		break;
 #endif
 
 
@@ -12915,7 +12903,9 @@ static struct iw_statistics *rtw_get_wireless_stats(struct net_device *dev)
 #endif
 
 		tmp_qual = padapter->recvpriv.signal_qual;
-		rtw_get_noise(padapter);
+		#ifdef CONFIG_BACKGROUND_NOISE_MONITOR
+		padapter->recvpriv.noise = rtw_noise_measure_curchan(padapter);
+		#endif
 		tmp_noise = padapter->recvpriv.noise;
 		/* RTW_INFO("level:%d, qual:%d, noise:%d, rssi (%d)\n", tmp_level, tmp_qual, tmp_noise,padapter->recvpriv.rssi); */
 

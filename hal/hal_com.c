@@ -9136,27 +9136,6 @@ void SetHalODMVar(
 		odm_cmn_info_init(podmpriv, ODM_CMNINFO_DOMAIN_CODE_2G, pHalData->Regulation2_4G);
 		odm_cmn_info_init(podmpriv, ODM_CMNINFO_DOMAIN_CODE_5G, pHalData->Regulation5G);
 		break;
-#if defined(CONFIG_SIGNAL_DISPLAY_DBM) && defined(CONFIG_BACKGROUND_NOISE_MONITOR)
-	case HAL_ODM_NOISE_MONITOR: {
-		struct noise_info *pinfo = (struct noise_info *)pValue1;
-
-#ifdef DBG_NOISE_MONITOR
-		RTW_INFO("### Noise monitor chan(%d)-bPauseDIG:%d,IGIValue:0x%02x,max_time:%d (ms) ###\n",
-			pinfo->chan, pinfo->bPauseDIG, pinfo->IGIValue, pinfo->max_time);
-#endif
-
-		pHalData->noise[pinfo->chan] = odm_inband_noise_monitor(podmpriv, pinfo->is_pause_dig, pinfo->igi_value, pinfo->max_time);
-		RTW_INFO("chan_%d, noise = %d (dBm)\n", pinfo->chan, pHalData->noise[pinfo->chan]);
-#ifdef DBG_NOISE_MONITOR
-		RTW_INFO("noise_a = %d, noise_b = %d  noise_all:%d\n",
-			 podmpriv->noise_level.noise[ODM_RF_PATH_A],
-			 podmpriv->noise_level.noise[ODM_RF_PATH_B],
-			 podmpriv->noise_level.noise_all);
-#endif
-	}
-		break;
-#endif/*#ifdef CONFIG_BACKGROUND_NOISE_MONITOR*/
-
 	case HAL_ODM_INITIAL_GAIN: {
 		u8 rx_gain = *((u8 *)(pValue1));
 		/*printk("rx_gain:%x\n",rx_gain);*/
@@ -9278,17 +9257,6 @@ void GetHalODMVar(
 	struct PHY_DM_STRUCT *podmpriv = &pHalData->odmpriv;
 
 	switch (eVariable) {
-#if defined(CONFIG_SIGNAL_DISPLAY_DBM) && defined(CONFIG_BACKGROUND_NOISE_MONITOR)
-	case HAL_ODM_NOISE_MONITOR: {
-		u8 chan = *(u8 *)pValue1;
-		*(s16 *)pValue2 = pHalData->noise[chan];
-#ifdef DBG_NOISE_MONITOR
-		RTW_INFO("### Noise monitor chan(%d)-noise:%d (dBm) ###\n",
-			 chan, pHalData->noise[chan]);
-#endif
-	}
-		break;
-#endif/*#ifdef CONFIG_BACKGROUND_NOISE_MONITOR*/
 	case HAL_ODM_DBG_FLAG:
 		*((u8Byte *)pValue1) = podmpriv->debug_components;
 		break;
@@ -9787,109 +9755,170 @@ void rtw_dump_rx_dframe_info(_adapter *padapter, void *sel)
 }
 
 #ifdef LGE_PRIVATE
+u8 rtw_get_current_txpwr(_adapter *padapter, u8 macid)
+{
+	HAL_DATA_TYPE *pHalData = GET_HAL_DATA(padapter);
+	struct PHY_DM_STRUCT	 *pDM_Odm = &pHalData->odmpriv;
+	struct _rate_adaptive_table_ *pRA_Table = &pDM_Odm->dm_ra_table;
+
+	u8 cck[4] = {17,17,17,17};
+	u8 ofdm_24g[8] = {17,17,17,17,17,17,15,15};
+	u8 ht20_24g[16] = {17,17,17,17,17,17,15,15,17,17,17,17,17,17,15,15};
+	u8 ht40_24g[16] = {17,17,17,17,17,17,15,15,17,17,17,17,17,17,15,15};
+	u8 ofdm_5g[8] = {15,15,15,15,15,15,13,13};
+	u8 ht20_5g[16] = {13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13};
+	u8 ht40_5g[16] = {13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13};
+	u8 vht20_5g[20] = {13,13,13,13,13,13,13,13,12,0,13,13,13,13,13,13,13,13,12,0};
+	u8 vht40_5g[20] = {13,13,13,13,13,13,13,13,12,12,13,13,13,13,13,13,13,13,12,12};
+	u8 vht80_5g[20] = {13,13,13,13,13,13,13,13,12,12,13,13,13,13,13,13,13,13,12,12};
+	u8 index = 0;
+	u8 current_rate_id = 0;
+	u8 current_band = pHalData->current_band_type;
+	u8 current_bw = pHalData->current_channel_bw;
+	u8 current_txpwr = 0;
+	
+
+	current_rate_id = rtw_get_current_tx_rate(padapter, macid);
+
+	if (DESC_RATE1M <=current_rate_id && current_rate_id <= DESC_RATE11M) {
+
+		index = current_rate_id;
+		current_txpwr = cck[index];
+
+	} else if (DESC_RATE6M <=current_rate_id && current_rate_id <= DESC_RATE54M) {
+
+		index = current_rate_id - DESC_RATE6M;
+		if (current_band == BAND_ON_2_4G)
+			current_txpwr = ofdm_24g[index];
+		else if (current_band == BAND_ON_5G)
+			current_txpwr = ofdm_5g[index];
+
+	} else if (DESC_RATEMCS0 <=current_rate_id && current_rate_id <= DESC_RATEMCS15) {
+
+		index = current_rate_id - DESC_RATEMCS0;
+		if ( current_bw == CHANNEL_WIDTH_20 && current_band == BAND_ON_2_4G)
+			current_txpwr = ht20_24g[index];
+		else if (current_bw == CHANNEL_WIDTH_40 && current_band == BAND_ON_2_4G )
+			current_txpwr = ht40_24g[index];
+		else if (current_bw == CHANNEL_WIDTH_20 && current_band == BAND_ON_5G)
+			current_txpwr = ht20_5g[index];
+		else if (current_bw == CHANNEL_WIDTH_40 && current_band == BAND_ON_5G)
+			current_txpwr = ht40_5g[index];
+
+	} else if (DESC_RATEVHTSS1MCS0 <=current_rate_id && current_rate_id <= DESC_RATEVHTSS2MCS9) {
+
+		index = current_rate_id - DESC_RATEVHTSS1MCS0;
+		if (current_bw == CHANNEL_WIDTH_20)
+			current_txpwr = vht20_5g[index];
+		else if (current_bw == CHANNEL_WIDTH_40)
+			current_txpwr = vht40_5g[index];
+		else if (current_bw == CHANNEL_WIDTH_80)
+			current_txpwr = vht80_5g[index];
+
+	} else {
+
+	}
+
+	return current_txpwr;
+}
+
+struct hdata_phyrate {
+	u8 rate_index;
+	u8 mcs;
+	u8 mimo;
+	u8 nss;
+	u16 bw20_lgi_phyrate; /* bw 20, Absolute value */
+	u16 bw20_sgi_phyrate; /* bw 20, Absolute value */
+	u16 bw40_lgi_phyrate; /* bw 40, Absolute value */
+	u16 bw40_sgi_phyrate; /* bw 40, Absolute value */
+	u16 bw80_lgi_phyrate; /* bw 80, Absolute value */
+	u16 bw80_sgi_phyrate; /* bw 80, Absolute value */
+	u16 bw160_lgi_phyrate; /* bw 160, Absolute value */
+	u16 bw160_sgi_phyrate; /* bw 160, Absolute value */
+};
+
+struct hdata_phyrate phyrate_tbl[] = {
+	/* CCK */
+	{ DESC_RATE1M, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 },
+	{ DESC_RATE2M, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0 },
+	{ DESC_RATE5_5M, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0 },
+	{ DESC_RATE11M, 0, 0, 0, 11, 0, 0, 0, 0, 0, 0, 0 },
+
+	/* OFDM */
+	{ DESC_RATE6M, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0 },
+	{ DESC_RATE9M, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0 },
+	{ DESC_RATE12M, 0, 0, 0, 12, 0, 0, 0, 0, 0, 0, 0 },
+	{ DESC_RATE18M, 0, 0, 0, 18, 0, 0, 0, 0, 0, 0, 0 },
+	{ DESC_RATE24M, 0, 0, 0, 24, 0, 0, 0, 0, 0, 0, 0 },
+	{ DESC_RATE36M, 0, 0, 0, 36, 0, 0, 0, 0, 0, 0, 0 },
+	{ DESC_RATE48M, 0, 0, 0, 48, 0, 0, 0, 0, 0, 0, 0 },
+	{ DESC_RATE54M, 0, 0, 0, 54, 0, 0, 0, 0, 0, 0, 0 },
+
+	/* MCS Rate */
+	{ DESC_RATEMCS0, 0, 1, 1, 6, 7, 13, 15, 0, 0, 0, 0 },
+	{ DESC_RATEMCS1, 1, 1, 1, 13, 14, 27, 30, 0, 0, 0, 0 },
+	{ DESC_RATEMCS2, 2, 1, 1, 19, 21, 40, 45, 0, 0, 0, 0 },
+	{ DESC_RATEMCS3, 3, 1, 1, 26, 28, 54, 60, 0, 0, 0, 0 },
+	{ DESC_RATEMCS4, 4, 1, 1, 39, 43, 81, 90, 0, 0, 0, 0 },
+	{ DESC_RATEMCS5, 5, 1, 1, 52, 57, 108, 120, 0, 0, 0, 0 },
+	{ DESC_RATEMCS6, 6, 1, 1, 58, 65, 121, 135, 0, 0, 0, 0 },
+	{ DESC_RATEMCS7, 7, 1, 1, 65, 52, 135, 150, 0, 0, 0, 0 },
+	{ DESC_RATEMCS8, 8, 1, 2, 13, 14, 27, 30, 0, 0, 0, 0 },
+	{ DESC_RATEMCS9, 9, 1, 2, 26, 28, 54, 60, 0, 0, 0, 0 },
+	{ DESC_RATEMCS10, 10, 1, 2, 39, 43, 81, 90, 0, 0, 0, 0 },
+	{ DESC_RATEMCS11, 11, 1, 2, 52, 57, 108, 120, 0, 0, 0, 0 },
+	{ DESC_RATEMCS12, 12, 1, 2, 78, 86, 162, 180, 0, 0, 0, 0 },
+	{ DESC_RATEMCS13, 13, 1, 2, 104, 115, 216, 240, 0, 0, 0, 0 },
+	{ DESC_RATEMCS14, 14, 1, 2, 117, 130, 243, 270, 0, 0, 0, 0 },
+	{ DESC_RATEMCS15, 15, 1, 2, 130, 144, 270, 300, 0, 0, 0, 0 },
+
+	{ DESC_RATEMCS16, 16, 1, 3, 19, 21, 40, 45, 0, 0, 0, 0 },
+	{ DESC_RATEMCS17, 17, 1, 3, 39, 43, 81, 90, 0, 0, 0, 0 },
+	{ DESC_RATEMCS18, 18, 1, 3, 58, 65, 121, 135, 0, 0, 0, 0 },
+	{ DESC_RATEMCS19, 19, 1, 3, 78, 86, 162, 180, 0, 0, 0, 0 },
+	{ DESC_RATEMCS20, 20, 1, 3, 117, 130, 243, 270, 0, 0, 0, 0 },
+	{ DESC_RATEMCS21, 21, 1, 3, 156, 173, 324, 360, 0, 0, 0, 0 },
+	{ DESC_RATEMCS22, 22, 1, 3, 175, 195, 364, 405, 0, 0, 0, 0 },
+	{ DESC_RATEMCS23, 23, 1, 3, 195, 216, 405, 450, 0, 0, 0, 0 },
+
+	/* VHT Rate */
+	{ DESC_RATEVHTSS1MCS0, 0, 0, 1,	6, 7, 13, 15, 29, 32, 58, 65 },
+	{ DESC_RATEVHTSS1MCS1, 1, 0, 1,	13, 14, 27, 30, 58, 65, 117, 130 },
+	{ DESC_RATEVHTSS1MCS2, 2, 0, 1,	19, 21, 40, 45, 87, 97, 175, 195 },
+	{ DESC_RATEVHTSS1MCS3, 3, 0, 1,	26, 28, 54, 60, 117, 130, 234, 260 },
+	{ DESC_RATEVHTSS1MCS4, 4, 0, 1,	39, 43, 81, 90, 175, 195, 351, 390 },
+	{ DESC_RATEVHTSS1MCS5, 5, 0, 1,	52, 57, 108, 120, 234, 260, 468, 520 },
+	{ DESC_RATEVHTSS1MCS6, 6, 0, 1,	58, 65, 121, 135, 263, 292, 526, 585 },
+	{ DESC_RATEVHTSS1MCS7, 7, 0, 1,	65, 52, 135, 150, 292, 325, 585, 650 },
+	{ DESC_RATEVHTSS1MCS8, 8, 0, 1, 78, 86, 162, 180, 351, 390, 702, 780 },
+	{ DESC_RATEVHTSS1MCS9, 9, 0, 1, 0, 0, 180, 200, 390, 433, 780, 866 },
+	{ DESC_RATEVHTSS2MCS0, 0, 1, 2,	13, 14, 27, 30, 58, 65, 117, 130 },
+	{ DESC_RATEVHTSS2MCS1, 1, 1, 2,	26, 28, 54, 60, 117, 130, 234, 260 },
+	{ DESC_RATEVHTSS2MCS2, 2, 1, 2,	39, 43, 81, 90, 175, 195, 351, 390 },
+	{ DESC_RATEVHTSS2MCS3, 3, 1, 2,	52, 57, 108, 120, 234, 260, 268, 520 },
+	{ DESC_RATEVHTSS2MCS4, 4, 1, 2,	78, 86, 162, 180, 351, 390, 702, 780 },
+	{ DESC_RATEVHTSS2MCS5, 5, 1, 2,	104, 115, 216, 240, 468, 520, 936, 1040 },
+	{ DESC_RATEVHTSS2MCS6, 6, 1, 2,	117, 130, 243, 270, 526, 585, 1053, 1170 },
+	{ DESC_RATEVHTSS2MCS7, 7, 1, 2,	130, 144, 270, 300, 585, 650, 1170, 1300 },
+	{ DESC_RATEVHTSS2MCS8, 8, 1, 2, 156, 173, 324, 360, 702, 780, 1404, 1560 },
+	{ DESC_RATEVHTSS2MCS9, 9, 1, 2, 0, 0, 360, 400, 780, 866, 1560, 1733 },
+
+	{ DESC_RATEVHTSS3MCS0, 0, 1, 3,	19, 21, 40, 45, 87, 97, 175, 195 },
+	{ DESC_RATEVHTSS3MCS1, 1, 1, 3,	39, 43, 81, 90, 175, 195, 351, 390 },
+	{ DESC_RATEVHTSS3MCS2, 2, 1, 3, 58, 65, 121, 135, 263, 292, 526, 585 },
+	{ DESC_RATEVHTSS3MCS3, 3, 1, 3, 78, 86, 162, 180, 351, 390, 702, 780 },
+	{ DESC_RATEVHTSS3MCS4, 4, 1, 3,	117, 130, 243, 270, 526, 580, 1053, 1170 },
+	{ DESC_RATEVHTSS3MCS5, 5, 1, 3,	156, 173, 324, 360, 702, 780, 140, 1560 },
+	{ DESC_RATEVHTSS3MCS6, 6, 1, 3,	175, 195, 364, 405, 0, 0, 1579, 1755 },
+	{ DESC_RATEVHTSS3MCS7, 7, 1, 3,	195, 216, 405, 450, 877, 975, 1755, 1950 },
+	{ DESC_RATEVHTSS3MCS8, 8, 1, 3, 234, 260, 486, 540, 1053, 1170, 2106, 2340 },
+	{ DESC_RATEVHTSS3MCS9, 9, 1, 3, 260, 288, 540, 600, 1170, 1300, 0, 0 },
+};
+
 void rtw_dump_rx_dframe_info2(_adapter *padapter, void *sel)
 {
-
-	struct hdata_phyrate {
-		u8 rate_index;
-		u8 mcs;
-		u8 mimo;
-		u8 nss;
-		u16 bw20_lgi_phyrate; /* bw 20, Absolute value */
-		u16 bw20_sgi_phyrate; /* bw 20, Absolute value */
-		u16 bw40_lgi_phyrate; /* bw 40, Absolute value */
-		u16 bw40_sgi_phyrate; /* bw 40, Absolute value */
-		u16 bw80_lgi_phyrate; /* bw 80, Absolute value */
-		u16 bw80_sgi_phyrate; /* bw 80, Absolute value */
-		u16 bw160_lgi_phyrate; /* bw 160, Absolute value */
-		u16 bw160_sgi_phyrate; /* bw 160, Absolute value */
-	};
-
-	struct hdata_phyrate phyrate_tbl[] = {
-		/* CCK */
-		{ DESC_RATE1M, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 },
-		{ DESC_RATE2M, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0 },
-		{ DESC_RATE5_5M, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0 },
-		{ DESC_RATE11M, 0, 0, 0, 11, 0, 0, 0, 0, 0, 0, 0 },
-
-		/* OFDM */
-		{ DESC_RATE6M, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0 },
-		{ DESC_RATE9M, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0 },
-		{ DESC_RATE12M, 0, 0, 0, 12, 0, 0, 0, 0, 0, 0, 0 },
-		{ DESC_RATE18M, 0, 0, 0, 18, 0, 0, 0, 0, 0, 0, 0 },
-		{ DESC_RATE24M, 0, 0, 0, 24, 0, 0, 0, 0, 0, 0, 0 },
-		{ DESC_RATE36M, 0, 0, 0, 36, 0, 0, 0, 0, 0, 0, 0 },
-		{ DESC_RATE48M, 0, 0, 0, 48, 0, 0, 0, 0, 0, 0, 0 },
-		{ DESC_RATE54M, 0, 0, 0, 54, 0, 0, 0, 0, 0, 0, 0 },
-
-		/* MCS Rate */
-		{ DESC_RATEMCS0, 0, 1, 1, 6, 7, 13, 15, 0, 0, 0, 0 },
-		{ DESC_RATEMCS1, 1, 1, 1, 13, 14, 27, 30, 0, 0, 0, 0 },
-		{ DESC_RATEMCS2, 2, 1, 1, 19, 21, 40, 45, 0, 0, 0, 0 },
-		{ DESC_RATEMCS3, 3, 1, 1, 26, 28, 54, 60, 0, 0, 0, 0 },
-		{ DESC_RATEMCS4, 4, 1, 1, 39, 43, 81, 90, 0, 0, 0, 0 },
-		{ DESC_RATEMCS5, 5, 1, 1, 52, 57, 108, 120, 0, 0, 0, 0 },
-		{ DESC_RATEMCS6, 6, 1, 1, 58, 65, 121, 135, 0, 0, 0, 0 },
-		{ DESC_RATEMCS7, 7, 1, 1, 65, 52, 135, 150, 0, 0, 0, 0 },
-		{ DESC_RATEMCS8, 8, 1, 2, 13, 14, 27, 30, 0, 0, 0, 0 },
-		{ DESC_RATEMCS9, 9, 1, 2, 26, 28, 54, 60, 0, 0, 0, 0 },
-		{ DESC_RATEMCS10, 10, 1, 2, 39, 43, 81, 90, 0, 0, 0, 0 },
-		{ DESC_RATEMCS11, 11, 1, 2, 52, 57, 108, 120, 0, 0, 0, 0 },
-		{ DESC_RATEMCS12, 12, 1, 2, 78, 86, 162, 180, 0, 0, 0, 0 },
-		{ DESC_RATEMCS13, 13, 1, 2, 104, 115, 216, 240, 0, 0, 0, 0 },
-		{ DESC_RATEMCS14, 14, 1, 2, 117, 130, 243, 270, 0, 0, 0, 0 },
-		{ DESC_RATEMCS15, 15, 1, 2, 130, 144, 270, 300, 0, 0, 0, 0 },
-
-		/*
-		{ DESC_RATEMCS16, 16, 1, 3, 19, 21, 40, 45, 0, 0, 0, 0 },
-		{ DESC_RATEMCS17, 17, 1, 3, 39, 43, 81, 90, 0, 0, 0, 0 },
-		{ DESC_RATEMCS18, 18, 1, 3, 58, 65, 121, 135, 0, 0, 0, 0 },
-		{ DESC_RATEMCS19, 19, 1, 3, 78, 86, 162, 180, 0, 0, 0, 0 },
-		{ DESC_RATEMCS20, 20, 1, 3, 117, 130, 243, 270, 0, 0, 0, 0 },
-		{ DESC_RATEMCS21, 21, 1, 3, 156, 173, 324, 360, 0, 0, 0, 0 },
-		{ DESC_RATEMCS22, 22, 1, 3, 175, 195, 364, 405, 0, 0, 0, 0 },
-		{ DESC_RATEMCS23, 23, 1, 3, 195, 216, 405, 450, 0, 0, 0, 0 }, 
-		*/
-
-		/* VHT Rate */
-		{ DESC_RATEVHTSS1MCS0, 0, 0, 1,	6, 7, 13, 15, 29, 32, 58, 65 },
-		{ DESC_RATEVHTSS1MCS1, 1, 0, 1,	13, 14, 27, 30, 58, 65, 117, 130 },
-		{ DESC_RATEVHTSS1MCS2, 2, 0, 1,	19, 21, 40, 45, 87, 97, 175, 195 },
-		{ DESC_RATEVHTSS1MCS3, 3, 0, 1,	26, 28, 54, 60, 117, 130, 234, 260 },
-		{ DESC_RATEVHTSS1MCS4, 4, 0, 1,	39, 43, 81, 90, 175, 195, 351, 390 },
-		{ DESC_RATEVHTSS1MCS5, 5, 0, 1,	52, 57, 108, 120, 234, 260, 468, 520 },
-		{ DESC_RATEVHTSS1MCS6, 6, 0, 1,	58, 65, 121, 135, 263, 292, 526, 585 },
-		{ DESC_RATEVHTSS1MCS7, 7, 0, 1,	65, 52, 135, 150, 292, 325, 585, 650 },
-		{ DESC_RATEVHTSS1MCS8, 8, 0, 1, 78, 86, 162, 180, 351, 390, 702, 780 },
-		{ DESC_RATEVHTSS1MCS9, 9, 0, 1, 0, 0, 180, 200, 390, 433, 780, 866 },
-		{ DESC_RATEVHTSS2MCS0, 0, 1, 2,	13, 14, 27, 30, 58, 65, 117, 130 },
-		{ DESC_RATEVHTSS2MCS1, 1, 1, 2,	26, 28, 54, 60, 117, 130, 234, 260 },
-		{ DESC_RATEVHTSS2MCS2, 2, 1, 2,	39, 43, 81, 90, 175, 195, 351, 390 },
-		{ DESC_RATEVHTSS2MCS3, 3, 1, 2,	52, 57, 108, 120, 234, 260, 268, 520 },
-		{ DESC_RATEVHTSS2MCS4, 4, 1, 2,	78, 86, 162, 180, 351, 390, 702, 780 },
-		{ DESC_RATEVHTSS2MCS5, 5, 1, 2,	104, 115, 216, 240, 468, 520, 936, 1040 },
-		{ DESC_RATEVHTSS2MCS6, 6, 1, 2,	117, 130, 243, 270, 526, 585, 1053, 1170 },
-		{ DESC_RATEVHTSS2MCS7, 7, 1, 2,	130, 144, 270, 300, 585, 650, 1170, 1300 },
-		{ DESC_RATEVHTSS2MCS8, 8, 1, 2, 156, 173, 324, 360, 702, 780, 1404, 1560 },
-		{ DESC_RATEVHTSS2MCS9, 9, 1, 2, 0, 0, 360, 400, 780, 866, 1560, 1733 },
-
-		/*
-		{ DESC_RATEVHTSS3MCS0, 0, 1, 3,	19, 21, 40, 45, 87, 97, 175, 195 },
-		{ DESC_RATEVHTSS3MCS1, 1, 1, 3,	39, 43, 81, 90, 175, 195, 351, 390 },
-		{ DESC_RATEVHTSS3MCS2, 2, 1, 3, 58, 65, 121, 135,263, 292, 526, 585 },
-		{ DESC_RATEVHTSS3MCS3, 3, 1, 3, 78, 86, 162, 180,351, 390, 702, 780 },
-		{ DESC_RATEVHTSS3MCS4, 4, 1, 3,	117, 130, 243, 270, 526, 580, 1053, 1170 },
-		{ DESC_RATEVHTSS3MCS5, 5, 1, 3,	156, 173, 324, 360, 702, 780, 140, 1560 },
-		{ DESC_RATEVHTSS3MCS6, 6, 1, 3,	175, 195, 364, 405, 0, 0, 1579, 1755 },
-		{ DESC_RATEVHTSS3MCS7, 7, 1, 3,	195, 216, 405, 450, 877, 975, 1755, 1950 },
-		{ DESC_RATEVHTSS3MCS8, 8, 1, 3, 234, 260, 486, 540, 1053, 1170, 2106, 2340 },
-		{ DESC_RATEVHTSS3MCS9, 9, 1, 3, 260, 288, 540, 600, 1170, 1300, 0, 0 }, 
-		*/
-
-	};
-
 	_irqL irqL;
-	u8 isCCKrate, rf_path;
+	u8 isCCKrate, rf_path, current_txpwr = 0;
 	struct recv_priv *precvpriv = &(padapter->recvpriv);
 	PHAL_DATA_TYPE	pHalData =  GET_HAL_DATA(padapter);
 	struct sta_priv *pstapriv = &padapter->stapriv;
@@ -9917,8 +9946,8 @@ void rtw_dump_rx_dframe_info2(_adapter *padapter, void *sel)
 				if (psta) {
 					psta_dframe_info = &psta->sta_dframe_info;
 					if ((_rtw_memcmp(psta->hwaddr, bc_addr, 6) !=   _TRUE)
-					    && (_rtw_memcmp(psta->hwaddr, null_addr, 6) !=  _TRUE)
-					    && (_rtw_memcmp(psta->hwaddr, adapter_mac_addr(padapter), 6) !=  _TRUE)) {
+						&& (_rtw_memcmp(psta->hwaddr, null_addr, 6) !=  _TRUE)
+						&& (_rtw_memcmp(psta->hwaddr, adapter_mac_addr(padapter), 6) !=  _TRUE)) {
 
 						isCCKrate = (psta_dframe_info->sta_data_rate <= DESC_RATE11M) ? TRUE : FALSE;
 
@@ -9954,24 +9983,25 @@ void rtw_dump_rx_dframe_info2(_adapter *padapter, void *sel)
 							break;
 						}
 
+						/* txpower, qdBm = 4 * dbm */
+						current_txpwr = 4 * rtw_get_current_txpwr(padapter, psta->mac_id);
+
 						snprintf(sel, 256,
-							 "\t\tMCS\t: %u\n"
-							 "\t\tMIMO\t: %s\n"
-							 "\t\tRate\t: %d mbps\n"
-							 "\t\tRSSI\t: %d dBm\n"
-							 "\t\tNoise\t: %d dBm\n"
-							 "\t\tTxpwr\t: %s\n"
-							 "\t\tNss\t: %u\n"
-							 "\t\tBW\t: %s\n",
-							 phyrate_tbl[psta_dframe_info->sta_data_rate].mcs,
-							 (phyrate_tbl[psta_dframe_info->sta_data_rate].mimo == 0) ? "None" : "SDM",
-							 phy_rate,
-							 padapter->recvpriv.rssi,
-							 padapter->recvpriv.noise,
-							 "48 qdBm", /* txpower, qdBm = 4 * dbm */
-							 phyrate_tbl[psta_dframe_info->sta_data_rate].nss,
-							 BW
-							);
+								 "\t\tMCS\t: %u\n"
+								 "\t\tMIMO\t: %s\n"
+								 "\t\tRate\t: %d mbps\n"
+								 "\t\tRSSI\t: %d dBm\n"
+								 "\t\tTxpwr\t: %u qdBm\n"
+								 "\t\tNss\t: %u\n"
+								 "\t\tBW\t: %s\n",
+								 phyrate_tbl[psta_dframe_info->sta_data_rate].mcs,
+								 (phyrate_tbl[psta_dframe_info->sta_data_rate].mimo == 0) ? "None" : "SDM",
+								 phy_rate,
+								 padapter->recvpriv.rssi,
+								 current_txpwr,
+								 phyrate_tbl[psta_dframe_info->sta_data_rate].nss,
+								 BW
+								);
 					}
 				}
 			}
@@ -11158,30 +11188,79 @@ void rtw_dump_rx_counters(_adapter *padapter)
 	}
 }
 #endif
-void rtw_get_noise(_adapter *padapter)
+
+#ifdef CONFIG_BACKGROUND_NOISE_MONITOR
+void rtw_noise_measure(_adapter *adapter, u8 chan, u8 is_pause_dig, u8 igi_value, u32 max_time)
 {
-#if defined(CONFIG_SIGNAL_DISPLAY_DBM) && defined(CONFIG_BACKGROUND_NOISE_MONITOR)
-	struct mlme_ext_priv	*pmlmeext = &padapter->mlmeextpriv;
-	struct noise_info info;
-	if (rtw_linked_check(padapter)) {
-		info.bPauseDIG = _TRUE;
-		info.IGIValue = 0x1e;
-		info.max_time = 100;/* ms */
-		info.chan = pmlmeext->cur_channel ;/* rtw_get_oper_ch(padapter); */
-		rtw_ps_deny(padapter, PS_DENY_IOCTL);
-		LeaveAllPowerSaveModeDirect(padapter);
+	HAL_DATA_TYPE *hal_data = GET_HAL_DATA(adapter);
+	struct PHY_DM_STRUCT *phydm = &hal_data->odmpriv;
+	int chan_idx = -1;
+	s16 noise = 0;
 
-		rtw_hal_set_odm_var(padapter, HAL_ODM_NOISE_MONITOR, &info, _FALSE);
-		/* odm_inband_noise_monitor(podmpriv,_TRUE,0x20,100); */
-		rtw_ps_deny_cancel(padapter, PS_DENY_IOCTL);
-		rtw_hal_get_odm_var(padapter, HAL_ODM_NOISE_MONITOR, &(info.chan), &(padapter->recvpriv.noise));
-#ifdef DBG_NOISE_MONITOR
-		RTW_INFO("chan:%d,noise_level:%d\n", info.chan, padapter->recvpriv.noise);
-#endif
+	#ifdef DBG_NOISE_MONITOR
+	RTW_INFO("[NM] chan(%d)-PauseDIG:%s,  IGIValue:0x%02x, max_time:%d (ms)\n",
+		chan, (is_pause_dig) ? "Y" : "N", igi_value, max_time);
+	#endif
+
+	chan_idx = rtw_chset_search_ch(adapter->mlmeextpriv.channel_set, chan);
+	if (chan_idx == -1) {
+		RTW_ERR("[NM] Get noise fail, can't get chan_idx(CH:%d)\n", chan);
+		chan_idx = 0;
 	}
-#endif
+	noise = odm_inband_noise_monitor(phydm, is_pause_dig, igi_value, max_time); /*dBm*/
 
+	hal_data->noise[chan_idx] = noise;
+
+	#ifdef DBG_NOISE_MONITOR
+	RTW_INFO("[NM] %s chan_%d, noise = %d (dBm)\n", __func__, chan, hal_data->noise[chan_idx]);
+
+	RTW_INFO("[NM] noise_a = %d, noise_b = %d  noise_all:%d\n",
+			 phydm->noise_level.noise[RF_PATH_A],
+			 phydm->noise_level.noise[RF_PATH_B],
+			 phydm->noise_level.noise_all);
+	#endif /*DBG_NOISE_MONITOR*/
 }
+
+s16 rtw_noise_query_by_chan(_adapter *adapter, u8 chan)
+{
+	HAL_DATA_TYPE *hal_data = GET_HAL_DATA(adapter);
+	s16 noise = 0;
+	int chan_idx = -1;
+
+	chan_idx = rtw_chset_search_ch(adapter->mlmeextpriv.channel_set, chan);
+	if (chan_idx == -1)	 {
+		RTW_ERR("[NM] Get noise fail, can't get chan_idx(CH:%d)\n", chan);
+		return noise;
+	}
+	noise = hal_data->noise[chan_idx];
+
+	#ifdef DBG_NOISE_MONITOR
+	RTW_INFO("[NM] %s chan_%d, noise = %d (dBm)\n", __func__, chan, hal_data->noise[chan_idx]);
+	#endif/*DBG_NOISE_MONITOR*/
+	return noise;
+}
+
+s16 rtw_noise_measure_curchan(_adapter *padapter)
+{
+	s16 noise = 0;
+	u8 igi_value = 0x1E;
+	u32 max_time = 100;/* ms */
+	u8 is_pause_dig = _TRUE;
+	u8 cur_chan = rtw_get_oper_ch(padapter);
+
+	if (rtw_linked_check(padapter) == _FALSE)
+		return noise;
+
+	rtw_ps_deny(padapter, PS_DENY_IOCTL);
+	LeaveAllPowerSaveModeDirect(padapter);
+	rtw_noise_measure(padapter, cur_chan, is_pause_dig, igi_value, max_time);
+	noise = rtw_noise_query_by_chan(padapter, cur_chan);
+	rtw_ps_deny_cancel(padapter, PS_DENY_IOCTL);
+
+	return noise;
+}
+#endif /*CONFIG_BACKGROUND_NOISE_MONITOR*/
+
 u8 rtw_get_current_tx_sgi(_adapter *padapter, u8 macid)
 {
 	HAL_DATA_TYPE	*pHalData = GET_HAL_DATA(padapter);

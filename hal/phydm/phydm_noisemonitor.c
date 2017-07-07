@@ -41,6 +41,18 @@
 
 #if (DM_ODM_SUPPORT_TYPE & (ODM_CE | ODM_WIN))
 
+void phydm_set_noise_data_sum(struct noise_level *noise_data, u8 max_rf_path)
+{
+	u8 rf_path;
+
+	for (rf_path = ODM_RF_PATH_A; rf_path < max_rf_path; rf_path++) {
+		if (noise_data->valid_cnt[rf_path])
+			noise_data->sum[rf_path] /= noise_data->valid_cnt[rf_path];
+		else
+			noise_data->sum[rf_path]  = 0;
+	}
+}
+
 s16 odm_inband_noise_monitor_n_series(struct PHY_DM_STRUCT	*p_dm_odm, u8 is_pause_dig, u8 igi_value, u32 max_time)
 {
 	u32				tmp4b;
@@ -139,14 +151,14 @@ s16 odm_inband_noise_monitor_n_series(struct PHY_DM_STRUCT	*p_dm_odm, u8 is_paus
 	reg_c50 = (u8)odm_get_bb_reg(p_dm_odm, REG_OFDM_0_XA_AGC_CORE1, MASKBYTE0);
 	reg_c50 &= ~BIT(7);
 	ODM_RT_TRACE(p_dm_odm, ODM_COMP_COMMON, ODM_DBG_LOUD, ("0x%x = 0x%02x(%d)\n", REG_OFDM_0_XA_AGC_CORE1, reg_c50, reg_c50));
-	p_dm_odm->noise_level.noise[ODM_RF_PATH_A] = (u8)(-110 + reg_c50 + noise_data.sum[ODM_RF_PATH_A]);
+	p_dm_odm->noise_level.noise[ODM_RF_PATH_A] = (s8)(-110 + reg_c50 + noise_data.sum[ODM_RF_PATH_A]);
 	p_dm_odm->noise_level.noise_all += p_dm_odm->noise_level.noise[ODM_RF_PATH_A];
 
 	if (max_rf_path == 2) {
 		reg_c58 = (u8)odm_get_bb_reg(p_dm_odm, REG_OFDM_0_XB_AGC_CORE1, MASKBYTE0);
 		reg_c58 &= ~BIT(7);
 		ODM_RT_TRACE(p_dm_odm, ODM_COMP_COMMON, ODM_DBG_LOUD, ("0x%x = 0x%02x(%d)\n", REG_OFDM_0_XB_AGC_CORE1, reg_c58, reg_c58));
-		p_dm_odm->noise_level.noise[ODM_RF_PATH_B] = (u8)(-110 + reg_c58 + noise_data.sum[ODM_RF_PATH_B]);
+		p_dm_odm->noise_level.noise[ODM_RF_PATH_B] = (s8)(-110 + reg_c58 + noise_data.sum[ODM_RF_PATH_B]);
 		p_dm_odm->noise_level.noise_all += p_dm_odm->noise_level.noise[ODM_RF_PATH_B];
 	}
 	p_dm_odm->noise_level.noise_all /= max_rf_path;
@@ -168,6 +180,111 @@ s16 odm_inband_noise_monitor_n_series(struct PHY_DM_STRUCT	*p_dm_odm, u8 is_paus
 }
 
 s16
+phydm_idle_noise_measurement_ac(
+	struct PHY_DM_STRUCT	*p_dm,
+	u8	is_pause_dig,
+	u8	igi_value,
+	u32	max_time
+	)
+{
+	u32				tmp4b;
+	u8				max_rf_path = 0, rf_path;
+	u8				reg_c50, reg_e50, valid_done = 0;
+	u64				start  = 0, func_start = 0, func_end = 0;
+	struct noise_level	noise_data;
+
+	func_start = odm_get_current_time(p_dm);
+	p_dm->noise_level.noise_all = 0;
+
+	if ((p_dm->rf_type == ODM_1T2R) || (p_dm->rf_type == ODM_2T2R))
+		max_rf_path = 2;
+	else
+		max_rf_path = 1;
+
+	ODM_RT_TRACE(p_dm, ODM_COMP_COMMON, ODM_DBG_LOUD, ("phydm_idle_noise_measurement_ac==>\n"));
+
+	odm_memory_set(p_dm, &noise_data, 0, sizeof(struct noise_level));
+
+	/*Step 1. Disable DIG && Set initial gain.*/
+
+	if (is_pause_dig)
+		odm_pause_dig(p_dm, PHYDM_PAUSE, PHYDM_PAUSE_LEVEL_1, igi_value);
+
+	/*Step 2. Get noise power level*/
+	start = odm_get_current_time(p_dm);
+
+	while (1) {
+
+		/*Stop updating idle time pwer report (for driver read)*/
+		odm_set_bb_reg(p_dm, 0x9e4, BIT(30), 0x1);
+
+		/*Read Noise Floor Report*/
+		tmp4b = odm_get_bb_reg(p_dm, 0xff0, MASKDWORD);
+
+		/*update idle time pwer report per 5us*/
+		odm_set_bb_reg(p_dm, 0x9e4, BIT(30), 0x0);
+
+		ODM_delay_us(5);
+
+		noise_data.value[ODM_RF_PATH_A] = (u8)(tmp4b & 0xff);
+		noise_data.value[ODM_RF_PATH_B] = (u8)((tmp4b & 0xff00) >> 8);
+
+		for (rf_path = ODM_RF_PATH_A; rf_path < max_rf_path; rf_path++) {
+			noise_data.sval[rf_path] = (s8)noise_data.value[rf_path];
+			noise_data.sval[rf_path] = noise_data.sval[rf_path] >> 1;
+		}
+
+		for (rf_path = ODM_RF_PATH_A; rf_path < max_rf_path; rf_path++) {
+			if ((noise_data.valid_cnt[rf_path] < VALID_CNT) && (noise_data.sval[rf_path] < VALID_MAX && noise_data.sval[rf_path] >= VALID_MIN)) {
+				noise_data.valid_cnt[rf_path]++;
+				noise_data.sum[rf_path] += noise_data.sval[rf_path];
+				ODM_RT_TRACE(p_dm, ODM_COMP_COMMON, ODM_DBG_LOUD, ("rf_path:%d Valid sval = %d\n", rf_path, noise_data.sval[rf_path]));
+				ODM_RT_TRACE(p_dm, ODM_COMP_COMMON, ODM_DBG_LOUD, ("Sum of sval = %d,\n", noise_data.sum[rf_path]));
+				if (noise_data.valid_cnt[rf_path] == VALID_CNT) {
+					valid_done++;
+					ODM_RT_TRACE(p_dm, ODM_COMP_COMMON, ODM_DBG_LOUD, ("After divided, rf_path:%d,sum = %d\n", rf_path, noise_data.sum[rf_path]));
+				}
+
+			}
+
+		}
+
+		if ((valid_done == max_rf_path) || (odm_get_progressing_time(p_dm, start) > max_time)) {
+			phydm_set_noise_data_sum(&noise_data, max_rf_path);
+			break;
+		}
+	}
+	reg_c50 = (u8)odm_get_bb_reg(p_dm, 0xc50, MASKBYTE0);
+	reg_c50 &= ~BIT(7);
+	p_dm->noise_level.noise[ODM_RF_PATH_A] = (s8)(-110 + reg_c50 + noise_data.sum[ODM_RF_PATH_A]);
+	p_dm->noise_level.noise_all += p_dm->noise_level.noise[ODM_RF_PATH_A];
+
+	if (max_rf_path == 2) {
+		reg_e50 = (u8)odm_get_bb_reg(p_dm, 0xe50, MASKBYTE0);
+		reg_e50 &= ~BIT(7);
+		p_dm->noise_level.noise[ODM_RF_PATH_B] = (s8)(-110 + reg_e50 + noise_data.sum[ODM_RF_PATH_B]);
+		p_dm->noise_level.noise_all += p_dm->noise_level.noise[ODM_RF_PATH_B];
+	}
+	p_dm->noise_level.noise_all /= max_rf_path;
+
+	ODM_RT_TRACE(p_dm, ODM_COMP_COMMON, ODM_DBG_LOUD,
+		("noise_a = %d, noise_b = %d, noise_all = %d\n",
+		p_dm->noise_level.noise[ODM_RF_PATH_A],
+		p_dm->noise_level.noise[ODM_RF_PATH_B],
+		p_dm->noise_level.noise_all));
+
+	/*Step 3. Recover the Dig*/
+	if (is_pause_dig)
+		odm_pause_dig(p_dm, PHYDM_RESUME, PHYDM_PAUSE_LEVEL_1, igi_value);
+	func_end = odm_get_progressing_time(p_dm, func_start);
+
+	ODM_RT_TRACE(p_dm, ODM_COMP_COMMON, ODM_DBG_LOUD, ("phydm_idle_noise_measurement_ac<==\n"));
+	return p_dm->noise_level.noise_all;
+
+}
+
+
+s16
 odm_inband_noise_monitor_ac_series(struct PHY_DM_STRUCT	*p_dm_odm, u8 is_pause_dig, u8 igi_value, u32 max_time
 				  )
 {
@@ -177,7 +294,9 @@ odm_inband_noise_monitor_ac_series(struct PHY_DM_STRUCT	*p_dm_odm, u8 is_pause_d
 	u8			i, valid_cnt;
 	u64	start = 0, func_start = 0, func_end = 0;
 
-
+	if (p_dm_odm->support_ic_type & (ODM_RTL8822B | ODM_RTL8821C))
+		return phydm_idle_noise_measurement_ac(p_dm_odm, is_pause_dig, igi_value, max_time);
+	
 	if (!(p_dm_odm->support_ic_type & (ODM_RTL8812 | ODM_RTL8821 | ODM_RTL8814A)))
 		return 0;
 

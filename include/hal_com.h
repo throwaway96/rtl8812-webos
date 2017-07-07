@@ -517,22 +517,19 @@ void SetHalODMVar(
 	PVOID					pValue1,
 	BOOLEAN					bSet);
 
-#ifdef CONFIG_BACKGROUND_NOISE_MONITOR
-struct noise_info {
-	u8		bPauseDIG;
-	u8		IGIValue;
-	u32 	max_time;/* ms	 */
-	u8		chan;
-};
-#endif
 
-void rtw_get_noise(_adapter *padapter);
+#ifdef CONFIG_BACKGROUND_NOISE_MONITOR
+s16 rtw_noise_query_by_chan(_adapter *adapter, u8 chan);
+s16 rtw_noise_measure_curchan(_adapter *padapter);
+#endif
 u8 rtw_get_current_tx_rate(_adapter *padapter, u8 macid);
 u8 rtw_get_current_tx_sgi(_adapter *padapter, u8 macid);
 void rtw_hal_construct_NullFunctionData(PADAPTER, u8 *pframe, u32 *pLength, u8 *StaAddr, u8 bQoS, u8 AC, u8 bEosp, u8 bForcePowerSave);
 void rtw_hal_construct_ARPRsp(PADAPTER padapter, u8 *pframe, u32 *pLength, u8 *pIPAddress);
 void rtw_hal_set_fw_rsvd_page(_adapter *adapter, bool finished);
-
+#ifdef LGE_PRIVATE
+u8 rtw_get_current_txpwr(_adapter *padapter, u8 macid);
+#endif
 #ifdef CONFIG_TDLS
 	#ifdef CONFIG_TDLS_CH_SW
 		s32 rtw_hal_ch_sw_oper_offload(_adapter *padapter, u8 channel, u8 channel_offset, u16 bwmode);

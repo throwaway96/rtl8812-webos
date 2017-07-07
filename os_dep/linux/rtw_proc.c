@@ -622,7 +622,7 @@ static int proc_get_tx_info_msg(struct seq_file *m, void *v)
 	struct sta_priv *pstapriv = &padapter->stapriv;
 	int i;
 	_list	*plist, *phead;
-	u8 current_rate_id = 0, current_sgi = 0;
+	u8 current_rate_id = 0, current_sgi = 0, current_txpwr = 0;
 
 	char *BW, *status;
 
@@ -673,10 +673,16 @@ static int proc_get_tx_info_msg(struct seq_file *m, void *v)
 				}
 				current_rate_id = rtw_get_current_tx_rate(adapter, psta->mac_id);
 				current_sgi = rtw_get_current_tx_sgi(adapter, psta->mac_id);
+				#ifdef LGE_PRIVATE
+				current_txpwr = rtw_get_current_txpwr(adapter, psta->mac_id);
+				#endif
 
 				RTW_PRINT_SEL(m, "==============================\n");
 				_RTW_PRINT_SEL(m, "macaddr=" MAC_FMT"\n", MAC_ARG(psta->hwaddr));
 				_RTW_PRINT_SEL(m, "Tx_Data_Rate=%s\n", HDATA_RATE(current_rate_id));
+				#ifdef LGE_PRIVATE
+				_RTW_PRINT_SEL(m, "current_txpwr=%d\n", current_txpwr);
+				#endif
 				_RTW_PRINT_SEL(m, "BW=%s,sgi=%u\n", BW, current_sgi);
 
 			}

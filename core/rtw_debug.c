@@ -1336,8 +1336,8 @@ int proc_get_survey_info(struct seq_file *m, void *v)
 			notify_signal = translate_percentage_to_dbm(pnetwork->network.PhyInfo.SignalStrength);/* dbm */
 		}
 
-#if defined(CONFIG_SIGNAL_DISPLAY_DBM) && defined(CONFIG_BACKGROUND_NOISE_MONITOR)
-		rtw_hal_get_odm_var(padapter, HAL_ODM_NOISE_MONITOR, &(pnetwork->network.Configuration.DSConfig), &(notify_noise));
+#ifdef CONFIG_BACKGROUND_NOISE_MONITOR
+		notify_noise = rtw_noise_query_by_chan(padapter, pnetwork->network.Configuration.DSConfig);
 #endif
 
 		ie_wpa = rtw_get_wpa_ie(&pnetwork->network.IEs[12], &ielen, pnetwork->network.IELength - 12);
@@ -2371,7 +2371,6 @@ int proc_get_rx_signal(struct seq_file *m, void *v)
 		return 0;
 	}
 
-	rtw_get_noise(padapter);
 	RTW_PRINT_SEL(m, "noise:%d\n", padapter->recvpriv.noise);
 #ifdef DBG_RX_SIGNAL_DISPLAY_RAW_DATA
 	rtw_odm_get_perpkt_rssi(m, padapter);
