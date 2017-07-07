@@ -1631,19 +1631,6 @@ unsigned int OnProbeReq(_adapter *padapter, union recv_frame *precv_frame)
 	u8 wifi_test_chk_rate = 1;
 
 #ifdef CONFIG_IOCTL_CFG80211
-#ifdef PURE_SUPPLICANT
-	if ((pwdinfo->driver_interface == DRIVER_CFG80211)
-	    //&& !rtw_p2p_chk_state(pwdinfo, P2P_STATE_NONE)
-	    && (GET_CFG80211_REPORT_MGMT(adapter_wdev_data(padapter), IEEE80211_STYPE_PROBE_REQ) == _TRUE)
-	) {
-		rtw_cfg80211_rx_probe_request(padapter, precv_frame);
-		return _SUCCESS;
-	} else if ((pwdinfo->driver_interface == DRIVER_CFG80211)
-		   && !rtw_p2p_chk_state(pwdinfo, P2P_STATE_NONE)) {
-		       /* Passthrought */
-		       return _SUCCESS;
-	}
-#else
 	if ((pwdinfo->driver_interface == DRIVER_CFG80211)
 	    && !rtw_p2p_chk_state(pwdinfo, P2P_STATE_NONE)
 	    && (GET_CFG80211_REPORT_MGMT(adapter_wdev_data(padapter), IEEE80211_STYPE_PROBE_REQ) == _TRUE)
@@ -1651,7 +1638,6 @@ unsigned int OnProbeReq(_adapter *padapter, union recv_frame *precv_frame)
 		rtw_cfg80211_rx_probe_request(padapter, precv_frame);
 		return _SUCCESS;
 	}
-#endif /* PURE_SUPPLICANT */
 #endif /* CONFIG_IOCTL_CFG80211 */
 
 	if (!rtw_p2p_chk_state(pwdinfo, P2P_STATE_NONE) &&
