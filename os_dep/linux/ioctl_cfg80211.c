@@ -7112,7 +7112,7 @@ int rtw_wdev_alloc(_adapter *padapter, struct wiphy *wiphy)
 	_rtw_mutex_init(&pwdev_priv->roch_mutex);
 
 #ifdef LGE_PRIVATE
-	strncpy(pwdev_priv->country, "LG", strlen("LG"));
+	strncpy(pwdev_priv->country, "DC", strlen("DC"));
 	pwdev_priv->ccode_version = 0;
 	pwdev_priv->mchan_sched_mode = 0;
 	pwdev_priv->wowl = _FALSE;

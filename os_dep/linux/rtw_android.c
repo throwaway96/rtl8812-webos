@@ -414,7 +414,7 @@ int rtw_android_set_country(struct net_device *net, char *command, int total_len
 	char *country_code = command + strlen(android_wifi_cmd_str[ANDROID_WIFI_CMD_COUNTRY]) + 1;
 	int ret = _FAIL;
 
-	ret = rtw_set_country(adapter, country_code);
+	ret = rtw_set_country(adapter, country_code, 0);
 
 	return (ret == _SUCCESS) ? 0 : -1;
 }
@@ -932,7 +932,7 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 			snprintf(buf1, 256,
 					 "\nGET_CS_INFO\n"
 					 "\t\tVerstion\t: %s\n"
-					 "\t\tCcode\t: %s\n"
+					 "\t\tCcode\t: R%s\n"
 					 "\t\tCcodeRev\t: %u\n"
 					 "\t\tChannel\t: %u\n"
 					 "\t\tNoise\t: %d dBm\n",

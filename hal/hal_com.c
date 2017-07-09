@@ -270,7 +270,7 @@ u8 hal_com_config_channel_plan(
 
 chk_hw_country_code:
 	if (hw_alpha2 && !IS_ALPHA2_NO_SPECIFIED(hw_alpha2)) {
-		ent = rtw_get_chplan_from_country(hw_alpha2);
+		ent = rtw_get_chplan_from_country(hw_alpha2, 0);
 		if (ent) {
 			/* get chplan from hw country code, by pass hw chplan setting */
 			country_ent = ent;
@@ -293,7 +293,7 @@ chk_sw_config:
 		goto done;
 
 	if (sw_alpha2 && !IS_ALPHA2_NO_SPECIFIED(sw_alpha2)) {
-		ent = rtw_get_chplan_from_country(sw_alpha2);
+		ent = rtw_get_chplan_from_country(sw_alpha2, 0);
 		if (ent) {
 			/* get chplan from sw country code, by pass sw chplan setting */
 			country_ent = ent;

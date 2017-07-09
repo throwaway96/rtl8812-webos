@@ -4707,9 +4707,16 @@ int rtw_lge_parse_country(_adapter *padapter, u8 *list_str)
 	}
 
 	if (country != NULL) {
-		if (rtw_set_country(padapter, country) == _FAIL) {
-			rtw_set_country(padapter, "LG");
-			strncpy(adapter_wdev_data(padapter)->country, "LGE", 3);
+
+		if (strlen(country) == 3) {
+			RTW_INFO("%s country [%s -> %s, %s]\n", __func__, country, (country + 1), ccode_ver);
+			country = (country + 1);
+		} else
+			RTW_INFO("%s country [%s, %s]\n", __func__, country, ccode_ver);
+
+		if (rtw_set_country(padapter, country, rtw_atoi(ccode_ver)) == _FAIL) {
+			rtw_set_country(padapter, "DC", 0); 
+			strncpy(adapter_wdev_data(padapter)->country, "DC", 3);
 			adapter_wdev_data(padapter)->ccode_version = 0;
 		} else {
 			strncpy(adapter_wdev_data(padapter)->country, country, 3);

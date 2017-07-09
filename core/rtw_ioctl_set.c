@@ -1221,10 +1221,10 @@ int rtw_set_channel_plan(_adapter *adapter, u8 channel_plan)
 *
 * Return _SUCCESS or _FAIL
 */
-int rtw_set_country(_adapter *adapter, const char *country_code)
+int rtw_set_country(_adapter *adapter, const char *country_code, const u8 version)
 {
 #ifdef CONFIG_RTW_IOCTL_SET_COUNTRY
-	return rtw_set_country_cmd(adapter, RTW_CMDF_WAIT_ACK, country_code, 1);
+	return rtw_set_country_cmd(adapter, RTW_CMDF_WAIT_ACK, country_code, version, 1);
 #else
 	return _FAIL;
 #endif

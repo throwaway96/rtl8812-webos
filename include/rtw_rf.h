@@ -220,7 +220,7 @@ struct country_chplan {
 #define COUNTRY_CHPLAN_DEF_MODULE_FALGS(_ent) 0
 #endif
 
-const struct country_chplan *rtw_get_chplan_from_country(const char *country_code);
+const struct country_chplan *rtw_get_chplan_from_country(const char *country_code, const u8 version);
 
 #define BB_GAIN_2G 0
 #ifdef CONFIG_IEEE80211_BAND_5GHZ

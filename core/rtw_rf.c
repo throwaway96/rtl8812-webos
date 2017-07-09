@@ -959,7 +959,7 @@ static const struct country_chplan country_chplan_map[] = {
 *
 * Return pointer of struct country_chplan entry or NULL when unsupported country_code is given
 */
-const struct country_chplan *rtw_get_chplan_from_country(const char *country_code)
+const struct country_chplan *rtw_get_chplan_from_country(const char *country_code, const u8 version)
 {
 	const struct country_chplan *ent = NULL;
 	const struct country_chplan *map = NULL;
@@ -987,6 +987,11 @@ const struct country_chplan *rtw_get_chplan_from_country(const char *country_cod
 	for (i = 0; i < map_sz; i++) {
 		if (strncmp(code, map[i].alpha2, 2) == 0) {
 			ent = &map[i];
+			if (version) {
+				if (strncmp(code, map[i + version].alpha2, 2) == 0)
+					ent = &map[i + version];
+				else ent = NULL;
+			}
 			break;
 		}
 	}

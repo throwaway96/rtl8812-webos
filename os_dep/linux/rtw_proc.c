@@ -885,7 +885,7 @@ static ssize_t proc_set_country_code(struct file *file, const char __user *buffe
 	if (num !=	2)
 		return count;
 
-	rtw_set_country(padapter, alpha2);
+	rtw_set_country(padapter, alpha2, 0);
 
 exit:
 	return count;

@@ -1073,7 +1073,7 @@ u8 rtw_enable_hw_update_tsf_cmd(_adapter *padapter);
 u8 rtw_set_ch_cmd(_adapter *padapter, u8 ch, u8 bw, u8 ch_offset, u8 enqueue);
 
 u8 rtw_set_chplan_cmd(_adapter *adapter, int flags, u8 chplan, u8 swconfig);
-u8 rtw_set_country_cmd(_adapter *adapter, int flags, const char *country_code, u8 swconfig);
+u8 rtw_set_country_cmd(_adapter *adapter, int flags, const char *country_code, u8 version, u8 swconfig);
 
 extern u8 rtw_led_blink_cmd(_adapter *padapter, PVOID pLed);
 extern u8 rtw_set_csa_cmd(_adapter *padapter, u8 new_ch_no);

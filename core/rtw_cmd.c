@@ -2248,7 +2248,7 @@ inline u8 rtw_set_chplan_cmd(_adapter *adapter, int flags, u8 chplan, u8 swconfi
 	return _rtw_set_chplan_cmd(adapter, flags, chplan, NULL, swconfig);
 }
 
-inline u8 rtw_set_country_cmd(_adapter *adapter, int flags, const char *country_code, u8 swconfig)
+inline u8 rtw_set_country_cmd(_adapter *adapter, int flags, const char *country_code, u8 version, u8 swconfig)
 {
 	const struct country_chplan *ent;
 
@@ -2259,7 +2259,7 @@ inline u8 rtw_set_country_cmd(_adapter *adapter, int flags, const char *country_
 		return _FAIL;
 	}
 
-	ent = rtw_get_chplan_from_country(country_code);
+	ent = rtw_get_chplan_from_country(country_code, version);
 
 	if (ent == NULL) {
 		RTW_PRINT("%s unsupported country_code:\"%c%c\"\n", __func__, country_code[0], country_code[1]);

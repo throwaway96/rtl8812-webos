@@ -155,6 +155,7 @@ static struct ch_list_t RTW_ChannelPlan2G[] = {
 	/* 6, RTW_RD_2G_GLOBAL */	CH_LIST_ENT(14, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14),
 	/* 7, RTW_RD_2G_MKK2 */		CH_LIST_ENT(13, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13),
 	/* 8, RTW_RD_2G_FCC2 */		CH_LIST_ENT(13, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13),
+	/* 9, RTW_RD_2G_ETSI3 */	CH_LIST_ENT(11, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
 };
 
 #ifdef CONFIG_IEEE80211_BAND_5GHZ
@@ -206,6 +207,13 @@ static struct ch_list_t RTW_ChannelPlan5G[] = {
 	/* 44, RTW_RD_5G_ETSI18 */	CH_LIST_ENT(9, 36, 40, 44, 48, 149, 153, 157, 161, 165),
 	/* 45, RTW_RD_5G_ETSI19 */	CH_LIST_ENT(24, 36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 149, 153, 157, 161, 165),
 
+	/* 46, RTW_RD_5G_ETSI20 */	CH_LIST_ENT(25, 36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144, 149, 153, 157, 161, 165),
+	/* 47, RTW_RD_5G_ETSI21 */	CH_LIST_ENT(24, 36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144, 149, 153, 157, 161),
+	/* 48, RTW_RD_5G_ETSI22 */	CH_LIST_ENT(12, 36, 40, 44, 48, 52, 56, 60, 64, 149, 153, 157, 161),
+	/* 49, RTW_RD_5G_ETSI23 */	CH_LIST_ENT(22, 36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 132, 136, 140, 144, 149, 153, 157, 161, 165),
+	/* 50, RTW_RD_5G_FCC17 */	CH_LIST_ENT(9, 52, 56, 60, 64, 149, 153, 157, 161, 165),
+	/* 51, RTW_RD_5G_FCC18 */	CH_LIST_ENT(17, 36, 40, 44, 48, 52, 56, 60, 64, 120, 124, 128, 144, 149, 153, 157, 161, 165),
+
 	/* === Below are driver defined for legacy channel plan compatible, NO static index assigned ==== */
 	/* RTW_RD_5G_OLD_FCC1 */	CH_LIST_ENT(20, 36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 136, 140, 149, 153, 157, 161, 165),
 	/* RTW_RD_5G_OLD_NCC1 */	CH_LIST_ENT(15, 56, 60, 64, 100, 104, 108, 112, 116, 136, 140, 149, 153, 157, 161, 165),
@@ -248,6 +256,7 @@ static RT_CHANNEL_PLAN_MAP	RTW_ChannelPlanMap[] = {
 	CHPLAN_ENT(RTW_RD_2G_NULL,		RTW_RD_5G_NULL,		TXPWR_LMT_WW),		/* 0x1E, */
 	CHPLAN_ENT(RTW_RD_2G_NULL,		RTW_RD_5G_FCC1,		TXPWR_LMT_WW),		/* 0x1F, RTW_CHPLAN_WORLD_WIDE_ONLY_5G */
 
+#ifndef LGE_PRIVATE
 	/* ===== 0x20 ~ 0x7F, new channel plan ===== */
 	CHPLAN_ENT(RTW_RD_2G_WORLD,		RTW_RD_5G_NULL,		TXPWR_LMT_WW),		/* 0x20, RTW_CHPLAN_WORLD_NULL */
 	CHPLAN_ENT(RTW_RD_2G_ETSI1,		RTW_RD_5G_NULL,		TXPWR_LMT_ETSI),	/* 0x21, RTW_CHPLAN_ETSI1_NULL */
@@ -333,8 +342,42 @@ static RT_CHANNEL_PLAN_MAP	RTW_ChannelPlanMap[] = {
 	CHPLAN_ENT(RTW_RD_2G_NULL,		RTW_RD_5G_ETSI17,	TXPWR_LMT_ETSI),	/* 0x71, RTW_CHPLAN_NULL_ETSI17 */
 	CHPLAN_ENT(RTW_RD_2G_NULL,		RTW_RD_5G_ETSI19,	TXPWR_LMT_ETSI),	/* 0x72, RTW_CHPLAN_NULL_ETSI19 */
 
-#ifdef LGE_PRIVATE
-	CHPLAN_ENT(RTW_RD_2G_FCC1,		RTW_RD_5G_ETSI18,	TXPWR_LMT_ETSI),	/* 0x73, LG Default, RTW_CHPLAN_LGE_NO_DFS */
+
+#else
+
+	CHPLAN_ENT(RTW_RD_2G_ETSI1,		RTW_RD_5G_NULL,		TXPWR_LMT_ETSI),	/* 0x20, RTW_CHPLAN_ETSI1_NULL */
+	CHPLAN_ENT(RTW_RD_2G_ETSI1,		RTW_RD_5G_ETSI4,	TXPWR_LMT_ETSI),	/* 0x21, RTW_CHPLAN_ETSI1_ETSI4 */
+	CHPLAN_ENT(RTW_RD_2G_ETSI1,		RTW_RD_5G_ETSI23,	TXPWR_LMT_ETSI),	/* 0x22, RTW_CHPLAN_ETSI1_ETSI23 */
+	CHPLAN_ENT(RTW_RD_2G_FCC2,		RTW_RD_5G_FCC17,	TXPWR_LMT_FCC),		/* 0x23, RTW_CHPLAN_FCC2_FCC17 */
+	CHPLAN_ENT(RTW_RD_2G_FCC2,		RTW_RD_5G_FCC11,	TXPWR_LMT_FCC),		/* 0x24, RTW_CHPLAN_FCC2_FCC11 */
+	CHPLAN_ENT(RTW_RD_2G_ETSI1,		RTW_RD_5G_ETSI7,	TXPWR_LMT_ETSI),	/* 0x25, RTW_CHPLAN_ETSI1_ETSI7 */
+	CHPLAN_ENT(RTW_RD_2G_FCC2,		RTW_RD_5G_FCC3,		TXPWR_LMT_FCC),		/* 0x26, RTW_CHPLAN_FCC2_FCC3 */
+
+	CHPLAN_ENT(RTW_RD_2G_ETSI1,		RTW_RD_5G_ETSI20,	TXPWR_LMT_ETSI),	/* 0x27, LG Default CE, RTW_CHPLAN_LGE_DC0 */
+	CHPLAN_ENT(RTW_RD_2G_FCC2,		RTW_RD_5G_FCC11,	TXPWR_LMT_FCC),		/* 0x28, LG Default FCC, RTW_CHPLAN_LGE_DC1 */
+	CHPLAN_ENT(RTW_RD_2G_FCC2,		RTW_RD_5G_FCC2,		TXPWR_LMT_FCC),		/* 0x29, RTW_CHPLAN_FCC2_FCC2 */
+	/* REG */
+	CHPLAN_ENT(RTW_RD_2G_ETSI1,		RTW_RD_5G_ETSI1,	TXPWR_LMT_ETSI),	/* 0x2a, RTW_CHPLAN_ETSI1_ETSI1 */
+	CHPLAN_ENT(RTW_RD_2G_ETSI1,		RTW_RD_5G_ETSI8,	TXPWR_LMT_ETSI),	/* 0x2b, RTW_CHPLAN_ETSI1_ETSI8 */
+	CHPLAN_ENT(RTW_RD_2G_ETSI1,		RTW_RD_5G_ETSI12,	TXPWR_LMT_ETSI),	/* 0x2c, RTW_CHPLAN_ETSI1_ETSI12 */
+	CHPLAN_ENT(RTW_RD_2G_ETSI3,		RTW_RD_5G_ETSI12,	TXPWR_LMT_ETSI),	/* 0x2d, RTW_CHPLAN_ETSI3_ETSI12 */
+	/* JP */
+	CHPLAN_ENT(RTW_RD_2G_MKK2,		RTW_RD_5G_MKK1,		TXPWR_LMT_MKK),		/* 0x2e, RTW_CHPLAN_MKK2_MKK1 */
+	CHPLAN_ENT(RTW_RD_2G_ETSI1,		RTW_RD_5G_ETSI2,	TXPWR_LMT_ETSI),	/* 0x2f, RTW_CHPLAN_ETSI1_ETSI2 */
+	CHPLAN_ENT(RTW_RD_2G_ETSI1,		RTW_RD_5G_ETSI20,	TXPWR_LMT_ETSI),	/* 0x30, RTW_CHPLAN_ETSI1_ETSI20 */
+	CHPLAN_ENT(RTW_RD_2G_ETSI1,		RTW_RD_5G_ETSI6,	TXPWR_LMT_ETSI),	/* 0x31, RTW_CHPLAN_ETSI1_ETSI6 */
+	CHPLAN_ENT(RTW_RD_2G_FCC2,		RTW_RD_5G_FCC18,	TXPWR_LMT_FCC),		/* 0x32, RTW_CHPLAN_FCC2_FCC18 */
+	/* RMY */
+	CHPLAN_ENT(RTW_RD_2G_ETSI1,		RTW_RD_5G_ETSI22,	TXPWR_LMT_ETSI),	/* 0x33, RTW_CHPLAN_ETSI1_ETSI22 */
+	CHPLAN_ENT(RTW_RD_2G_ETSI1,		RTW_RD_5G_ETSI10,	TXPWR_LMT_ETSI),	/* 0x34, RTW_CHPLAN_ETSI1_ETSI10 */
+	CHPLAN_ENT(RTW_RD_2G_ETSI1,		RTW_RD_5G_ETSI11,	TXPWR_LMT_ETSI),	/* 0x35, RTW_CHPLAN_ETSI1_ETSI11 */
+	/* RSA */
+	CHPLAN_ENT(RTW_RD_2G_ETSI1,		RTW_RD_5G_ETSI21,	TXPWR_LMT_ETSI),	/* 0x36, RTW_CHPLAN_ETSI1_ETSI21 */
+	CHPLAN_ENT(RTW_RD_2G_FCC1,		RTW_RD_5G_FCC18,	TXPWR_LMT_FCC),		/* 0x37, RTW_CHPLAN_FCC1_FCC18 */
+	CHPLAN_ENT(RTW_RD_2G_ETSI1,		RTW_RD_5G_ETSI3,	TXPWR_LMT_ETSI),	/* 0x38, RTW_CHPLAN_ETSI1_ETSI3 */
+	CHPLAN_ENT(RTW_RD_2G_FCC1,		RTW_RD_5G_FCC11,	TXPWR_LMT_FCC),		/* 0x39, RTW_CHPLAN_FCC1_FCC11 */
+	CHPLAN_ENT(RTW_RD_2G_GLOBAL,	RTW_RD_5G_NULL,		TXPWR_LMT_WW),		/* 0x40, RTW_CHPLAN_GLOBAL_NULL */
+
 #endif /* LGE_PRIVATE */
 };
 
@@ -819,7 +862,7 @@ void dump_country_chplan_map(void *sel)
 
 	for (code[0] = 'A'; code[0] <= 'Z'; code[0]++) {
 		for (code[1] = 'A'; code[1] <= 'Z'; code[1]++) {
-			ent = rtw_get_chplan_from_country(code);
+			ent = rtw_get_chplan_from_country(code, 0);
 			if (!ent)
 				continue;
 
@@ -1265,17 +1308,6 @@ static u8 init_channel_set(_adapter *padapter, u8 ChannelPlan, RT_CHANNEL_INFO *
 					channel_set[chanset_size].ScanType = SCAN_ACTIVE;
 				else
 					channel_set[chanset_size].ScanType = SCAN_PASSIVE;
-#if LGE_PRIVATE
-			} else if (RTW_CHPLAN_LGE_NO_DFS == ChannelPlan ) {
-				/* LGEDC(Default Country-Code)
-				   2.4GHz 1~11CH active (12~13CH disable)
-				   5GHz(except DFS) is operated by passive scan */
-
-				if (channel_set[chanset_size].ChannelNum <= 11)
-					channel_set[chanset_size].ScanType = SCAN_ACTIVE;
-				else
-					channel_set[chanset_size].ScanType = SCAN_PASSIVE;
-#endif /* LGE_PRIVATE */
 			} else
 				channel_set[chanset_size].ScanType = SCAN_ACTIVE;
 
@@ -1305,6 +1337,16 @@ static u8 init_channel_set(_adapter *padapter, u8 ChannelPlan, RT_CHANNEL_INFO *
 
 			channel_set[chanset_size].ChannelNum = CH_LIST_CH(RTW_ChannelPlan5G[Index5G], index);
 
+#ifdef LGE_PRIVATE
+			/* LGE DC(Default Country-Code)
+			   2.4GHz active scan
+			   5GHz passive scan */
+			if ((ChannelPlan == RTW_CHPLAN_LGE_DC0)
+			    || (ChannelPlan == RTW_CHPLAN_LGE_DC1)
+			    || (rtw_is_dfs_ch(channel_set[chanset_size].ChannelNum)) /* DFS channel(band2, 3) passive */
+			   ) channel_set[chanset_size].ScanType = SCAN_PASSIVE;
+			else channel_set[chanset_size].ScanType = SCAN_ACTIVE;
+#else
 			if ((ChannelPlan == RTW_CHPLAN_WORLD_WIDE_5G) /* all channels passive */
 				|| (rtw_is_5g_band1(channel_set[chanset_size].ChannelNum)
 					&& rtw_rd_5g_band1_passive(Index5G)) /* band1 passive */
@@ -1315,6 +1357,7 @@ static u8 init_channel_set(_adapter *padapter, u8 ChannelPlan, RT_CHANNEL_INFO *
 				channel_set[chanset_size].ScanType = SCAN_PASSIVE;
 			else
 				channel_set[chanset_size].ScanType = SCAN_ACTIVE;
+#endif /* LGE_PRIVATE */
 
 			chanset_size++;
 		}

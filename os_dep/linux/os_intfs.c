@@ -234,7 +234,7 @@ int rtw_low_power = 0;
 int rtw_special_rf_path = 0; /* 0: 2T2R ,1: only turn on path A 1T1R */
 
 #ifdef LGE_PRIVATE
-char rtw_country_unspecified[] = {0x4C, 0x47, 0x00};
+char rtw_country_unspecified[] = {0x44, 0x43, 0x00};
 #else
 char rtw_country_unspecified[] = {0xFF, 0xFF, 0x00};
 #endif /* LGE_PRIVATE */
@@ -243,7 +243,7 @@ module_param(rtw_country_code, charp, 0644);
 MODULE_PARM_DESC(rtw_country_code, "The default country code (in alpha2)");
 
 #ifdef LGE_PRIVATE
-int rtw_channel_plan = RTW_CHPLAN_LGE_NO_DFS;
+int rtw_channel_plan = RTW_CHPLAN_LGE_DC0;
 #else
 int rtw_channel_plan = RTW_CHPLAN_MAX;
 #endif /* LGE_PRIVATE */
