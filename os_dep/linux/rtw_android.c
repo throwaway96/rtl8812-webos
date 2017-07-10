@@ -987,11 +987,16 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 	case LGE_PRIVATE_CMD_IDLE_MODE:
 		{
 			u8 val = 0;
+			struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
 
 			RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s]\n"CLR_NONE, command);
 
 			sscanf(command, "WOWL_ACTIVATE %u", (unsigned int *)&val);
-			adapter_wdev_data(padapter)->idle_mode = 1;
+			adapter_wdev_data(padapter)->idle_mode = _TRUE;
+
+			if (check_fwstate(pmlmepriv, _FW_UNDER_SURVEY)) rtw_scan_abort(padapter);
+
+			rtw_suspend_common(padapter);
 
 			snprintf(command, 3, "OK");
 			bytes_written = strlen("OK");

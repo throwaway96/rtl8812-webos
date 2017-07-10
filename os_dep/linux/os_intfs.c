@@ -4115,6 +4115,11 @@ int rtw_suspend_common(_adapter *padapter)
 		else if (pwrpriv->wowlan_pno_enable == _TRUE)
 			pwrpriv->wowlan_mode |= pwrpriv->wowlan_pno_enable;
 
+#ifdef LGE_PRIVATE
+		if (adapter_wdev_data(padapter)->idle_mode == _TRUE) 
+			pwrpriv->wowlan_mode = _FALSE;
+#endif /* LGE_PRIVATE */
+
 #ifdef CONFIG_P2P_WOWLAN
 		if (!rtw_p2p_chk_state(&padapter->wdinfo, P2P_STATE_NONE) || P2P_ROLE_DISABLE != padapter->wdinfo.role)
 			pwrpriv->wowlan_p2p_mode = _TRUE;
