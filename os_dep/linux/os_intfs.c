@@ -4587,6 +4587,16 @@ int rtw_resume_common(_adapter *padapter)
 		pwrpriv->wowlan_in_resume = _FALSE;
 #endif
 	}
+
+#ifdef CONFIG_RTW_ONE_PIN_GPIO
+#ifdef LGE_PRIVATE
+	adapter_wdev_data(padapter)->wowl = _FALSE;
+	adapter_wdev_data(padapter)->wowl_activate = _FALSE;
+	adapter_wdev_data(padapter)->idle_mode = _FALSE;
+	adapter_wdev_data(padapter)->block_scan = _FALSE;
+#endif /* LGE_PRIVATE */
+#endif /* CONFIG_RTW_ONE_PIN_GPIO */
+
 	RTW_PRINT("%s:%d in %d ms\n", __FUNCTION__ , ret,
 		  rtw_get_passing_time_ms(start_time));
 

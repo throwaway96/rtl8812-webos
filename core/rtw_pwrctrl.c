@@ -2058,7 +2058,9 @@ void rtw_init_pwrctrl_priv(PADAPTER padapter)
 	pwrctrlpriv->is_high_active = HIGH_ACTIVE;
 	val8 = (pwrctrlpriv->is_high_active == 0) ? 1 : 0;
 	rtw_hal_switch_gpio_wl_ctrl(padapter, WAKEUP_GPIO_IDX, _TRUE);
+#ifndef CONFIG_RTW_ONE_PIN_GPIO
 	rtw_hal_set_output_gpio(padapter, WAKEUP_GPIO_IDX, val8);
+#endif /* CONFIG_RTW_ONE_PIN_GPIO */
 	RTW_INFO("%s: set GPIO_%d %d as default.\n",
 		 __func__, WAKEUP_GPIO_IDX, val8);
 #endif /* CONFIG_GPIO_WAKEUP */

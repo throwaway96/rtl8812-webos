@@ -492,6 +492,12 @@ s32 rtw_hal_customer_str_write(_adapter *adapter, const u8 *cs);
 	SET_BITS_TO_LE_1BYTE((__pH2CCmd)+4, 3, 1, __Value)
 #define SET_H2CCMD_WOWLAN_DIS_UPHY_TAKE_PDN(__pH2CCmd, __Value) \
 	SET_BITS_TO_LE_1BYTE((__pH2CCmd)+4, 4, 1, __Value)
+#ifdef CONFIG_RTW_ONE_PIN_GPIO
+#define SET_H2CCMD_WOWLAN_DIS_UPHY_GPIO_INPUT(__pH2CCmd, __Value) \
+	SET_BITS_TO_LE_1BYTE((__pH2CCmd)+4, 5, 1, __Value)
+#define SET_H2CCMD_WOWLAN_DIS_UPHY_DEV2HST_EN(__pH2CCmd, __Value) \
+	SET_BITS_TO_LE_1BYTE((__pH2CCmd)+4, 7, 1, __Value)
+#endif /* CONFIG_RTW_ONE_PIN_GPIO */
 #define SET_H2CCMD_WOWLAN_DIS_UPHY_TIME(__pH2CCmd, __Value) \
 	SET_BITS_TO_LE_1BYTE((__pH2CCmd)+5, 0, 8, __Value)
 

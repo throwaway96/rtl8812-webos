@@ -3249,6 +3249,17 @@ void rtw_hal_switch_gpio_wl_ctrl(_adapter *padapter, u8 index, u8 enable)
 
 	if (index == 13 || index == 14)
 		rtw_hal_set_hwreg(padapter, HW_SET_GPIO_WL_CTRL, (u8 *)(&enable));
+#ifdef CONFIG_RTW_ONE_PIN_GPIO
+	/* config GPIO mode */
+	rtw_write8(padapter, REG_GPIO_PIN_CTRL + 3,
+		rtw_read8(padapter, REG_GPIO_PIN_CTRL + 3) & ~BIT(WAKEUP_GPIO_IDX));
+	
+	/* config GPIO Sel */
+	/* 0: input */
+	/* 1: output */
+	rtw_write8(padapter, REG_GPIO_PIN_CTRL + 2,
+		rtw_read8(padapter, REG_GPIO_PIN_CTRL + 2) & ~BIT(WAKEUP_GPIO_IDX));
+#endif /* CONFIG_RTW_ONE_PIN_GPIO */
 }
 
 void rtw_hal_set_output_gpio(_adapter *padapter, u8 index, u8 outputval)
@@ -4080,6 +4091,10 @@ static u8 rtw_hal_set_wowlan_ctrl_cmd(_adapter *adapter, u8 enable, u8 change_un
 	SET_H2CCMD_WOWLAN_HOST_2_DEV(u1H2CWoWlanCtrlParm, 0);
 	SET_H2CCMD_WOWLAN_DIS_UPHY_UNIT(u1H2CWoWlanCtrlParm, dis_uphy_unit);
 	SET_H2CCMD_WOWLAN_DIS_UPHY_TAKE_PDN(u1H2CWoWlanCtrlParm, dis_uphy_take_pdn);
+#ifdef CONFIG_RTW_ONE_PIN_GPIO
+	SET_H2CCMD_WOWLAN_DIS_UPHY_GPIO_INPUT(u1H2CWoWlanCtrlParm, 1);
+	SET_H2CCMD_WOWLAN_DIS_UPHY_DEV2HST_EN(u1H2CWoWlanCtrlParm, 1);
+#endif /* CONFIG_RTW_ONE_PIN_GPIO */
 	SET_H2CCMD_WOWLAN_DIS_UPHY_TIME(u1H2CWoWlanCtrlParm, dis_uphy_time);
 
 	ret = rtw_hal_fill_h2c_cmd(adapter,
@@ -8037,9 +8052,11 @@ static void rtw_hal_wow_disable(_adapter *adapter)
 #ifdef CONFIG_GPIO_WAKEUP
 	val8 = (pwrctl->is_high_active == 0) ? 1 : 0;
 	RTW_PRINT("Set Wake GPIO to default(%d).\n", val8);
+#ifndef CONFIG_RTW_ONE_PIN_GPIO
 	rtw_hal_set_output_gpio(adapter, WAKEUP_GPIO_IDX, val8);
 
 	rtw_hal_switch_gpio_wl_ctrl(adapter, WAKEUP_GPIO_IDX, _FALSE);
+#endif /* CONFIG_RTW_ONE_PIN_GPIO */
 #endif
 
 	if ((pwrctl->wowlan_wake_reason != FW_DECISION_DISCONNECT) &&

@@ -286,10 +286,14 @@ struct rtw_usb_drv usb_drv = {
 	.usbdrv.suspend =  rtw_suspend,
 	.usbdrv.resume = rtw_resume,
 #if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 22))
-#ifndef LGE_PRIVATE
+#ifdef LGE_PRIVATE
+#ifdef CONFIG_RTW_ONE_PIN_GPIO
 	.usbdrv.reset_resume   = rtw_resume,
-#endif
-#endif
+#endif /* CONFIG_RTW_ONE_PIN_GPIO */
+#else
+	.usbdrv.reset_resume   = rtw_resume,
+#endif /* LGE_PRIVATE */
+#endif 
 #ifdef CONFIG_AUTOSUSPEND
 	.usbdrv.supports_autosuspend = 1,
 #endif
