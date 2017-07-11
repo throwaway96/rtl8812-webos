@@ -832,6 +832,7 @@ typedef struct hal_com_data {
 
 	struct submit_ctx chsw_sctx;
 	struct self_dect self_detection;
+	u8 ch_switch_offload;
 } HAL_DATA_COMMON, *PHAL_DATA_COMMON;
 
 

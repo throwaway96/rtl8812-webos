@@ -1177,6 +1177,7 @@ void rtw_init_hal_com_default_value(PADAPTER Adapter)
 	pHalData->u1ForcedIgiLb = regsty->force_igi_lb;
 
 	pHalData->RegIQKFWOffload = regsty->iqk_fw_offload;
+	pHalData->ch_switch_offload = regsty->ch_switch_offload;
 }
 
 #ifdef CONFIG_FW_C2H_REG
@@ -11898,7 +11899,6 @@ void rtw_hal_switch_chnl_and_set_bw_offload(_adapter *adapter, u8 central_ch, u8
 	SET_H2CCMD_SINGLE_CH_SWITCH_V2_BW(h2c, bw);
 
 	rtw_sctx_init(chsw_sctx, 100);
-
 	rtw_hal_fill_h2c_cmd(adapter, H2C_SINGLE_CHANNELSWITCH_V2, H2C_SINGLE_CHANNELSWITCH_V2_LEN, h2c);
 	rtw_sctx_wait(chsw_sctx, __func__);
 }

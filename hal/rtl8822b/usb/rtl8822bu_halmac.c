@@ -150,27 +150,43 @@ static u8 usb_write_data_not_xmitframe(void *d, u8 *pBuf, u32 size, u8 qsel)
 	desclen = HALMAC_TX_DESC_SIZE_8822B;
 	len = desclen + size;
 
-	if (len % pHalData->UsbBulkOutSize == 0)
-		add_pkt_offset = 1;
+	if (qsel == HALMAC_TXDESC_QSEL_BEACON) {
 
-	if (add_pkt_offset == 1)
-		len = len + PACKET_OFFSET_SZ;
+		if (len % pHalData->UsbBulkOutSize == 0)
+			add_pkt_offset = 1;
 
-	buf = rtw_zmalloc(len);
-	if (!buf)
+		if (add_pkt_offset == 1)
+			len = len + PACKET_OFFSET_SZ;
+
+		buf = rtw_zmalloc(len);
+		if (!buf)
+			return _FALSE;
+
+		if (add_pkt_offset == 1)
+			_rtw_memcpy(buf + desclen + PACKET_OFFSET_SZ , pBuf, size);
+		else
+			_rtw_memcpy(buf + desclen, pBuf, size);
+
+		SET_TX_DESC_TXPKTSIZE_8822B(buf, size);
+		if (add_pkt_offset == 1) {
+			SET_TX_DESC_OFFSET_8822B(buf, desclen + PACKET_OFFSET_SZ);
+			SET_TX_DESC_PKT_OFFSET_8822B(buf, 1);
+		} else
+			SET_TX_DESC_OFFSET_8822B(buf, desclen);
+
+	} else if (qsel == HALMAC_TXDESC_QSEL_H2C_CMD){
+
+		buf = rtw_zmalloc(len);
+		if (!buf)
+			return _FALSE;
+
+		SET_TX_DESC_TXPKTSIZE_8822B(buf, size);
+	} else {
+
+		RTW_ERR("%s: qsel may be error(%d)\n", __func__, qsel);
+
 		return _FALSE;
-
-	if (add_pkt_offset == 1)
-		_rtw_memcpy(buf + desclen + PACKET_OFFSET_SZ , pBuf, size);
-	else
-		_rtw_memcpy(buf + desclen, pBuf, size);
-
-	SET_TX_DESC_TXPKTSIZE_8822B(buf, size);
-	if (add_pkt_offset == 1) {
-		SET_TX_DESC_OFFSET_8822B(buf, desclen + PACKET_OFFSET_SZ);
-		SET_TX_DESC_PKT_OFFSET_8822B(buf, 1);
-	} else
-		SET_TX_DESC_OFFSET_8822B(buf, desclen);
+	}
 
 	SET_TX_DESC_QSEL_8822B(buf, qsel);
 	rtl8822b_cal_txdesc_chksum(padapter, buf);

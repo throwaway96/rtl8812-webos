@@ -2677,7 +2677,7 @@ const struct rtw_proc_hdl adapter_proc_hdls[] = {
 #endif
 
 	RTW_PROC_HDL_SSEQ("ack_timeout", proc_get_ack_timeout, proc_set_ack_timeout),
-	RTW_PROC_HDL_SSEQ("iqk_fw_offload", proc_get_iqk_fw_offload, proc_set_iqk_fw_offload),
+	RTW_PROC_HDL_SSEQ("fw_offload", proc_get_fw_offload, proc_set_fw_offload),
 
 };
 

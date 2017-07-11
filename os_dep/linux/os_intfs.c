@@ -723,6 +723,12 @@ int rtw_iqk_fw_offload = 1;
 int rtw_iqk_fw_offload;
 #endif /* RTW_IQK_FW_OFFLOAD */
 module_param(rtw_iqk_fw_offload, int, 0644);
+#ifdef RTW_CHANNEL_SWITCH_OFFLOAD
+int rtw_ch_switch_offload = 1;
+#else
+int rtw_ch_switch_offload;
+#endif /* RTW_IQK_FW_OFFLOAD */
+module_param(rtw_ch_switch_offload, int, 0644);
 
 void rtw_regsty_load_target_tx_power(struct registry_priv *regsty)
 {
@@ -1071,6 +1077,7 @@ uint loadparam(_adapter *padapter)
 #endif
 
 	registry_par->iqk_fw_offload = (u8)rtw_iqk_fw_offload;
+	registry_par->ch_switch_offload = (u8)rtw_ch_switch_offload;
 
 	return status;
 }

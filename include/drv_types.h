@@ -427,6 +427,7 @@ struct registry_priv {
 #endif
 
 	u8 iqk_fw_offload;
+	u8 ch_switch_offload;
 };
 
 /* For registry parameters */

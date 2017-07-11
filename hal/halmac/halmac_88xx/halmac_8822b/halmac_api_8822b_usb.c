@@ -83,6 +83,9 @@ halmac_mac_power_switch_8822b_usb(
 
 			HALMAC_REG_WRITE_8(pHalmac_adapter, REG_SYS_STATUS1 + 1, HALMAC_REG_READ_8(pHalmac_adapter, REG_SYS_STATUS1 + 1) & ~(BIT(0)));
 
+			if ((HALMAC_REG_READ_8(pHalmac_adapter, REG_SW_MDIO + 3) & BIT(0)) == BIT(0))
+				PLATFORM_MSG_PRINT(pDriver_adapter, HALMAC_MSG_PWR, HALMAC_DBG_WARN, "[WARN]This version shall R register twice!!\n");
+
 			pHalmac_adapter->halmac_state.mac_power = HALMAC_MAC_POWER_ON;
 			pHalmac_adapter->halmac_state.ps_state = HALMAC_PS_STATE_ACT;
 		}

@@ -633,8 +633,8 @@ ssize_t proc_set_mcc_policy_table(struct file *file, const char __user *buffer, 
 int proc_get_ack_timeout(struct seq_file *m, void *v);
 ssize_t proc_set_ack_timeout(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data);
 
-int proc_get_iqk_fw_offload(struct seq_file *m, void *v);
-ssize_t proc_set_iqk_fw_offload(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data);
+int proc_get_fw_offload(struct seq_file *m, void *v);
+ssize_t proc_set_fw_offload(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data);
 
 
 #define _drv_always_		1

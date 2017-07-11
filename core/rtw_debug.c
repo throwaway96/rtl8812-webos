@@ -5523,14 +5523,14 @@ ssize_t proc_set_ack_timeout(struct file *file, const char __user *buffer, size_
 	return count;
 }
 
-ssize_t proc_set_iqk_fw_offload(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data)
+ssize_t proc_set_fw_offload(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data)
 {
 	struct net_device *dev = data;
 	_adapter *adapter = (_adapter *)rtw_netdev_priv(dev);
 	_adapter *pri_adapter = GET_PRIMARY_ADAPTER(adapter);
 	HAL_DATA_TYPE *hal = GET_HAL_DATA(adapter);
 	char tmp[32];
-	u32 enable = 0;
+	u32 iqk_offload_enable = 0, ch_switch_offload_enable = 0;
 
 	if (buffer == NULL) {
 		RTW_INFO("input buffer is NULL!\n");
@@ -5549,23 +5549,26 @@ ssize_t proc_set_iqk_fw_offload(struct file *file, const char __user *buffer, si
 	}
 
 	if (buffer && !copy_from_user(tmp, buffer, count)) {
-		int num = sscanf(tmp, "%d", &enable);
+		int num = sscanf(tmp, "%d %d", &iqk_offload_enable, &ch_switch_offload_enable);
 
-		if (num < 1) {
+		if (num < 2) {
 			RTW_INFO("input parameters < 1\n");
 			return -EINVAL;
 		}
 
-		if (hal->RegIQKFWOffload != enable) {
-			hal->RegIQKFWOffload = enable;
+		if (hal->RegIQKFWOffload != iqk_offload_enable) {
+			hal->RegIQKFWOffload = iqk_offload_enable;
 			rtw_hal_update_iqk_fw_offload_cap(pri_adapter);
 		}
+
+		if (hal->ch_switch_offload != ch_switch_offload_enable)
+			hal->ch_switch_offload = ch_switch_offload_enable;
 	}
 
 	return count;
 }
 
-int proc_get_iqk_fw_offload(struct seq_file *m, void *v)
+int proc_get_fw_offload(struct seq_file *m, void *v)
 {
 	struct net_device *dev = m->private;
 	_adapter *adapter = (_adapter *)rtw_netdev_priv(dev);
@@ -5573,6 +5576,7 @@ int proc_get_iqk_fw_offload(struct seq_file *m, void *v)
 
 
 	RTW_PRINT_SEL(m, "IQK FW offload:%s\n", hal->RegIQKFWOffload?"enable":"disable");
+	RTW_PRINT_SEL(m, "Channel switch FW offload:%s\n", hal->ch_switch_offload?"enable":"disable");
 	return 0;
 }
 

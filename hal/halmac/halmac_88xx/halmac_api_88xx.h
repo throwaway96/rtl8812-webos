@@ -601,7 +601,7 @@ halmac_cfg_csi_rate_88xx(
 HALMAC_RET_STATUS
 halmac_sdio_cmd53_4byte_88xx(
 	IN PHALMAC_ADAPTER pHalmac_adapter,
-	IN HALMAC_SDIO_CMD53_4BYTE_MODE cmd53_4byte_mode
+    IN HALMAC_SDIO_CMD53_4BYTE_MODE cmd53_4byte_mode
 );
 
 HALMAC_RET_STATUS

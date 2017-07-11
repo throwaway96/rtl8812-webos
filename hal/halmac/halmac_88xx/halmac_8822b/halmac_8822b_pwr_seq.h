@@ -3,7 +3,7 @@
 
 #include "../../halmac_pwr_seq_cmd.h"
 
-#define HALMAC_8822B_PWR_SEQ_VER  "V17"
+#define HALMAC_8822B_PWR_SEQ_VER  "V17_1"
 extern PHALMAC_WLAN_PWR_CFG halmac_8822b_card_disable_flow[];
 extern PHALMAC_WLAN_PWR_CFG halmac_8822b_card_enable_flow[];
 extern PHALMAC_WLAN_PWR_CFG halmac_8822b_suspend_flow[];

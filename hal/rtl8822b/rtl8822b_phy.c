@@ -850,12 +850,41 @@ void rtl8822b_write_rf_reg(PADAPTER adapter, u8 path, u32 addr, u32 mask, u32 va
 
 static void set_tx_power_level_by_path(PADAPTER adapter, u8 channel, u8 path)
 {
+
+	struct dvobj_priv *dvobj = adapter_to_dvobj(adapter);
+	_adapter *iface;
+	struct mlme_ext_priv *mlmeext;
+	u8 set_power = _TRUE;
+	int i;
+
+	for (i = 0; i < dvobj->iface_nums; i++) {
+		iface = dvobj->padapters[i];
+		mlmeext = &iface->mlmeextpriv;
+
+		/* check scan state */
+		if (mlmeext_scan_state(mlmeext) != SCAN_DISABLE
+			&& mlmeext_scan_state(mlmeext) != SCAN_COMPLETE
+				&& mlmeext_scan_state(mlmeext) != SCAN_BACKING_OP
+		) {
+			set_power = _FALSE;
+		}
+
+		else if (mlmeext_scan_state(mlmeext) == SCAN_BACKING_OP
+			&& !mlmeext_chk_scan_backop_flags(mlmeext, SS_BACKOP_TX_RESUME)
+		) {
+			set_power = _FALSE;
+		}
+	}
+
 	phy_set_tx_power_index_by_rate_section(adapter, path, channel, CCK);
 	phy_set_tx_power_index_by_rate_section(adapter, path, channel, OFDM);
-	phy_set_tx_power_index_by_rate_section(adapter, path, channel, HT_MCS0_MCS7);
-	phy_set_tx_power_index_by_rate_section(adapter, path, channel, HT_MCS8_MCS15);
-	phy_set_tx_power_index_by_rate_section(adapter, path, channel, VHT_1SSMCS0_1SSMCS9);
-	phy_set_tx_power_index_by_rate_section(adapter, path, channel, VHT_2SSMCS0_2SSMCS9);
+
+	if (set_power == _TRUE) {
+		phy_set_tx_power_index_by_rate_section(adapter, path, channel, HT_MCS0_MCS7);
+		phy_set_tx_power_index_by_rate_section(adapter, path, channel, HT_MCS8_MCS15);
+		phy_set_tx_power_index_by_rate_section(adapter, path, channel, VHT_1SSMCS0_1SSMCS9);
+		phy_set_tx_power_index_by_rate_section(adapter, path, channel, VHT_2SSMCS0_2SSMCS9);
+	}
 }
 
 void rtl8822b_set_tx_power_level(PADAPTER adapter, u8 channel)
@@ -911,8 +940,7 @@ void rtl8822b_set_tx_power_index(PADAPTER adapter, u32 powerindex, u8 rfpath, u8
 
 	if (shift == 3) {
 		rate = rate - 3;
-		/* RTW_INFO("ch:%d,bw:%s(index:0x%02x, rfpath:%d, rate:0x%02x) fail\n",
-				hal->current_channel, ch_width_str(hal->current_channel_bw), index, rfpath, rate); */
+
 		if (!config_phydm_write_txagc_8822b(phydm, index, rfpath, rate)) {
 			RTW_INFO("%s(index:%d, rfpath:%d, rate:0x%02x, disable api:%d) fail\n",
 				__FUNCTION__, index, rfpath, rate, phydm->is_disable_phy_api);
@@ -1075,32 +1103,12 @@ static void mac_switch_bandwidth(PADAPTER adapter, u8 pri_ch_idx)
 	}
 }
 
-/*
- * Description:
- *	Set channel & bandwidth & offset
- */
-void rtl8822b_switch_chnl_and_set_bw(PADAPTER adapter)
+void rtl8822b_switch_chnl_and_set_bw_by_drv(PADAPTER adapter)
 {
 	PHAL_DATA_TYPE hal = GET_HAL_DATA(adapter);
 	struct PHY_DM_STRUCT *p_dm_odm = &hal->odmpriv;
 	u8 center_ch = 0, ret = 0;
 
-	if (adapter->bNotifyChannelChange) {
-		RTW_INFO("[%s] bSwChnl=%d, ch=%d, bSetChnlBW=%d, bw=%d\n",
-			 __FUNCTION__,
-			 hal->bSwChnl,
-			 hal->current_channel,
-			 hal->bSetChnlBW,
-			 hal->current_channel_bw);
-	}
-
-	if (RTW_CANNOT_RUN(adapter)) {
-		hal->bSwChnlAndSetBWInProgress = _FALSE;
-		return;
-	}
-#ifdef RTW_CHANNEL_SWITCH_OFFLOAD
-	rtw_hal_switch_chnl_and_set_bw_offload(adapter, hal->current_channel, get_pri_ch_id(adapter), hal->current_channel_bw);
-#else
 	/* set channel & Bandwidth register */
 	/* 1. set switch band register if need to switch band */
 	if (need_switch_band(adapter, hal->current_channel) == _TRUE) {
@@ -1173,7 +1181,92 @@ void rtl8822b_switch_chnl_and_set_bw(PADAPTER adapter)
 			return;
 		}
 	}
+}
+
+#ifdef RTW_CHANNEL_SWITCH_OFFLOAD
+void rtl8822b_switch_chnl_and_set_bw_by_fw(PADAPTER adapter)
+{
+	PHAL_DATA_TYPE hal = GET_HAL_DATA(adapter);
+
+	rtw_hal_switch_chnl_and_set_bw_offload(adapter, hal->current_channel, get_pri_ch_id(adapter), hal->current_channel_bw);
+
+	if (need_switch_band(adapter, hal->current_channel) == _TRUE) {
+#ifdef CONFIG_BT_COEXIST
+		if (hal->EEPROMBluetoothCoexist) {
+			struct mlme_ext_priv *mlmeext;
+
+			/* switch band under site survey or not, must notify to BT COEX */
+			mlmeext = &adapter->mlmeextpriv;
+			if (mlmeext_scan_state(mlmeext) != SCAN_DISABLE)
+				rtw_btcoex_switchband_notify(_TRUE, hal->current_band_type);
+			else
+				rtw_btcoex_switchband_notify(_FALSE, hal->current_band_type);
+		} else
+			rtw_btcoex_wifionly_switchband_notify(adapter);
+#else /* !CONFIG_BT_COEXIST */
+		rtw_btcoex_wifionly_switchband_notify(adapter);
+#endif /* CONFIG_BT_COEXIST */
+
+	}
+}
 #endif
+/* RTW_CHANNEL_SWITCH_OFFLOAD */
+
+/*
+ * Description:
+ *	Set channel & bandwidth & offset
+ */
+void rtl8822b_switch_chnl_and_set_bw(PADAPTER adapter)
+{
+	PHAL_DATA_TYPE hal = GET_HAL_DATA(adapter);
+	struct PHY_DM_STRUCT *p_dm_odm = &hal->odmpriv;
+	u8 center_ch = 0, ret = 0;
+
+	if (adapter->bNotifyChannelChange) {
+		RTW_INFO("[%s] bSwChnl=%d, ch=%d, bSetChnlBW=%d, bw=%d\n",
+			 __FUNCTION__,
+			 hal->bSwChnl,
+			 hal->current_channel,
+			 hal->bSetChnlBW,
+			 hal->current_channel_bw);
+	}
+
+	if (RTW_CANNOT_RUN(adapter)) {
+		hal->bSwChnlAndSetBWInProgress = _FALSE;
+		return;
+	}
+
+#ifdef RTW_CHANNEL_SWITCH_OFFLOAD
+	if (hal->ch_switch_offload) {
+		struct dvobj_priv *dvobj = adapter_to_dvobj(adapter);
+		_adapter *iface;
+		struct mlme_ext_priv *mlmeext;
+		u8 drv_switch = _TRUE;
+		int i;
+
+		for (i = 0; i < dvobj->iface_nums; i++) {
+			iface = dvobj->padapters[i];
+			mlmeext = &iface->mlmeextpriv;
+
+			/* check scan state */
+			if (mlmeext_scan_state(mlmeext) != SCAN_DISABLE
+				&& mlmeext_scan_state(mlmeext) != SCAN_COMPLETE
+					&& mlmeext_scan_state(mlmeext) != SCAN_BACKING_OP)
+				drv_switch = _FALSE;
+		}
+
+		if (drv_switch == _TRUE)
+			rtl8822b_switch_chnl_and_set_bw_by_drv(adapter);
+		else
+			rtl8822b_switch_chnl_and_set_bw_by_fw(adapter);
+
+	} else {
+		rtl8822b_switch_chnl_and_set_bw_by_drv(adapter);
+	}
+#else
+	rtl8822b_switch_chnl_and_set_bw_by_drv(adapter);
+#endif /* RTW_CHANNEL_SWITCH_OFFLOAD */
+
 	/* TX Power Setting */
 	odm_clear_txpowertracking_state(p_dm_odm);
 	rtw_hal_set_tx_power_level(adapter, hal->current_channel);

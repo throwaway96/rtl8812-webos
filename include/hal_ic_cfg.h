@@ -191,8 +191,12 @@
 	#endif /* CONFIG_MCC_MODE */
 
 	#ifndef RTW_IQK_FW_OFFLOAD
-		/* #define RTW_IQK_FW_OFFLOAD */
+		#define RTW_IQK_FW_OFFLOAD
 	#endif /* RTW_IQK_FW_OFFLOAD */
+
+	#ifndef RTW_CHANNEL_SWITCH_OFFLOAD
+		#define RTW_CHANNEL_SWITCH_OFFLOAD
+	#endif /* RTW_CHANNEL_SWITCH_OFFLOAD */
 #endif /* CONFIG_RTL8822B */
 
 #ifdef CONFIG_RTL8821C

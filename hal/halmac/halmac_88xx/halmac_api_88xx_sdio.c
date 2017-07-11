@@ -741,6 +741,8 @@ halmac_tx_allowed_sdio_88xx(
 	u32 i, counter;
 	u32 tx_agg_num, packet_size = 0;
 	u32 tx_required_page_num, total_required_page_num = 0;
+	u8 macid_group[HALMAC_MACID_MAX_88XX + 1] = {0}, qsel;
+	u8 macid, macid_counter = 0;
 	HALMAC_RET_STATUS status = HALMAC_RET_SUCCESS;
 	VOID *pDriver_adapter = NULL;
 	HALMAC_DMA_MAPPING dma_mapping;
@@ -755,14 +757,15 @@ halmac_tx_allowed_sdio_88xx(
 
 	pDriver_adapter = pHalmac_adapter->pDriver_adapter;
 
-	PLATFORM_MSG_PRINT(pDriver_adapter, HALMAC_MSG_INIT, HALMAC_DBG_TRACE, "halmac_tx_allowed_sdio_88xx ==========>\n");
+	PLATFORM_MSG_PRINT(pDriver_adapter, HALMAC_MSG_COMMON, HALMAC_DBG_TRACE, "halmac_tx_allowed_sdio_88xx ==========>\n");
 
 	tx_agg_num = GET_TX_DESC_DMA_TXAGG_NUM(pHalmac_buf);
 	pCurr_packet = pHalmac_buf;
 
 	tx_agg_num = (tx_agg_num == 0) ? 1 : tx_agg_num;
 
-	switch ((HALMAC_QUEUE_SELECT)GET_TX_DESC_QSEL(pCurr_packet)) {
+	qsel = GET_TX_DESC_QSEL(pCurr_packet);
+	switch ((HALMAC_QUEUE_SELECT)qsel) {
 	case HALMAC_QUEUE_SELECT_VO:
 	case HALMAC_QUEUE_SELECT_VO_V2:
 		dma_mapping = pHalmac_adapter->halmac_ptcl_queue[HALMAC_PTCL_QUEUE_VO];
@@ -789,7 +792,7 @@ halmac_tx_allowed_sdio_88xx(
 	case HALMAC_QUEUE_SELECT_CMD:
 		return HALMAC_RET_SUCCESS;
 	default:
-		PLATFORM_MSG_PRINT(pDriver_adapter, HALMAC_MSG_INIT, HALMAC_DBG_ERR, "Qsel is out of range\n");
+		PLATFORM_MSG_PRINT(pDriver_adapter, HALMAC_MSG_COMMON, HALMAC_DBG_ERR, "Qsel is out of range\n");
 		return HALMAC_RET_QSEL_INCORRECT;
 	}
 
@@ -807,11 +810,23 @@ halmac_tx_allowed_sdio_88xx(
 		pCurr_free_space = &(pHalmac_adapter->sdio_free_space.extra_queue_number);
 		break;
 	default:
-		PLATFORM_MSG_PRINT(pDriver_adapter, HALMAC_MSG_INIT, HALMAC_DBG_ERR, "DmaMapping is out of range\n");
+		PLATFORM_MSG_PRINT(pDriver_adapter, HALMAC_MSG_COMMON, HALMAC_DBG_ERR, "DmaMapping is out of range\n");
 		return HALMAC_RET_DMA_MAP_INCORRECT;
 	}
 
 	for (i = 0; i < tx_agg_num; i++) {
+		/*MACID parser*/
+		macid = GET_TX_DESC_MACID(pCurr_packet);
+		if (macid_group[macid] == 0) {
+			macid_group[macid] = 1;
+			macid_counter++;
+		}
+		/*QSEL parser*/
+		if (qsel != GET_TX_DESC_QSEL(pCurr_packet)) {
+			PLATFORM_MSG_PRINT(pDriver_adapter, HALMAC_MSG_COMMON, HALMAC_DBG_ERR, "Multi-Qsel in a bus agg is not allowed, qsel = %d, %d\n", qsel, GET_TX_DESC_QSEL(pCurr_packet));
+			return HALMAC_RET_QSEL_INCORRECT;
+		}
+		/*Page number parser*/
 		packet_size = GET_TX_DESC_TXPKTSIZE(pCurr_packet) + GET_TX_DESC_OFFSET(pCurr_packet) + (GET_TX_DESC_PKT_OFFSET(pCurr_packet) << 3);
 		tx_required_page_num = (packet_size >> pHalmac_adapter->hw_config_info.page_size_2_power) + ((packet_size & (pHalmac_adapter->hw_config_info.page_size - 1)) ? 1 : 0);
 		total_required_page_num += tx_required_page_num;
@@ -824,17 +839,18 @@ halmac_tx_allowed_sdio_88xx(
 	counter = 10;
 	do {
 		if ((u32)(*pCurr_free_space + pHalmac_adapter->sdio_free_space.public_queue_number) > total_required_page_num) {
+
+			status = halmac_check_oqt_88xx(pHalmac_adapter, tx_agg_num, pHalmac_buf, macid_counter);
+
+			if (HALMAC_RET_SUCCESS != status)
+				return status;
+
 			if (*pCurr_free_space >= total_required_page_num) {
 				*pCurr_free_space -= (u16)total_required_page_num;
 			} else {
 				pHalmac_adapter->sdio_free_space.public_queue_number -= (u16)(total_required_page_num - *pCurr_free_space);
 				*pCurr_free_space = 0;
 			}
-
-			status = halmac_check_oqt_88xx(pHalmac_adapter, tx_agg_num, pHalmac_buf);
-
-			if (HALMAC_RET_SUCCESS != status)
-				return status;
 
 			break;
 		} else {
@@ -846,7 +862,7 @@ halmac_tx_allowed_sdio_88xx(
 			return HALMAC_RET_FREE_SPACE_NOT_ENOUGH;
 	} while (1);
 
-	PLATFORM_MSG_PRINT(pDriver_adapter, HALMAC_MSG_INIT, HALMAC_DBG_TRACE, "halmac_tx_allowed_sdio_88xx <==========\n");
+	PLATFORM_MSG_PRINT(pDriver_adapter, HALMAC_MSG_COMMON, HALMAC_DBG_TRACE, "halmac_tx_allowed_sdio_88xx <==========\n");
 
 	return HALMAC_RET_SUCCESS;
 }
@@ -894,4 +910,44 @@ halmac_reg_read_indirect_32_sdio_88xx(
 	return value32.dword;
 }
 
+/**
+ * halmac_sdio_hw_info_88xx() - info sdio hw info
+ * @pHalmac_adapter : the adapter of halmac
+ * @HALMAC_SDIO_CMD53_4BYTE_MODE :
+ * clock_speed : sdio bus clock. Unit -> MHz
+ * spec_ver : sdio spec version
+ * Author : Ivan Lin
+ * Return : HALMAC_RET_STATUS
+ * More details of status code can be found in prototype document
+ */
+HALMAC_RET_STATUS
+halmac_sdio_hw_info_88xx(
+	IN PHALMAC_ADAPTER pHalmac_adapter,
+	IN PHALMAC_SDIO_HW_INFO pSdio_hw_info
+)
+{
+	VOID *pDriver_adapter = NULL;
+	PHALMAC_API pHalmac_api;
 
+	pDriver_adapter = pHalmac_adapter->pDriver_adapter;
+	pHalmac_api = (PHALMAC_API)pHalmac_adapter->pHalmac_api;
+
+	PLATFORM_MSG_PRINT(pDriver_adapter, HALMAC_MSG_INIT, HALMAC_DBG_TRACE, "[TRACE]halmac_sdio_hw_info_88xx ==========>\n");
+
+	if (HALMAC_RET_SUCCESS != halmac_adapter_validate(pHalmac_adapter))
+		return HALMAC_RET_ADAPTER_INVALID;
+
+	if (HALMAC_RET_SUCCESS != halmac_api_validate(pHalmac_adapter))
+		return HALMAC_RET_API_INVALID;
+
+	if (HALMAC_INTERFACE_SDIO != pHalmac_adapter->halmac_interface)
+		return HALMAC_RET_WRONG_INTF;
+
+	PLATFORM_MSG_PRINT(pDriver_adapter, HALMAC_MSG_INIT, HALMAC_DBG_TRACE, "[TRACE]SDIO hw spec : %d\n", pSdio_hw_info->spec_ver);
+
+	pHalmac_adapter->sdio_hw_info.spec_ver = pSdio_hw_info->spec_ver;
+
+	PLATFORM_MSG_PRINT(pDriver_adapter, HALMAC_MSG_INIT, HALMAC_DBG_TRACE, "[TRACE]halmac_sdio_hw_info_88xx <==========\n");
+
+	return HALMAC_RET_SUCCESS;
+}

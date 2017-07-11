@@ -2192,6 +2192,8 @@ halmac_func_send_general_info_88xx(
 
 	PLATFORM_MSG_PRINT(pDriver_adapter, HALMAC_MSG_H2C, HALMAC_DBG_TRACE, "halmac_send_general_info!!\n");
 
+	GENERAL_INFO_SET_REF_TYPE(pH2c_buff, pGeneral_info->rfe_type);
+	GENERAL_INFO_SET_RF_TYPE(pH2c_buff, pGeneral_info->rf_type);
 	GENERAL_INFO_SET_FW_TX_BOUNDARY(pH2c_buff, pHalmac_adapter->txff_allocation.rsvd_fw_txbuff_pg_bndy - pHalmac_adapter->txff_allocation.rsvd_pg_bndy);
 
 	h2c_header_info.sub_cmd_id = SUB_CMD_ID_GENERAL_INFO;
@@ -2964,8 +2966,8 @@ halmac_update_sdio_free_page_88xx(
 	pSdio_free_space->low_queue_number = (u16)BIT_GET_LOW_FREEPG_V1(free_page2);
 	pSdio_free_space->public_queue_number = (u16)BIT_GET_PUB_FREEPG_V1(free_page2);
 	pSdio_free_space->extra_queue_number = (u16)BIT_GET_EXQ_FREEPG_V1(free_page3);
-	pSdio_free_space->ac_oqt_number = (u8)((free_page3 >> 16) & 0xFF);
-	pSdio_free_space->non_ac_oqt_number = (u8)((free_page3 >> 24) & 0xFF);
+	pSdio_free_space->ac_oqt_number = (u8)BIT_GET_AC_OQT_FREEPG_V1(free_page3);
+	pSdio_free_space->non_ac_oqt_number = (u8)BIT_GET_NOAC_OQT_FREEPG_V1(free_page3);
 
 	PLATFORM_MSG_PRINT(pDriver_adapter, HALMAC_MSG_INIT, HALMAC_DBG_TRACE, "halmac_update_sdio_free_page_88xx <==========\n");
 
@@ -2981,24 +2983,29 @@ halmac_update_oqt_free_space_88xx(
 	PHALMAC_API pHalmac_api;
 	PHALMAC_SDIO_FREE_SPACE pSdio_free_space;
 	u8 value;
+	u32 oqt_free_page;
 
 	pDriver_adapter = pHalmac_adapter->pDriver_adapter;
 	pHalmac_api = (PHALMAC_API)pHalmac_adapter->pHalmac_api;
 
-	PLATFORM_MSG_PRINT(pDriver_adapter, HALMAC_MSG_INIT, HALMAC_DBG_TRACE, "halmac_update_oqt_free_space_88xx ==========>\n");
+	PLATFORM_MSG_PRINT(pDriver_adapter, HALMAC_MSG_COMMON, HALMAC_DBG_TRACE, "halmac_update_oqt_free_space_88xx ==========>\n");
 
 	pSdio_free_space = &(pHalmac_adapter->sdio_free_space);
 
-	pSdio_free_space->ac_oqt_number = HALMAC_REG_READ_8(pHalmac_adapter, REG_SDIO_OQT_FREE_TXPG_V1 + 2);
-	/* pSdio_free_space->non_ac_oqt_number = (u8)BIT_GET_NOAC_OQT_FREEPG_V1(oqt_free_page); */
+	oqt_free_page = HALMAC_REG_READ_32(pHalmac_adapter, REG_SDIO_OQT_FREE_TXPG_V1);
+	pSdio_free_space->ac_oqt_number = (u8)BIT_GET_AC_OQT_FREEPG_V1(oqt_free_page);
+	pSdio_free_space->non_ac_oqt_number = (u8)BIT_GET_NOAC_OQT_FREEPG_V1(oqt_free_page);
 	pSdio_free_space->ac_empty = 0;
-	value = HALMAC_REG_READ_8(pHalmac_adapter, REG_TXPKT_EMPTY);
-	while (value > 0) {
-		value = value & (value - 1);
-		pSdio_free_space->ac_empty++;
+	if (HALMAC_OQT_ENTRY_AC_88XX == pSdio_free_space->ac_oqt_number) {
+		value = HALMAC_REG_READ_8(pHalmac_adapter, REG_TXPKT_EMPTY);
+		while (value > 0) {
+			value = value & (value - 1);
+			pSdio_free_space->ac_empty++;
+		};
+	} else {
+		PLATFORM_MSG_PRINT(pDriver_adapter, HALMAC_MSG_COMMON, HALMAC_DBG_TRACE, "pSdio_free_space->ac_oqt_number %d != %d\n", pSdio_free_space->ac_oqt_number, HALMAC_OQT_ENTRY_AC_88XX);
 	}
-
-	PLATFORM_MSG_PRINT(pDriver_adapter, HALMAC_MSG_INIT, HALMAC_DBG_TRACE, "halmac_update_oqt_free_space_88xx <==========\n");
+	PLATFORM_MSG_PRINT(pDriver_adapter, HALMAC_MSG_COMMON, HALMAC_DBG_TRACE, "halmac_update_oqt_free_space_88xx <==========\n");
 
 	return HALMAC_RET_SUCCESS;
 }
@@ -3094,7 +3101,7 @@ halmac_transition_scan_state_88xx(
 {
 	PHALMAC_SCAN_STATE_SET pScan = &(pHalmac_adapter->halmac_state.scan_state_set);
 
-	if (pScan->scan_cmd_construct_state > HALMAC_SCAN_CMD_CONSTRUCT_H2C_SENT)
+	if ((pScan->scan_cmd_construct_state > HALMAC_SCAN_CMD_CONSTRUCT_H2C_SENT))
 		return HALMAC_RET_ERROR_STATE;
 
 	if (HALMAC_SCAN_CMD_CONSTRUCT_IDLE == dest_state) {
@@ -3705,10 +3712,13 @@ HALMAC_RET_STATUS
 halmac_check_oqt_88xx(
 	IN PHALMAC_ADAPTER pHalmac_adapter,
 	IN u32 tx_agg_num,
-	IN u8 *pHalmac_buf
+	IN u8 *pHalmac_buf,
+	IN u8 macid_counter
 )
 {
 	u32 counter = 10;
+	VOID *pDriver_adapter = NULL;
+	pDriver_adapter = pHalmac_adapter->pDriver_adapter;
 
 	/*S0, S1 are not allowed to use, 0x4E4[0] should be 0. Soar 20160323*/
 	/*no need to check non_ac_oqt_number. HI and MGQ blocked will cause protocal issue before H_OQT being full*/
@@ -3721,15 +3731,36 @@ halmac_check_oqt_88xx(
 	case HALMAC_QUEUE_SELECT_BE_V2:
 	case HALMAC_QUEUE_SELECT_BK:
 	case HALMAC_QUEUE_SELECT_BK_V2:
+		if (HALMAC_OQT_ENTRY_AC_88XX < tx_agg_num)
+			PLATFORM_MSG_PRINT(pDriver_adapter, HALMAC_MSG_COMMON, HALMAC_DBG_WARN, "tx_agg_num %d > HALMAC_OQT_ENTRY_AC_88XX %d\n", tx_agg_num, HALMAC_OQT_ENTRY_AC_88XX);
 		counter = 10;
 		do {
-			if (pHalmac_adapter->sdio_free_space.ac_empty > 0) {
-				pHalmac_adapter->sdio_free_space.ac_empty -= 1;
+			if (pHalmac_adapter->sdio_free_space.ac_empty >= macid_counter) {
+				pHalmac_adapter->sdio_free_space.ac_empty -= macid_counter;
 				break;
 			}
 
 			if (pHalmac_adapter->sdio_free_space.ac_oqt_number >= tx_agg_num) {
+				pHalmac_adapter->sdio_free_space.ac_empty = 0;
 				pHalmac_adapter->sdio_free_space.ac_oqt_number -= (u8)tx_agg_num;
+				break;
+			}
+
+			halmac_update_oqt_free_space_88xx(pHalmac_adapter);
+
+			counter--;
+			if (0 == counter)
+				return HALMAC_RET_OQT_NOT_ENOUGH;
+		} while (1);
+		break;
+	case HALMAC_QUEUE_SELECT_MGNT:
+	case HALMAC_QUEUE_SELECT_HIGH:
+		if (HALMAC_OQT_ENTRY_NOAC_88XX < tx_agg_num)
+			PLATFORM_MSG_PRINT(pDriver_adapter, HALMAC_MSG_COMMON, HALMAC_DBG_WARN, "tx_agg_num %d > HALMAC_OQT_ENTRY_NOAC_88XX %d\n", tx_agg_num, HALMAC_OQT_ENTRY_NOAC_88XX);
+		counter = 10;
+		do {
+			if (pHalmac_adapter->sdio_free_space.non_ac_oqt_number >= tx_agg_num) {
+				pHalmac_adapter->sdio_free_space.non_ac_oqt_number -= (u8)tx_agg_num;
 				break;
 			}
 

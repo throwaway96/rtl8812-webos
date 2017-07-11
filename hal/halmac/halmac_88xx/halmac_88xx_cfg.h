@@ -25,7 +25,7 @@
 #define HALMAC_MAJOR_VER_88XX        0x0001 /* major version, ver_1 for async_api */
 #define HALMAC_PROTOTYPE_VER_88XX    0x0003 /* For halmac_api num change or prototype change, increment prototype version */
 #define HALMAC_MINOR_VER_88XX        0x0005 /* else increment minor version */
-#define HALMAC_PATCH_VER_88XX        0x0001 /* patch version */
+#define HALMAC_PATCH_VER_88XX        0x0004 /* patch version */
 
 #define HALMAC_C2H_DATA_OFFSET_88XX             10
 #define HALMAC_RX_AGG_ALIGNMENT_SIZE_88XX       8
@@ -144,5 +144,12 @@
 
 /* CCK rate ACK timeout */
 #define HALMAC_ACK_TO_CCK_88XX    0x40
+
+/* OQT entry */
+#define HALMAC_OQT_ENTRY_AC_88XX		32
+#define HALMAC_OQT_ENTRY_NOAC_88XX		32
+
+/* MACID number */
+#define HALMAC_MACID_MAX_88XX		127
 
 #endif

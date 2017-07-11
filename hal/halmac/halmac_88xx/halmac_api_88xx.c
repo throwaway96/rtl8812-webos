@@ -89,6 +89,7 @@ halmac_init_adapter_para_88xx(
 
 	pHalmac_adapter->txff_allocation.la_mode = HALMAC_LA_MODE_DISABLE;
     pHalmac_adapter->txff_allocation.rx_fifo_expanding_mode = HALMAC_RX_FIFO_EXPANDING_MODE_DISABLE;
+	pHalmac_adapter->sdio_hw_info.spec_ver = HALMAC_SDIO_SPEC_VER_2_00;
 
 	halmac_init_adapter_dynamic_para_88xx(pHalmac_adapter);
 	halmac_init_state_machine_88xx(pHalmac_adapter);
@@ -270,6 +271,7 @@ halmac_mount_api_88xx(
 	pHalmac_api->halmac_cfg_csi_rate = halmac_cfg_csi_rate_88xx;
 
 	pHalmac_api->halmac_sdio_cmd53_4byte = halmac_sdio_cmd53_4byte_88xx;
+	pHalmac_api->halmac_sdio_hw_info = halmac_sdio_hw_info_88xx;
 	pHalmac_api->halmac_txfifo_is_empty = halmac_txfifo_is_empty_88xx;
 
 	if (HALMAC_INTERFACE_SDIO == pHalmac_adapter->halmac_interface) {
@@ -998,6 +1000,11 @@ halmac_pre_init_system_cfg_88xx(
 			if (counter == 0)
 				return HALMAC_RET_SDIO_LEAVE_SUSPEND_FAIL;
 		}
+
+		if (pHalmac_adapter->sdio_hw_info.spec_ver == HALMAC_SDIO_SPEC_VER_3_00)
+			HALMAC_REG_WRITE_8(pHalmac_adapter, REG_HCI_OPT_CTRL + 2, HALMAC_REG_READ_8(pHalmac_adapter, REG_HCI_OPT_CTRL + 2) | BIT(2));
+		else
+			HALMAC_REG_WRITE_8(pHalmac_adapter, REG_HCI_OPT_CTRL + 2, HALMAC_REG_READ_8(pHalmac_adapter, REG_HCI_OPT_CTRL + 2) & ~(BIT(2)));
 	} else if (HALMAC_INTERFACE_USB == pHalmac_adapter->halmac_interface) {
 		if (HALMAC_REG_READ_8(pHalmac_adapter, REG_SYS_CFG2 + 3) == 0x20)	 /* usb3.0 */
 			HALMAC_REG_WRITE_8(pHalmac_adapter, 0xFE5B, HALMAC_REG_READ_8(pHalmac_adapter, 0xFE5B) | BIT(4));
@@ -4803,7 +4810,7 @@ halmac_psd_88xx(
  * halmac_cfg_la_mode_88xx() - config la mode
  * @pHalmac_adapter : the adapter of halmac
  * @la_mode :
- *	disable : no TXFF space reserved for LA debug
+ * 	disable : no TXFF space reserved for LA debug
  *	partial : partial TXFF space is reserved for LA debug
  *	full : all TXFF space is reserved for LA debug
  * Author : KaiYuan Chang
@@ -5626,6 +5633,6 @@ halmac_txfifo_is_empty_88xx(
 
 	PLATFORM_MSG_PRINT(pDriver_adapter, HALMAC_MSG_COMMON, HALMAC_DBG_TRACE, "halmac_txfifo_is_empty_88xx <==========\n");
 
-	return HALMAC_RET_SUCCESS;
+    return HALMAC_RET_SUCCESS;
 }
 

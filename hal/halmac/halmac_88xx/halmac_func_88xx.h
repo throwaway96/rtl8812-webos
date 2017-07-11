@@ -438,7 +438,8 @@ HALMAC_RET_STATUS
 halmac_check_oqt_88xx(
 	IN PHALMAC_ADAPTER pHalmac_adapter,
 	IN u32 tx_agg_num,
-	IN u8 *pHalmac_buf
+	IN u8 *pHalmac_buf,
+	IN u8 macid_counter
 );
 
 HALMAC_RET_STATUS

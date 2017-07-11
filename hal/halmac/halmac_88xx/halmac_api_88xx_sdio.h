@@ -102,4 +102,10 @@ halmac_reg_read_nbyte_sdio_88xx(
 	OUT u8 *halmac_data
 );
 
+HALMAC_RET_STATUS
+halmac_sdio_hw_info_88xx(
+	IN PHALMAC_ADAPTER pHalmac_adapter,
+	IN PHALMAC_SDIO_HW_INFO pSdio_hw_info
+);
+
 #endif/* _HALMAC_API_88XX_SDIO_H_ */
