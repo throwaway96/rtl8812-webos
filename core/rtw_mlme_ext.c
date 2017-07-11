@@ -9460,15 +9460,8 @@ int issue_nulldata(_adapter *padapter, unsigned char *da, unsigned int power_mod
 #ifdef CONFIG_MCC_MODE
 	if (MCC_EN(padapter)) {
 		/* driver doesn't access macid sleep reg under MCC */
-		if (rtw_hal_check_mcc_status(padapter, MCC_STATUS_DOING_MCC)) {
+		if (rtw_hal_check_mcc_status(padapter, MCC_STATUS_DOING_MCC))
 			macid_sleep_reg_access = _FALSE;
-
-			if (da == NULL) {
-				RTW_INFO("Warning: Do not tx null data to AP under MCC mode\n");
-				rtw_warn_on(1);
-			}
-
-		}
 	}
 #endif
 
@@ -12709,25 +12702,30 @@ void linked_status_chk(_adapter *padapter, u8 from_timer)
 
 #if defined(CONFIG_ACTIVE_KEEP_ALIVE_CHECK) && !defined(CONFIG_LPS_LCLK_WD_TIMER)
 			if (pmlmeext->active_keep_alive_check && (rx_chk == _FAIL || tx_chk == _FAIL)
-				#ifdef CONFIG_MCC_MODE
-				/* Driver don't know operation channel under MCC*/
-				/* So driver don't  do KEEP_ALIVE_CHECK */
-				&& (!rtw_hal_check_mcc_status(padapter, MCC_STATUS_NEED_MCC))
-				#endif
 			) {
-				u8 backup_ch = 0, backup_bw, backup_offset;
-				u8 union_ch = 0, union_bw, union_offset;
+				u8 backup_ch = 0, backup_bw = 0, backup_offset = 0;
+				u8 union_ch = 0, union_bw = 0, union_offset = 0;
+				u8 switch_channel_by_drv = _TRUE;
 
-				if (!rtw_mi_get_ch_setting_union(padapter, &union_ch, &union_bw, &union_offset)
-					|| pmlmeext->cur_channel != union_ch)
-						goto bypass_active_keep_alive;
+#ifdef CONFIG_MCC_MODE
+				if (MCC_EN(padapter)) {
+					/* driver doesn't switch channel under MCC */
+					if (rtw_hal_check_mcc_status(padapter, MCC_STATUS_DOING_MCC))
+						switch_channel_by_drv = _FALSE;
+				}
+#endif
+				if (switch_channel_by_drv) {
+					if (!rtw_mi_get_ch_setting_union(padapter, &union_ch, &union_bw, &union_offset)
+						|| pmlmeext->cur_channel != union_ch)
+							goto bypass_active_keep_alive;
 
-				/* switch to correct channel of current network  before issue keep-alive frames */
-				if (rtw_get_oper_ch(padapter) != pmlmeext->cur_channel) {
-					backup_ch = rtw_get_oper_ch(padapter);
-					backup_bw = rtw_get_oper_bw(padapter);
-					backup_offset = rtw_get_oper_choffset(padapter);
-					set_channel_bwmode(padapter, union_ch, union_offset, union_bw);
+					/* switch to correct channel of current network  before issue keep-alive frames */
+					if (rtw_get_oper_ch(padapter) != pmlmeext->cur_channel) {
+						backup_ch = rtw_get_oper_ch(padapter);
+						backup_bw = rtw_get_oper_bw(padapter);
+						backup_offset = rtw_get_oper_choffset(padapter);
+						set_channel_bwmode(padapter, union_ch, union_offset, union_bw);
+					}
 				}
 
 				if (rx_chk != _SUCCESS)
@@ -12741,7 +12739,7 @@ void linked_status_chk(_adapter *padapter, u8 from_timer)
 				}
 
 				/* back to the original operation channel */
-				if (backup_ch > 0)
+				if (backup_ch > 0 && switch_channel_by_drv)
 					set_channel_bwmode(padapter, backup_ch, backup_offset, backup_bw);
 
 bypass_active_keep_alive:

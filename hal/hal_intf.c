@@ -733,12 +733,6 @@ void	rtw_hal_get_tx_power_level(_adapter *padapter, s32 *powerlevel)
 
 void	rtw_hal_dm_watchdog(_adapter *padapter)
 {
-#ifdef CONFIG_MCC_MODE
-	if (MCC_EN(padapter)) {
-		if (rtw_hal_check_mcc_status(padapter, MCC_STATUS_DOING_MCC))
-			return;
-	}
-#endif /* CONFIG_MCC_MODE */
 	rtw_hal_turbo_edca(padapter);
 	padapter->hal_func.hal_dm_watchdog(padapter);
 

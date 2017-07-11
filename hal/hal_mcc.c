@@ -2056,7 +2056,10 @@ static void rtw_hal_mcc_status_hdl(PADAPTER padapter, u8 status)
 static void rtw_hal_mcc_stop_posthdl(PADAPTER padapter)
 {
 	struct dvobj_priv *dvobj = adapter_to_dvobj(padapter);
+	struct mcc_obj_priv *mccobjpriv = &(adapter_to_dvobj(padapter)->mcc_objpriv);
 	_adapter *iface = NULL;
+	PHAL_DATA_TYPE hal;
+	struct PHY_DM_STRUCT *p_dm_odm;
 	u8 i = 0;
 
 	for (i = 0; i < dvobj->iface_nums; i++) {
@@ -2082,12 +2085,21 @@ static void rtw_hal_mcc_stop_posthdl(PADAPTER padapter)
 		}
 #endif /* CONFIG_TDLS */
 	}
+
+	hal = GET_HAL_DATA(padapter);
+	p_dm_odm = &hal->odmpriv;
+
+	odm_cmn_info_update(p_dm_odm, ODM_CMNINFO_ABILITY, mccobjpriv->backup_phydm_ability);
 }
 
 static void rtw_hal_mcc_start_posthdl(PADAPTER padapter)
 {
 	struct dvobj_priv *dvobj = adapter_to_dvobj(padapter);
+	struct mcc_obj_priv *mccobjpriv = &(adapter_to_dvobj(padapter)->mcc_objpriv);
 	_adapter *iface = NULL;
+	PHAL_DATA_TYPE hal;
+	struct PHY_DM_STRUCT *p_dm_odm;
+	u32 support_ability = 0;
 	u8 i = 0;
 
 	for (i = 0; i < dvobj->iface_nums; i++) {
@@ -2108,6 +2120,13 @@ static void rtw_hal_mcc_start_posthdl(PADAPTER padapter)
 		}
 #endif /* CONFIG_TDLS */
 	}
+
+	hal = GET_HAL_DATA(padapter);
+	p_dm_odm = &hal->odmpriv;
+	support_ability = mccobjpriv->backup_phydm_ability = p_dm_odm->support_ability;
+	support_ability = support_ability & (~ODM_RF_TX_PWR_TRACK) & (~ODM_RF_CALIBRATION);
+
+	odm_cmn_info_update(p_dm_odm, ODM_CMNINFO_ABILITY, support_ability);
 	/* rtw_dump_rsvd_page(RTW_DBGDUMP, padapter, dvobj->mcc_objpriv.mcc_pwr_idx_rsvd_page[0], 2); */
 }
 
@@ -2479,9 +2498,6 @@ void rtw_hal_mcc_sw_status_check(PADAPTER padapter)
 	_enter_critical_mutex(&pmccobjpriv->mcc_mutex, NULL);
 
 	if (rtw_hal_check_mcc_status(padapter, MCC_STATUS_DOING_MCC)) {
-		
-		phy_set_bb_reg(padapter, 0xB58, BIT(0), 1);
-		phy_set_bb_reg(padapter, 0xB58, BIT(0), 0);
 
 		/* check noa enable or not */
 		for (i = 0; i < dvobj->iface_nums; i++) {

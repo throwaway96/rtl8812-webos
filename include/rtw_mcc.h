@@ -188,6 +188,7 @@ struct mcc_obj_priv {
 #endif /* CONFIG_MCC_MODE_V2 */
 	u8 mcc_pwr_idx_rsvd_page[MAX_MCC_NUM];
 	u8 enable_runtime_duration;
+	u32 backup_phydm_ability;
 };
 
 /* backup IQK val */
