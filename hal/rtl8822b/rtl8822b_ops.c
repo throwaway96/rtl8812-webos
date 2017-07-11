@@ -4196,6 +4196,7 @@ void rtl8822b_rxdesc2attribute(struct rx_pkt_attrib *a, u8 *desc)
 		a->frag_num = (u8)GET_RX_DESC_FRAG_8822B(desc);
 
 		a->data_rate = (u8)GET_RX_DESC_RX_RATE_8822B(desc);
+		a->ppdu_cnt = (u8)GET_RX_DESC_PPDU_CNT_8822B(desc);
 	}
 }
 

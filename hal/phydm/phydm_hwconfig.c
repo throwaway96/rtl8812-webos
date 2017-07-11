@@ -3002,15 +3002,19 @@ phydm_rx_statistic_cal(
 	if ((p_phy_sta_rpt->gid != 0) && (p_phy_sta_rpt->gid != 63)) {
 		if (date_rate >= ODM_RATEVHTSS1MCS0) {
 			p_phydm->phy_dbg_info.num_qry_mu_vht_pkt[date_rate - 0x2C]++;
-			p_phydm->phy_dbg_info.num_of_ppdu[p_pktinfo->ppdu_cnt] = date_rate | BIT(7);
-			p_phydm->phy_dbg_info.gid_num[p_pktinfo->ppdu_cnt] = p_phy_sta_rpt->gid;
+			if (p_pktinfo->ppdu_cnt < 4) {
+				p_phydm->phy_dbg_info.num_of_ppdu[p_pktinfo->ppdu_cnt] = date_rate | BIT(7);
+				p_phydm->phy_dbg_info.gid_num[p_pktinfo->ppdu_cnt] = p_phy_sta_rpt->gid;
+			}
 		}
 
 	} else {
 		if (date_rate >= ODM_RATEVHTSS1MCS0) {
 			p_phydm->phy_dbg_info.num_qry_vht_pkt[date_rate - 0x2C]++;
-			p_phydm->phy_dbg_info.num_of_ppdu[p_pktinfo->ppdu_cnt] = date_rate;
-			p_phydm->phy_dbg_info.gid_num[p_pktinfo->ppdu_cnt] = p_phy_sta_rpt->gid;
+			if (p_pktinfo->ppdu_cnt < 4) {
+				p_phydm->phy_dbg_info.num_of_ppdu[p_pktinfo->ppdu_cnt] = date_rate;
+				p_phydm->phy_dbg_info.gid_num[p_pktinfo->ppdu_cnt] = p_phy_sta_rpt->gid;
+			}
 		}
 	}
 

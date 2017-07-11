@@ -269,6 +269,7 @@ struct rx_pkt_attrib	{
 	u8	pkt_rpt_type;
 	u32 tsfl;
 	u32	MacIDValidEntry[2];	/* 64 bits present 64 entry. */
+	u8	ppdu_cnt;
 
 #if 0
 	u8	signal_qual;

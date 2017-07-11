@@ -4460,6 +4460,7 @@ void rx_query_phy_status(
 	pkt_info.is_packet_match_bssid = _FALSE;
 	pkt_info.is_packet_to_self = _FALSE;
 	pkt_info.is_packet_beacon = _FALSE;
+	pkt_info.ppdu_cnt = pattrib->ppdu_cnt;
 
 	wlanhdr = get_recvframe_data(precvframe);
 
