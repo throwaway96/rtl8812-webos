@@ -1284,9 +1284,6 @@ int _issue_tdls_teardown(_adapter *padapter, struct tdls_txmgmt *ptxmgmt, u8 wai
 		ret = _SUCCESS;
 	}
 
-	if (rtw_tdls_is_driver_setup(padapter))
-		rtw_tdls_cmd(padapter, ptxmgmt->peer, TDLS_TEARDOWN_STA_LOCALLY);
-
 exit:
 
 	return ret;
@@ -1302,6 +1299,9 @@ int issue_tdls_teardown(_adapter *padapter, struct tdls_txmgmt *ptxmgmt, u8 wait
 		ptxmgmt->status_code = _RSON_TDLS_TEAR_TOOFAR_;
 		ret = _issue_tdls_teardown(padapter, ptxmgmt, wait_ack);
 	}
+
+	if (rtw_tdls_is_driver_setup(padapter))
+		rtw_tdls_cmd(padapter, ptxmgmt->peer, TDLS_TEARDOWN_STA_LOCALLY);
 
 	return ret;
 }
