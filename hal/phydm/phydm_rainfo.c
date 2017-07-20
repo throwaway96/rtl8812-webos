@@ -1173,9 +1173,13 @@ s8 phydm_rssi_report(struct PHY_DM_STRUCT *p_dm_odm, u8 mac_id)
 	}
 #endif /*#ifdef CONFIG_BEAMFORMING*/
 
+#ifdef CONFIG_BEAMFORMING
+
 	if (tx_bf_en)
 		STBC_TX = 0;
-	else {
+	else
+#endif
+	{
 #ifdef CONFIG_80211AC_VHT
 		if (is_supported_vht(p_entry->wireless_mode))
 			STBC_TX = TEST_FLAG(p_entry->vhtpriv.stbc_cap, STBC_VHT_ENABLE_TX);
@@ -1190,8 +1194,10 @@ s8 phydm_rssi_report(struct PHY_DM_STRUCT *p_dm_odm, u8 mac_id)
 	if (UL_DL_STATE)
 		h2c_parameter[3] |= RAINFO_BE_RX_STATE;
 
+#ifdef CONFIG_BEAMFORMING
 	if (tx_bf_en)
 		h2c_parameter[3] |= RAINFO_BF_STATE;
+#endif
 	if (STBC_TX)
 		h2c_parameter[3] |= RAINFO_STBC_STATE;
 	if (p_dm_odm->noisy_decision)
@@ -1780,9 +1786,6 @@ phydm_trans_platform_wireless_mode(
 
 	else if (wireless_mode == WIRELESS_11_24AC)
 		wireless_mode = PHYDM_WIRELESS_MODE_AC_24G;
-
-	else if (wireless_mode == WIRELESS_11AC)
-		wireless_mode = PHYDM_WIRELESS_MODE_AC_ONLY;
 
 	else if (wireless_mode == WIRELESS_MODE_MAX)
 		wireless_mode = PHYDM_WIRELESS_MODE_MAX;

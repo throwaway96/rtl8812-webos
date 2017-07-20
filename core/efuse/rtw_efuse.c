@@ -972,8 +972,6 @@ VOID hal_ReadEFuse_BT_logic_map(
 
 	if (total)
 		efuse_usage = (u8)((used * 100) / total);
-	else
-		efuse_usage = 100;
 
 	fakeBTEfuseUsedBytes = used;
 	RTW_INFO("%s: BTEfuseUsed last Bytes = %#x\n", __FUNCTION__, fakeBTEfuseUsedBytes);

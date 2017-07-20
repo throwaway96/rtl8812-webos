@@ -267,15 +267,18 @@ unsigned int ffaddr2pipehdl(struct dvobj_priv *pdvobj, u32 addr)
 	else if (addr == RECV_INT_IN_ADDR)
 		pipe = usb_rcvintpipe(pusbd, pdvobj->RtInPipe[1]);
 
-	else if (addr < HW_QUEUE_ENTRY) {
 #ifdef RTW_HALMAC
+	else if (addr < sizeof(pdvobj->RtOutPipe)/pdvobj->RtOutPipe[0]) {
 		/* halmac already translate queue id to bulk out id */
 		ep_num = pdvobj->RtOutPipe[addr];
-#else
-		ep_num = pdvobj->Queue2Pipe[addr];
-#endif
 		pipe = usb_sndbulkpipe(pusbd, ep_num);
 	}
+#else
+	else if (addr < HW_QUEUE_ENTRY) {
+		ep_num = pdvobj->Queue2Pipe[addr];
+		pipe = usb_sndbulkpipe(pusbd, ep_num);
+	}
+#endif
 
 	return pipe;
 }

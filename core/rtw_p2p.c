@@ -757,6 +757,7 @@ u32 build_probe_resp_wfd_ie(struct wifidirect_info *pwdinfo, u8 *pbuf, u8 tunnel
 	_adapter *padapter = pwdinfo->padapter;
 	struct mlme_priv		*pmlmepriv = &padapter->mlmepriv;
 	struct wifi_display_info	*pwfd_info = padapter->wdinfo.wfd_info;
+	u16 v16 = 0;
 
 	if (!hal_chk_wl_func(padapter, WL_FUNC_MIRACAST))
 		goto exit;
@@ -794,36 +795,43 @@ u32 build_probe_resp_wfd_ie(struct wifidirect_info *pwdinfo, u8 *pbuf, u8 tunnel
 			if (is_any_client_associated(pwdinfo->padapter)) {
 				if (pwdinfo->wfd_tdls_enable) {
 					/*	TDLS mode + WSD ( WFD Service Discovery ) */
-					RTW_PUT_BE16(wfdie + wfdielen, pwfd_info->wfd_device_type | WFD_DEVINFO_WSD | WFD_DEVINFO_PC_TDLS | WFD_DEVINFO_HDCP_SUPPORT);
+					v16 = pwfd_info->wfd_device_type | WFD_DEVINFO_WSD | WFD_DEVINFO_PC_TDLS | WFD_DEVINFO_HDCP_SUPPORT;
+					RTW_PUT_BE16(wfdie + wfdielen, v16);
 				} else {
 					/*	WiFi Direct mode + WSD ( WFD Service Discovery ) */
-					RTW_PUT_BE16(wfdie + wfdielen, pwfd_info->wfd_device_type | WFD_DEVINFO_WSD | WFD_DEVINFO_HDCP_SUPPORT);
+					v16 =  pwfd_info->wfd_device_type | WFD_DEVINFO_WSD | WFD_DEVINFO_HDCP_SUPPORT;
+					RTW_PUT_BE16(wfdie + wfdielen, v16);
 				}
 			} else {
 				if (pwdinfo->wfd_tdls_enable) {
 					/*	available for WFD session + TDLS mode + WSD ( WFD Service Discovery ) */
-					RTW_PUT_BE16(wfdie + wfdielen, pwfd_info->wfd_device_type | WFD_DEVINFO_SESSION_AVAIL | WFD_DEVINFO_WSD | WFD_DEVINFO_PC_TDLS | WFD_DEVINFO_HDCP_SUPPORT);
+					v16 = pwfd_info->wfd_device_type | WFD_DEVINFO_SESSION_AVAIL | WFD_DEVINFO_WSD | WFD_DEVINFO_PC_TDLS | WFD_DEVINFO_HDCP_SUPPORT;
+					RTW_PUT_BE16(wfdie + wfdielen, v16);
 				} else {
 					/*	available for WFD session + WiFi Direct mode + WSD ( WFD Service Discovery ) */
-					RTW_PUT_BE16(wfdie + wfdielen, pwfd_info->wfd_device_type | WFD_DEVINFO_SESSION_AVAIL | WFD_DEVINFO_WSD | WFD_DEVINFO_HDCP_SUPPORT);
+					v16 = pwfd_info->wfd_device_type | WFD_DEVINFO_SESSION_AVAIL | WFD_DEVINFO_WSD | WFD_DEVINFO_HDCP_SUPPORT;
+					RTW_PUT_BE16(wfdie + wfdielen, v16);
 				}
 			}
 		} else {
 			if (pwdinfo->wfd_tdls_enable) {
 				/*	available for WFD session + WiFi Direct mode + WSD ( WFD Service Discovery ) */
-				RTW_PUT_BE16(wfdie + wfdielen, pwfd_info->wfd_device_type | WFD_DEVINFO_SESSION_AVAIL | WFD_DEVINFO_WSD | WFD_DEVINFO_PC_TDLS | WFD_DEVINFO_HDCP_SUPPORT);
+				v16 = pwfd_info->wfd_device_type | WFD_DEVINFO_SESSION_AVAIL | WFD_DEVINFO_WSD | WFD_DEVINFO_PC_TDLS | WFD_DEVINFO_HDCP_SUPPORT;
+				RTW_PUT_BE16(wfdie + wfdielen, v16);
 			} else {
-
 				/*	available for WFD session + WiFi Direct mode + WSD ( WFD Service Discovery ) */
-				RTW_PUT_BE16(wfdie + wfdielen, pwfd_info->wfd_device_type | WFD_DEVINFO_SESSION_AVAIL | WFD_DEVINFO_WSD | WFD_DEVINFO_HDCP_SUPPORT);
+				v16 =  pwfd_info->wfd_device_type | WFD_DEVINFO_SESSION_AVAIL | WFD_DEVINFO_WSD | WFD_DEVINFO_HDCP_SUPPORT;
+				RTW_PUT_BE16(wfdie + wfdielen, v16);
 			}
 		}
 	} else {
-		if (pwdinfo->wfd_tdls_enable)
-			RTW_PUT_BE16(wfdie + wfdielen, pwfd_info->wfd_device_type | WFD_DEVINFO_WSD | WFD_DEVINFO_PC_TDLS | WFD_DEVINFO_HDCP_SUPPORT);
-		else
-			RTW_PUT_BE16(wfdie + wfdielen, pwfd_info->wfd_device_type | WFD_DEVINFO_WSD | WFD_DEVINFO_HDCP_SUPPORT);
-
+		if (pwdinfo->wfd_tdls_enable) {
+			v16 = pwfd_info->wfd_device_type | WFD_DEVINFO_WSD | WFD_DEVINFO_PC_TDLS | WFD_DEVINFO_HDCP_SUPPORT;
+			RTW_PUT_BE16(wfdie + wfdielen, v16);
+		} else {
+			v16 =  pwfd_info->wfd_device_type | WFD_DEVINFO_WSD | WFD_DEVINFO_HDCP_SUPPORT;
+			RTW_PUT_BE16(wfdie + wfdielen, v16);
+		}
 	}
 
 	wfdielen += 2;
@@ -1867,6 +1875,7 @@ u32 build_probe_resp_p2p_ie(struct wifidirect_info *pwdinfo, u8 *pbuf)
 {
 	u8 p2pie[MAX_P2P_IE_LEN] = { 0x00 };
 	u32 len = 0, p2pielen = 0;
+	u16 v16 = 0;
 #ifdef CONFIG_INTEL_WIDI
 	struct mlme_priv *pmlmepriv = &(pwdinfo->padapter->mlmepriv);
 	u8 zero_array_check[L2SDTA_SERVICE_VE_LEN] = { 0x00 };
@@ -1966,7 +1975,10 @@ u32 build_probe_resp_p2p_ie(struct wifidirect_info *pwdinfo, u8 *pbuf)
 		RTW_PUT_LE16(p2pie + p2pielen, 21 + 8 * pmlmepriv->num_p2p_sdt + pwdinfo->device_name_len);
 	else
 #endif /* CONFIG_INTEL_WIDI */
-		RTW_PUT_LE16(p2pie + p2pielen, 21 + pwdinfo->device_name_len);
+	{
+		v16 = 21 + pwdinfo->device_name_len;
+		RTW_PUT_LE16(p2pie + p2pielen, v16);
+	}
 	p2pielen += 2;
 
 	/*	Value: */
@@ -2049,12 +2061,14 @@ u32 build_probe_resp_p2p_ie(struct wifidirect_info *pwdinfo, u8 *pbuf)
 	/*	Device Name */
 	/*	Type: */
 	/* *(u16*) ( p2pie + p2pielen ) = cpu_to_be16( WPS_ATTR_DEVICE_NAME ); */
-	RTW_PUT_BE16(p2pie + p2pielen, WPS_ATTR_DEVICE_NAME);
+	v16 = WPS_ATTR_DEVICE_NAME;
+	RTW_PUT_BE16(p2pie + p2pielen, v16);
 	p2pielen += 2;
 
 	/*	Length: */
 	/* *(u16*) ( p2pie + p2pielen ) = cpu_to_be16( pwdinfo->device_name_len ); */
-	RTW_PUT_BE16(p2pie + p2pielen, pwdinfo->device_name_len);
+	v16 = pwdinfo->device_name_len;
+	RTW_PUT_BE16(p2pie + p2pielen, v16);
 	p2pielen += 2;
 
 	/*	Value: */
@@ -2080,6 +2094,7 @@ u32 build_prov_disc_request_p2p_ie(struct wifidirect_info *pwdinfo, u8 *pbuf, u8
 {
 	u8 p2pie[MAX_P2P_IE_LEN] = { 0x00 };
 	u32 len = 0, p2pielen = 0;
+	u16 v16 = 0;
 
 	/*	P2P OUI */
 	p2pielen = 0;
@@ -2169,7 +2184,8 @@ u32 build_prov_disc_request_p2p_ie(struct wifidirect_info *pwdinfo, u8 *pbuf, u8
 
 	/*	Length: */
 	/* *(u16*) ( p2pie + p2pielen ) = cpu_to_be16( pwdinfo->device_name_len ); */
-	RTW_PUT_BE16(p2pie + p2pielen, pwdinfo->device_name_len);
+	v16 =  pwdinfo->device_name_len;
+	RTW_PUT_BE16(p2pie + p2pielen, v16);
 	p2pielen += 2;
 
 	/*	Value: */

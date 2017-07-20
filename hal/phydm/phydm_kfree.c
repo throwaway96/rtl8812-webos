@@ -266,7 +266,7 @@ phydm_config_kfree(
 	struct odm_power_trim_data	*p_power_trim_info = &(p_dm_odm->power_trim_data);
 
 	u8			rfpath = 0, max_rf_path = 0;
-	u8			channel_idx = 0, i;
+	u8			channel_idx = 0, i, j;
 
 	if (p_dm_odm->support_ic_type & ODM_RTL8814A)
 		max_rf_path = 4;	/*0~3*/
@@ -301,8 +301,9 @@ phydm_config_kfree(
 					channel_idx = PHYDM_5GHB;
 			}
 
-			for (i = 0; i < (max_rf_path * BB_GAIN_NUM); i++)
-				ODM_RT_TRACE(p_dm_odm, ODM_COMP_MP, ODM_DBG_LOUD, ("[kfree] p_power_trim_info->bb_gain[%d][%d]=0x%X\n", i, max_rf_path - 1, p_power_trim_info->bb_gain[i][max_rf_path - 1]));
+			for (i = 0; i < BB_GAIN_NUM; i++)
+				for (j = 0; j < max_rf_path; j++)
+					ODM_RT_TRACE(p_dm_odm, ODM_COMP_MP, ODM_DBG_LOUD, ("[kfree] p_power_trim_info->bb_gain[%d][%d]=0x%X\n", i, j, p_power_trim_info->bb_gain[i][j]));
 
 			for (rfpath = ODM_RF_PATH_A;  rfpath < max_rf_path; rfpath++) {
 				ODM_RT_TRACE(p_dm_odm, ODM_COMP_MP, ODM_DBG_LOUD, ("[kfree] phydm_kfree(): channel_to_sw=%d PATH_%d: 0x%X\n", channel_to_sw, rfpath, p_power_trim_info->bb_gain[channel_idx][rfpath]));

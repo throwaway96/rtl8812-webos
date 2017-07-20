@@ -916,7 +916,7 @@ _iqk_one_shot_8822b(
 	ODM_delay_ms(WBIQK_delay_8822B);
 	fail = _iqk_check_cal_8822b(p_dm_odm, path, 0x1);
 
-	if (p_dm_odm->debug_components && ODM_COMP_CALIBRATION) {
+	if (p_dm_odm->debug_components & ODM_COMP_CALIBRATION) {
 		odm_write_4byte(p_dm_odm, 0x1b00, 0xf8000008 | path << 1);
 		ODM_RT_TRACE(p_dm_odm, ODM_COMP_CALIBRATION, ODM_DBG_TRACE,
 			("[IQK]S%d ==> 0x1b00 = 0x%x, 0x1b08 = 0x%x\n", path, odm_read_4byte(p_dm_odm, 0x1b00), odm_read_4byte(p_dm_odm, 0x1b08)));
@@ -1307,7 +1307,7 @@ _phy_iq_calibrate_8822b(
 		_iqk_agc_bnd_int_8822b(p_dm_odm);
 		_iqk_rf_setting_8822b(p_dm_odm);
 
-		_iqk_start_iqk_8822b(p_dm_odm, segment_iqk);
+		_iqk_start_iqk_8822b(p_dm_odm, false /* segment_iqk */);
 
 		_iqk_afe_setting_8822b(p_dm_odm, false);
 		_iqk_restore_mac_bb_8822b(p_dm_odm, MAC_backup, BB_backup, backup_mac_reg, backup_bb_reg);
@@ -1328,7 +1328,7 @@ _phy_iq_calibrate_8822b(
 		ODM_delay_ms(50);
 	};
 
-	if (segment_iqk)
+	if ( false /*segment_iqk*/ )
 		_iqk_reload_iqk_setting_8822b(p_dm_odm, 0x0, 0x1);
 #if 0
 	_iqk_afe_setting_8822b(p_dm_odm, false);

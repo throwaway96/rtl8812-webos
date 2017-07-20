@@ -588,6 +588,7 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 #ifdef CONFIG_WFD
 	struct wifi_display_info		*pwfd_info;
 #endif
+	void *pcmd = (void *)&priv_cmd;
 
 	rtw_lock_suspend();
 
@@ -617,7 +618,7 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 		priv_cmd.total_len = compat_priv_cmd.total_len;
 	} else
 #endif /* CONFIG_COMPAT */
-		if (copy_from_user(&priv_cmd, ifr->ifr_data, sizeof(android_wifi_priv_cmd))) {
+		if (copy_from_user(pcmd, ifr->ifr_data, sizeof(android_wifi_priv_cmd))) {
 			ret = -EFAULT;
 			goto exit;
 		}
@@ -626,7 +627,7 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 		goto exit;
 	}
 	/*RTW_INFO("%s priv_cmd.buf=%p priv_cmd.total_len=%d  priv_cmd.used_len=%d\n",__func__,priv_cmd.buf,priv_cmd.total_len,priv_cmd.used_len);*/
-	command = rtw_zmalloc(priv_cmd.total_len);
+	command = rtw_zmalloc(priv_cmd.total_len + 1);
 	if (!command) {
 		RTW_INFO("%s: failed to allocate memory\n", __FUNCTION__);
 		ret = -ENOMEM;
@@ -642,6 +643,7 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 		ret = -EFAULT;
 		goto exit;
 	}
+	command[priv_cmd.total_len] = '\0';
 
 	RTW_INFO("%s: Android private cmd \"%s\" on %s\n"
 		 , __FUNCTION__, command, ifr->ifr_name);

@@ -488,7 +488,7 @@ phydm_search_pwdb_lower_bound(
 {
 	struct PHY_DM_STRUCT		*p_dm_odm = (struct PHY_DM_STRUCT *)p_dm_void;
 	struct _ADAPTIVITY_STATISTICS	*adaptivity = (struct _ADAPTIVITY_STATISTICS *)phydm_get_structure(p_dm_odm, PHYDM_ADAPTIVITY);
-	u32			value32 = 0, reg_value32 = 0;
+	u32			reg_value32 = 0;
 	u8			cnt, try_count = 0;
 	u8			tx_edcca1 = 0, tx_edcca0 = 0;
 	boolean			is_adjust = true;
@@ -538,9 +538,9 @@ phydm_search_pwdb_lower_bound(
 				phydm_release_bb_dbg_port(p_dm_odm);
 			}
 
-			if (value32 & BIT(30) && (p_dm_odm->support_ic_type & (ODM_RTL8723B | ODM_RTL8188E)))
+			if (reg_value32 & BIT(30) && (p_dm_odm->support_ic_type & (ODM_RTL8723B | ODM_RTL8188E)))
 				tx_edcca1 = tx_edcca1 + 1;
-			else if (value32 & BIT(29))
+			else if (reg_value32 & BIT(29))
 				tx_edcca1 = tx_edcca1 + 1;
 			else
 				tx_edcca0 = tx_edcca0 + 1;

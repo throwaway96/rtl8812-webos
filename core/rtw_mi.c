@@ -1101,12 +1101,14 @@ u8 rtw_mi_buddy_stay_in_p2p_mode(_adapter *padapter)
 _adapter *rtw_get_iface_by_id(_adapter *padapter, u8 iface_id)
 {
 	_adapter *iface = NULL;
-	struct dvobj_priv *dvobj = adapter_to_dvobj(padapter);
+	struct dvobj_priv *dvobj = NULL;
 
 	if ((padapter == NULL) || (iface_id >= CONFIG_IFACE_NUMBER)) {
 		rtw_warn_on(1);
 		return iface;
 	}
+
+	dvobj = adapter_to_dvobj(padapter);
 
 	return  dvobj->padapters[iface_id];
 }

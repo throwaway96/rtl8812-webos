@@ -969,10 +969,12 @@ phydm_bb_debug_info(
 		else if (*p_dm_odm->p_band_width == ODM_BW40M)
 			factor = "128/108";
 		else if (*p_dm_odm->p_band_width == ODM_BW20M) {
-			if (RX_HT != 2 || RX_HT != 1)
-				factor = "64/52";	/*HT or VHT*/
+			if (RX_HT == 1)
+				factor = "64/48";	/*HT or VHT*/
+			else if (RX_HT == 2)
+				factor = "64/48";	/*HT or VHT*/
 			else
-				factor = "64/48";	/*legacy*/
+				factor = "64/52";	/*legacy*/
 		}
 
 		PHYDM_SNPRINTF((output + used, out_len - used, "\r\n %-35s = %d (factor = %s)", "Condition number", condition_num, factor));
@@ -2053,7 +2055,7 @@ phydm_cmd_parser(
 	u32 used = 0;
 	u8 id = 0;
 	int var1[10] = {0};
-	int i, input_idx = 0, phydm_ary_size;
+	int i, input_idx = 0, phydm_ary_size = sizeof(phy_dm_ary) / sizeof(struct _PHYDM_COMMAND);
 	char help[] = "-h";
 
 	if (flag == 0) {
@@ -2066,7 +2068,6 @@ phydm_cmd_parser(
 	/* Parsing Cmd ID */
 	if (input_num) {
 
-		phydm_ary_size = sizeof(phy_dm_ary) / sizeof(struct _PHYDM_COMMAND);
 		for (i = 0; i < phydm_ary_size; i++) {
 			if (strcmp(phy_dm_ary[i].name, input[0]) == 0) {
 				id = phy_dm_ary[i].id;
@@ -2381,10 +2382,9 @@ phydm_cmd_parser(
 	case PHYDM_MU_MIMO:
 #if (RTL8822B_SUPPORT == 1)
 
+		var1[0] = 0;
 		if (input[1])
 			PHYDM_SSCANF(input[1], DCMD_DECIMAL, &var1[0]);
-		else
-			var1[0] = 0;
 
 		if (var1[0] == 1) {
 			int index, ptr;

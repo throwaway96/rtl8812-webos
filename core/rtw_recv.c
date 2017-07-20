@@ -3220,9 +3220,14 @@ void rtw_reordering_ctrl_timeout_handler(void *pcontext)
 {
 	_irqL irql;
 	struct recv_reorder_ctrl *preorder_ctrl = (struct recv_reorder_ctrl *)pcontext;
-	_adapter *padapter = preorder_ctrl->padapter;
-	_queue *ppending_recvframe_queue = &preorder_ctrl->pending_recvframe_queue;
+	_adapter *padapter = NULL;
+	_queue *ppending_recvframe_queue = NULL;
 
+	if ((preorder_ctrl == NULL) || (preorder_ctrl->padapter == NULL))
+		return;
+
+	padapter = preorder_ctrl->padapter;
+	ppending_recvframe_queue = &preorder_ctrl->pending_recvframe_queue;
 
 	if (RTW_CANNOT_RUN(padapter))
 		return;
@@ -3696,13 +3701,8 @@ static sint fill_radiotap_hdr(_adapter *padapter, union recv_frame *precvframe, 
 	/* rate */
 	if (pattrib->data_rate < 12) {
 		rtap_hdr->it_present |= (1 << IEEE80211_RADIOTAP_RATE);
-		if (pattrib->data_rate < 4) {
-			/* CCK */
-			hdr_buf[rt_len] = data_rate[pattrib->data_rate];
-		} else {
-			/* OFDM */
-			hdr_buf[rt_len] = data_rate[pattrib->data_rate];
-		}
+		/*rt_len < 4 : CCK, otherwise : OFDM */
+		hdr_buf[rt_len] = data_rate[pattrib->data_rate];
 	}
 	rt_len += 1; /* force padding 1 byte for aligned */
 

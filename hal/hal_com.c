@@ -8698,8 +8698,7 @@ static void rtw_hal_set_hw_update_tsf(PADAPTER padapter)
 #if defined(CONFIG_RTL8822B) || defined(CONFIG_MI_WITH_MBSSID_CAM)
 	RTW_INFO("[Warn] %s "ADPT_FMT" enter func\n", __func__, ADPT_ARG(padapter));
 	rtw_warn_on(1);
-	return;
-#endif
+#else
 
 	if (!pmlmeext->en_hw_update_tsf)
 		return;
@@ -8719,6 +8718,7 @@ static void rtw_hal_set_hw_update_tsf(PADAPTER padapter)
 			rtw_write8(padapter, REG_BCN_CTRL, rtw_read8(padapter, REG_BCN_CTRL) & (~DIS_TSF_UDT));
 	}
 	pmlmeext->en_hw_update_tsf = _FALSE;
+#endif
 }
 
 #ifdef CONFIG_TDLS

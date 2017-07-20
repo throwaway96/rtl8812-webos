@@ -672,8 +672,10 @@ void rtl8822b_phy_haldm_watchdog(PADAPTER adapter)
 
 #ifdef CONFIG_BT_COEXIST
 		bBtDisabled = rtw_btcoex_IsBtDisabled(adapter);
-#endif /* CONFIG_BT_COEXIST */
 		odm_cmn_info_update(&hal->odmpriv, ODM_CMNINFO_BT_ENABLED, ((bBtDisabled == _TRUE) ? _FALSE : _TRUE));
+#else
+		odm_cmn_info_update(&hal->odmpriv, ODM_CMNINFO_BT_ENABLED, _FALSE);
+#endif /* CONFIG_BT_COEXIST */
 
 		odm_dm_watchdog(&hal->odmpriv);
 	}

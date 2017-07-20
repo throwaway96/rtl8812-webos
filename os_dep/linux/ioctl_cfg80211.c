@@ -1159,7 +1159,7 @@ static int rtw_cfg80211_set_encryption(struct net_device *dev, struct ieee_param
 		wep_key_idx = param->u.crypt.idx;
 		wep_key_len = param->u.crypt.key_len;
 
-		if ((wep_key_idx > WEP_KEYS) || (wep_key_len <= 0)) {
+		if ((wep_key_idx >= WEP_KEYS) || (wep_key_len <= 0)) {
 			ret = -EINVAL;
 			goto exit;
 		}
@@ -5789,7 +5789,7 @@ static int cfg80211_rtw_mgmt_tx(struct wiphy *wiphy,
 	u32 dump_cnt = 0;
 	bool ack = _TRUE;
 	u8 tx_ch;
-	u8 category, action;
+	u8 category, action = 0;
 	u8 frame_styp;
 	int type = (-1);
 	u32 start = rtw_get_current_time();
@@ -7112,7 +7112,7 @@ int rtw_wdev_alloc(_adapter *padapter, struct wiphy *wiphy)
 	_rtw_mutex_init(&pwdev_priv->roch_mutex);
 
 #ifdef LGE_PRIVATE
-	strncpy(pwdev_priv->country, "DC", strlen("DC"));
+	strncpy(pwdev_priv->country, "DC", 3);
 	pwdev_priv->ccode_version = 0;
 	pwdev_priv->mchan_sched_mode = 0;
 	pwdev_priv->wowl = _FALSE;

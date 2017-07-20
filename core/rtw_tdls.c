@@ -727,7 +727,10 @@ u8 *rtw_tdls_set_ftie(struct tdls_txmgmt *ptxmgmt, u8 *pframe, struct pkt_attrib
 			_rtw_memcpy(FTIE.Anonce, ANonce, WPA_NONCE_LEN);
 		if (SNonce != NULL)
 			_rtw_memcpy(FTIE.Snonce, SNonce, WPA_NONCE_LEN);
-		return rtw_set_ie(pframe, _FTIE_ , 82, (u8 *)FTIE.mic_ctrl, &(pattrib->pktlen));
+		rtw_set_ie(pframe, _FTIE_ , 2, (u8 *)FTIE.mic_ctrl, &(pattrib->pktlen));
+		rtw_set_ie(pframe, _FTIE_, TDLS_MIC_LEN, (u8 *)FTIE.mic, &(pattrib->pktlen));
+		rtw_set_ie(pframe, _FTIE_, WPA_NONCE_LEN, (u8 *)FTIE.Anonce, &(pattrib->pktlen));
+		return rtw_set_ie(pframe, _FTIE_, WPA_NONCE_LEN, (u8 *)FTIE.Snonce, &(pattrib->pktlen));
 	}
 }
 
@@ -1837,7 +1840,7 @@ sint On_TDLS_Setup_Req(_adapter *padapter, union recv_frame *precv_frame)
 			case _COUNTRY_IE_:
 				break;
 			case _EXT_SUPPORTEDRATES_IE_:
-				if (supportRateNum <= sizeof(supportRate)) {
+				if (supportRateNum < sizeof(supportRate)) {
 					_rtw_memcpy(supportRate + supportRateNum, pIE->data, pIE->Length);
 					supportRateNum += pIE->Length;
 				}
@@ -2027,7 +2030,7 @@ int On_TDLS_Setup_Rsp(_adapter *padapter, union recv_frame *precv_frame)
 		case _COUNTRY_IE_:
 			break;
 		case _EXT_SUPPORTEDRATES_IE_:
-			if (supportRateNum <= sizeof(supportRate)) {
+			if (supportRateNum < sizeof(supportRate)) {
 				_rtw_memcpy(supportRate + supportRateNum, pIE->data, pIE->Length);
 				supportRateNum += pIE->Length;
 			}
@@ -2687,6 +2690,7 @@ void wfd_ie_tdls(_adapter *padapter, u8 *pframe, u32 *pktlen)
 	struct wifi_display_info	*pwfd_info = padapter->tdlsinfo.wfd_info;
 	u8 wfdie[MAX_WFD_IE_LEN] = { 0x00 };
 	u32 wfdielen = 0;
+	u16 v16 = 0;
 
 	if (!hal_chk_wl_func(padapter, WL_FUNC_MIRACAST))
 		return;
@@ -2718,8 +2722,9 @@ void wfd_ie_tdls(_adapter *padapter, u8 *pframe, u32 *pktlen)
 	/* Value1: */
 	/* WFD device information */
 	/* available for WFD session + Preferred TDLS + WSD ( WFD Service Discovery ) */
-	RTW_PUT_BE16(wfdie + wfdielen, pwfd_info->wfd_device_type | WFD_DEVINFO_SESSION_AVAIL
-		     | WFD_DEVINFO_PC_TDLS | WFD_DEVINFO_WSD);
+	v16 = pwfd_info->wfd_device_type | WFD_DEVINFO_SESSION_AVAIL
+		| WFD_DEVINFO_PC_TDLS | WFD_DEVINFO_WSD;
+	RTW_PUT_BE16(wfdie + wfdielen, v16);
 	wfdielen += 2;
 
 	/* Value2: */

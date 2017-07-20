@@ -1298,7 +1298,7 @@ static int wpa_set_encryption(struct net_device *dev, struct ieee_param *param, 
 		wep_key_idx = param->u.crypt.idx;
 		wep_key_len = param->u.crypt.key_len;
 
-		if ((wep_key_idx > WEP_KEYS) || (wep_key_len <= 0)) {
+		if ((wep_key_idx >= WEP_KEYS) || (wep_key_len <= 0)) {
 			ret = -EINVAL;
 			goto exit;
 		}
@@ -8728,7 +8728,7 @@ static int rtw_wowlan_set_pattern(struct net_device *dev,
 	struct wowlan_ioctl_param poidparam;
 	int ret = 0, len = 0, i = 0;
 	u32 start_time = rtw_get_current_time();
-	u8 input[wrqu->data.length];
+	u8 input[wrqu->data.length + 1];
 	u8 index = 0;
 
 	poidparam.subcode = 0;
@@ -8749,6 +8749,8 @@ static int rtw_wowlan_set_pattern(struct net_device *dev,
 		if (copy_from_user(input,
 				   wrqu->data.pointer, wrqu->data.length))
 			return -EFAULT;
+
+		input[wrqu->data.length] = '\0';
 		/* leave PS first */
 		rtw_ps_deny(padapter, PS_DENY_IOCTL);
 		LeaveAllPowerSaveModeDirect(padapter);
@@ -10385,7 +10387,8 @@ static int rtw_mp_efuse_set(struct net_device *dev,
 		RTW_INFO("%s: MAC address=%s\n", __FUNCTION__, tmp[1]);
 
 		for (jj = 0, kk = 0; jj < cnts; jj++, kk += 2)
-			pEfuseHal->fakeEfuseModifiedMap[addr + jj] = key_2char2num(tmp[1][kk], tmp[1][kk + 1]);
+			if ((addr + jj) < EFUSE_MAX_MAP_LEN)
+				pEfuseHal->fakeEfuseModifiedMap[addr + jj] = key_2char2num(tmp[1][kk], tmp[1][kk + 1]);
 
 		_rtw_memset(extra, '\0', strlen(extra));
 		sprintf(extra, "write mac addr to fake map OK\n");
@@ -10936,6 +10939,7 @@ static int rtw_priv_get(struct net_device *dev,
 	struct iw_point *wrqu = (struct iw_point *)wdata;
 	u32 subcmd = wrqu->flags;
 	PADAPTER padapter = rtw_netdev_priv(dev);
+	int ret = 0;
 
 
 	if (padapter == NULL)
@@ -10985,11 +10989,12 @@ static int rtw_priv_get(struct net_device *dev,
 		break;
 #endif
 	default:
-		return -EIO;
+		ret = -EIO;
 	}
 
-	rtw_msleep_os(10); /* delay 5ms for sending pkt before exit adb shell operation */
-	return 0;
+	if (!ret)
+		rtw_msleep_os(10); /* delay 5ms for sending pkt before exit adb shell operation */
+	return ret;
 }
 
 
@@ -13024,11 +13029,6 @@ static int _rtw_ioctl_wext_private(struct net_device *dev, union iwreq_data *wrq
 	input[input_len - 1] = '\0';
 	ptr = input;
 	len = input_len;
-
-	if (ptr == NULL) {
-		err = -EOPNOTSUPP;
-		goto exit;
-	}
 
 	sscanf(ptr, "%16s", cmdname);
 	cmdlen = strlen(cmdname);

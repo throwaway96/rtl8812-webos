@@ -4558,6 +4558,8 @@ int rtw_resume_common(_adapter *padapter)
 	struct pwrctrl_priv *pwrpriv = adapter_to_pwrctl(padapter);
 	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
 
+	if (pwrpriv == NULL)
+		return 0;
 
 	if (pwrpriv->bInSuspend == _FALSE)
 		return 0;

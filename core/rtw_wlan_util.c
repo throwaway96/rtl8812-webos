@@ -4105,7 +4105,7 @@ bool rtw_wowlan_parser_pattern_cmd(u8 *input, char *pattern,
 	char *cp = NULL, *end = NULL;
 	size_t len = 0;
 	int pos = 0, mask_pos = 0, res = 0;
-	u8 member[2] = {0};
+	u8 member[3] = {0};
 
 	cp = strchr(input, '=');
 	if (cp) {
@@ -4132,6 +4132,7 @@ bool rtw_wowlan_parser_pattern_cmd(u8 *input, char *pattern,
 			u8 hex;
 
 			strncpy(member, input, len);
+			member[2] = '\0';
 			if (!rtw_check_pattern_valid(member, sizeof(member))) {
 				RTW_INFO("%s:[ERROR] pattern is invalid!!\n",
 					 __func__);
@@ -4719,7 +4720,7 @@ int rtw_lge_parse_country(_adapter *padapter, u8 *list_str)
 			strncpy(adapter_wdev_data(padapter)->country, "DC", 3);
 			adapter_wdev_data(padapter)->ccode_version = 0;
 		} else {
-			strncpy(adapter_wdev_data(padapter)->country, country, 3);
+			strncpy(adapter_wdev_data(padapter)->country, country, 2);
 			adapter_wdev_data(padapter)->ccode_version = rtw_atoi(ccode_ver);
 		}
 	}

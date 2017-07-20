@@ -3036,11 +3036,6 @@ bypass_vht_chk:
 	else
 		pstat->flags &= ~WLAN_STA_SHORT_PREAMBLE;
 
-
-
-	if (status != _STATS_SUCCESSFUL_)
-		goto OnAssocReqFail;
-
 #ifdef CONFIG_P2P
 	pstat->is_p2p_device = _FALSE;
 	if (rtw_p2p_chk_role(pwdinfo, P2P_ROLE_GO)) {
