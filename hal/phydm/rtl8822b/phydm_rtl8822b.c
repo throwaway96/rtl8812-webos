@@ -279,6 +279,11 @@ phydm_dynamic_ant_weighting_8822b(
 	} else {
 		set_result_nbi = phydm_nbi_setting(p_dm_odm, NBI_DISABLE, *p_dm_odm->p_channel, 20, 2440, PHYDM_DONT_CARE);
 	}
+	
+	if ((*p_dm_odm->p_band_width == ODM_BW20M) && (*p_dm_odm->p_channel == 11) && (p_dm_odm->rfe_type == 3)) {
+		odm_set_bb_reg(p_dm_odm, 0x830, BIT(13)|BIT(14)|BIT(15)|BIT(16), 0xa);
+	}
+
 }
 
 
