@@ -1216,7 +1216,7 @@ sint sta2sta_data_frame(
 			}
 		} else { /* not mc-frame */
 			/* For AP mode, if DA is non-MCAST, then it must be BSSID, and bssid == BSSID */
-			if (!_rtw_memcmp(pattrib->bssid, pattrib->dst, ETH_ALEN)) {
+			if (_rtw_memcmp(pattrib->bssid, pattrib->dst, ETH_ALEN) == _FALSE) {
 				ret = _FAIL;
 				goto exit;
 			}

@@ -10968,6 +10968,9 @@ static int rtw_priv_get(struct net_device *dev,
 	}
 
 	switch (subcmd) {
+	case MP_NULL:
+		/* passthrough */
+		break;
 #if defined(CONFIG_RTL8723B)
 	case MP_SetBT:
 		RTW_INFO("set MP_SetBT\n");

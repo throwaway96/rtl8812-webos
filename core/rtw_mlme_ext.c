@@ -15745,7 +15745,7 @@ u8 tdls_hdl(_adapter *padapter, unsigned char *pbuf)
 		u8 sta_band = 0;
 
 		/* leave ALL PS when TDLS is established */
-		rtw_pwr_wakeup(padapter);
+		(void) rtw_pwr_wakeup(padapter);
 
 		rtw_hal_set_hwreg(padapter, HW_VAR_TDLS_WRCR, 0);
 		RTW_INFO("Created Direct Link with "MAC_FMT"\n", MAC_ARG(ptdls_sta->hwaddr));

@@ -713,7 +713,9 @@ u8 rtw_get_tx_bw_bmp_of_vht_rate(struct dvobj_priv *dvobj, u8 rate, u8 max_bw)
 	u8 bw_bmp = 0;
 	u32 rate_bmp;
 
-	if (!IS_VHT_RATE(rate)) {
+	if (!IS_VHT_RATE(rate)
+		| IS_VHT4SS_RATE(rate) /* not support 4SS */
+		) {
 		rtw_warn_on(1);
 		goto exit;
 	}

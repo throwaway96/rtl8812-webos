@@ -226,14 +226,15 @@ struct ieee80211_supported_band *rtw_spt_band_alloc(
 
 	spt_band->channels = (struct ieee80211_channel *)(((u8 *)spt_band) + sizeof(struct ieee80211_supported_band));
 	spt_band->bitrates = (struct ieee80211_rate *)(((u8 *)spt_band->channels) + sizeof(struct ieee80211_channel) * n_channels);
-	spt_band->band = band;
 	spt_band->n_channels = n_channels;
 	spt_band->n_bitrates = n_bitrates;
 
 	if (band == NL80211_BAND_2GHZ) {
+		spt_band->band = NL80211_BAND_2GHZ;
 		rtw_2g_channels_init(spt_band->channels);
 		rtw_2g_rates_init(spt_band->bitrates);
 	} else if (band == NL80211_BAND_5GHZ) {
+		spt_band->band = NL80211_BAND_5GHZ;
 		rtw_5g_channels_init(spt_band->channels);
 		rtw_5g_rates_init(spt_band->bitrates);
 	}
@@ -599,7 +600,8 @@ void rtw_cfg80211_ibss_indicate_connect(_adapter *padapter)
 	RTW_INFO(FUNC_ADPT_FMT"\n", FUNC_ADPT_ARG(padapter));
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 15, 0))
-	freq = rtw_ch2freq(cur_network->network.Configuration.DSConfig);
+	if(cur_network)
+		freq = rtw_ch2freq(cur_network->network.Configuration.DSConfig);
 
 	if (0)
 		RTW_INFO("chan: %d, freq: %d\n", cur_network->network.Configuration.DSConfig, freq);
@@ -1792,11 +1794,11 @@ static int cfg80211_rtw_change_iface(struct wiphy *wiphy,
 		networkType = Ndis802_11IBSS;
 		break;
 
+	case NL80211_IFTYPE_STATION:
 	#if defined(CONFIG_P2P) && ((LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 37)) || defined(COMPAT_KERNEL_RELEASE))
 	case NL80211_IFTYPE_P2P_CLIENT:
 		is_p2p = _TRUE;
 	#endif
-	case NL80211_IFTYPE_STATION:
 		networkType = Ndis802_11Infrastructure;
 
 		#ifdef CONFIG_P2P
@@ -1816,11 +1818,11 @@ static int cfg80211_rtw_change_iface(struct wiphy *wiphy,
 
 		break;
 
+	case NL80211_IFTYPE_AP:
 	#if defined(CONFIG_P2P) && ((LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 37)) || defined(COMPAT_KERNEL_RELEASE))
 	case NL80211_IFTYPE_P2P_GO:
 		is_p2p = _TRUE;
 	#endif
-	case NL80211_IFTYPE_AP:
 		networkType = Ndis802_11APMode;
 
 		#ifdef CONFIG_P2P
@@ -3327,7 +3329,7 @@ static int cfg80211_rtw_disconnect(struct wiphy *wiphy, struct net_device *ndev,
 		rtw_free_assoc_resources(padapter, 1);
 		rtw_indicate_disconnect(padapter, 0, _TRUE);
 
-		rtw_pwr_wakeup(padapter);
+		(void) rtw_pwr_wakeup(padapter);
 	}
 
 #ifdef SUPPLICANT_RTK_VERSION_LOWER_THAN_JB42
@@ -3658,6 +3660,8 @@ static int rtw_cfg80211_monitor_if_xmit_entry(struct sk_buff *skb, struct net_de
 
 	if (skb)
 		rtw_mstat_update(MSTAT_TYPE_SKB, MSTAT_ALLOC_SUCCESS, skb->truesize);
+	else
+		goto fail;
 
 	if (unlikely(skb->len < sizeof(struct ieee80211_radiotap_header)))
 		goto fail;
@@ -3782,8 +3786,9 @@ dump:
 
 
 fail:
-
-	rtw_skb_free(skb);
+	if (skb) {
+		rtw_skb_free(skb);
+	}
 
 	return 0;
 
@@ -3954,7 +3959,8 @@ static int
 			rtw_p2p_enable(padapter, P2P_ROLE_DEVICE);
 		#endif
 		ndev = padapter->pnetdev;
-		wdev = ndev->ieee80211_ptr;
+		if (ndev != NULL)
+			wdev = ndev->ieee80211_ptr;
 		break;
 
 #if defined(CONFIG_P2P) && defined(RTW_DEDICATED_P2P_DEVICE)
@@ -6137,13 +6143,17 @@ static int cfg80211_rtw_tdls_oper(struct wiphy *wiphy,
 		return 0;
 	}
 
+	if (peer == NULL) {
+		RTW_WARN("%s: peer is NULL\n", __func__);
+		return 0;
+	}
+
 #ifdef CONFIG_LPS
 	rtw_lps_ctrl_wk_cmd(padapter, LPS_CTRL_LEAVE, 1);
 #endif /* CONFIG_LPS */
 
 	_rtw_memset(&txmgmt, 0x00, sizeof(struct tdls_txmgmt));
-	if (peer)
-		_rtw_memcpy(txmgmt.peer, peer, ETH_ALEN);
+	_rtw_memcpy(txmgmt.peer, peer, ETH_ALEN);
 
 	if (rtw_tdls_is_driver_setup(padapter)) {
 		/* these two cases are done by driver itself */

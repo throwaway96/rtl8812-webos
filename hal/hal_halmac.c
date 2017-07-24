@@ -1208,7 +1208,9 @@ static inline HALMAC_RF_TYPE _rf_type_drv2halmac(RT_RF_TYPE_DEF_E rf_drv)
 		rf_mac = HALMAC_RF_4T4R;
 		break;
 	default:
-		rf_mac = (HALMAC_RF_TYPE)rf_drv;
+		/* defaul will set to HALMAC_RF_1T1R */
+		rf_mac = HALMAC_RF_1T1R;
+		RTW_ERR("%s: Invalid RF type (0x%x)!\n", __func__, rf_drv);
 		break;
 	}
 

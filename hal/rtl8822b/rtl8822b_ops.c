@@ -2981,6 +2981,7 @@ void rtl8822b_sethwreg(PADAPTER adapter, u8 variable, u8 *val)
 			val8 &= (~BIT6);
 			rtw_write8(adapter, REG_MISC_CTRL_8822B, val8);
 		}
+		break;
 
 	default:
 		SetHwReg(adapter, variable, val);

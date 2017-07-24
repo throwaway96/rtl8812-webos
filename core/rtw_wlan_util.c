@@ -3665,6 +3665,7 @@ void rtw_alloc_macid(_adapter *padapter, struct sta_info *psta)
 	/* static u8 last_id = 0;  for testing */
 	u8 last_id = 0;
 	u8 is_bc_sta = _FALSE;
+	u8 rsvd_maicd[MACID_NUM_SW_LIMIT] = {0};
 
 	if (_rtw_memcmp(psta->hwaddr, adapter_mac_addr(padapter), ETH_ALEN)) {
 		psta->mac_id = macid_ctl->num;
@@ -3695,23 +3696,22 @@ void rtw_alloc_macid(_adapter *padapter, struct sta_info *psta)
 	}
 #endif
 
-	_enter_critical_bh(&macid_ctl->lock, &irqL);
-
-	for (i = last_id; i < macid_ctl->num; i++) {
 #ifdef CONFIG_SHARED_BMC_MACID
-		if (i == 1)
-			continue;
+	rsvd_maicd[1] = _TRUE;
 #endif
 
 #ifdef CONFIG_MCC_MODE
-		/* macid 0/1 reserve for mcc for mgnt queue macid */
-		if (MCC_EN(padapter)) {
-			if (i == MCC_ROLE_STA_GC_MGMT_QUEUE_MACID)
-				continue;
-			if (i == MCC_ROLE_SOFTAP_GO_MGMT_QUEUE_MACID)
-				continue;
-		}
+	/* macid 0/1 reserve for mcc for mgnt queue macid */
+	rsvd_maicd[MCC_ROLE_STA_GC_MGMT_QUEUE_MACID] = _TRUE;
+	rsvd_maicd[MCC_ROLE_SOFTAP_GO_MGMT_QUEUE_MACID] = _TRUE;
 #endif /* CONFIG_MCC_MODE */
+
+	_enter_critical_bh(&macid_ctl->lock, &irqL);
+
+	for (i = last_id; i < macid_ctl->num; i++) {
+
+		if (rsvd_maicd[i] == _TRUE)
+			continue;
 
 		if (is_bc_sta) {/*for SoftAP's Broadcast sta-info*/
 			/*TODO:non-security AP may allociated macid = 1*/
@@ -4249,6 +4249,7 @@ u8 rtw_set_default_pattern(_adapter *adapter)
 				    &unicast_mask, sizeof(unicast_mask));
 			pwrpriv->patterns[index].len = IP_OFFSET + sizeof(currentip);
 			break;
+#ifdef CONFIG_PLATFORM_ANDROID_INTEL_X86
 		case 2:
 			_rtw_memcpy(pwrpriv->patterns[index].content, &multicast_addr,
 				    sizeof(multicast_addr));
@@ -4263,6 +4264,7 @@ u8 rtw_set_default_pattern(_adapter *adapter)
 			pwrpriv->patterns[index].len =
 				IP_OFFSET + sizeof(multicast_ip);
 			break;
+#endif /* CONFIG_PLATFORM_ANDROID_INTEL_X86 */
 		}
 	}
 

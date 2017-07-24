@@ -1167,6 +1167,8 @@ void rtl8822b_switch_chnl_and_set_bw_by_drv(PADAPTER adapter)
 
 	/* 3. set Bandwidth register */
 	if (hal->bSetChnlBW) {
+		enum odm_bw_e odm_tmp_bw;
+
 		/* get primary channel index */
 		u8 pri_ch_idx = get_pri_ch_id(adapter);
 
@@ -1174,7 +1176,26 @@ void rtl8822b_switch_chnl_and_set_bw_by_drv(PADAPTER adapter)
 		mac_switch_bandwidth(adapter, pri_ch_idx);
 
 		/* 3.2 set BB/RF registet */
-		ret = config_phydm_switch_bandwidth_8822b(p_dm_odm, pri_ch_idx, hal->current_channel_bw);
+
+		switch(hal->current_channel_bw) {
+		case CHANNEL_WIDTH_20:
+			odm_tmp_bw = ODM_BW20M;
+			break;
+		case CHANNEL_WIDTH_40:
+			odm_tmp_bw = ODM_BW40M;
+			break;
+		case CHANNEL_WIDTH_80:
+			odm_tmp_bw = ODM_BW80M;
+			break;
+		case CHANNEL_WIDTH_160:
+			odm_tmp_bw = ODM_BW160M;
+			break;
+		default:
+			odm_tmp_bw = ODM_BW20M;
+			break;
+		}
+
+		ret = config_phydm_switch_bandwidth_8822b(p_dm_odm, pri_ch_idx, odm_tmp_bw);
 		hal->bSetChnlBW = _FALSE;
 
 		if (!ret) {

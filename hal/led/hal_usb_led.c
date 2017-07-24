@@ -101,13 +101,9 @@ SwLedBlink(
 			_set_timer(&(pLed->BlinkTimer), LED_BLINK_SLOWLY_INTERVAL);
 			break;
 
-		case LED_BLINK_WPS: {
-			if (pLed->BlinkingLedState == RTW_LED_ON)
-				_set_timer(&(pLed->BlinkTimer), LED_BLINK_LONG_INTERVAL);
-			else
-				_set_timer(&(pLed->BlinkTimer), LED_BLINK_LONG_INTERVAL);
-		}
-		break;
+		case LED_BLINK_WPS:
+			_set_timer(&(pLed->BlinkTimer), LED_BLINK_LONG_INTERVAL);
+			break;
 
 		default:
 			_set_timer(&(pLed->BlinkTimer), LED_BLINK_SLOWLY_INTERVAL);
@@ -553,7 +549,7 @@ SwLedBlink4(
 		if (pLed->BlinkTimes == 0)
 			bStopBlinking = _FALSE;
 
-		if (bStopBlinking) {
+		if ( _FALSE /* bStopBlinking */) {
 			if (adapter_to_pwrctl(padapter)->rf_pwrstate != rf_on && adapter_to_pwrctl(padapter)->rfoff_reason > RF_CHANGE_BY_PS)
 				SwLedOff(padapter, pLed);
 			else {

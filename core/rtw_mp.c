@@ -2120,6 +2120,8 @@ u32 mp_query_psd(PADAPTER pAdapter, u8 *data)
 
 	data[0] = '\0';
 
+	if (psd_stop > 1536) psd_stop = 1536;
+
 	i = psd_start;
 	while (i < psd_stop) {
 		if (i >= psd_pts)
@@ -2128,6 +2130,8 @@ u32 mp_query_psd(PADAPTER pAdapter, u8 *data)
 			psd_data = rtw_GetPSDData(pAdapter, i);
 		sprintf(data, "%s%x ", data, psd_data);
 		i++;
+
+		if (i > psd_stop) break;
 	}
 
 #ifdef CONFIG_LONG_DELAY_ISSUE

@@ -1125,8 +1125,6 @@ config_phydm_switch_channel_8822b(
 		rf_reg_be = middle_band[(central_ch - 100) >> 1];
 	else if ((central_ch >= 149) && (central_ch <= 177))
 		rf_reg_be = high_band[(central_ch - 149) >> 1];
-	else
-		rf_reg_be = 0xff;
 
 	if (rf_reg_be != 0xff)
 		rf_reg_status = rf_reg_status & config_phydm_write_rf_reg_8822b(p_dm_odm, ODM_RF_PATH_A, 0xbe, (BIT(17) | BIT(16) | BIT(15)), rf_reg_be);

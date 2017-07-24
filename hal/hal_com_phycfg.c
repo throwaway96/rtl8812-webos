@@ -2985,8 +2985,7 @@ static s8 _phy_get_txpwr_lmt(
 
 			tmp_lmt = (regulation == TXPWR_LMT_WW) ? phy_GetWorldWideLimit(limits) :
 				hal_data->TxPwrLimit_5G[regulation][bw][rs][ch_idx][RfPath];
-		} else
-			continue;
+		}
 
 		if (min_lmt >= tmp_lmt) {
 			min_lmt = tmp_lmt;

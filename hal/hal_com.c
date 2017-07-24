@@ -3069,8 +3069,9 @@ void rtw_set_p2p_ps_offload_cmd(_adapter *adapter, u8 p2p_ps_state)
 		break;
 
 	case P2P_PS_SCAN:
-		/*This feature FW not ready 20161116 YiWei*/
+#if 1 /*This feature FW not ready 20161116 YiWei*/
 		return;
+#else
 		RTW_INFO("P2P_PS_SCAN\n");
 		(&p2p_ps_para)->discovery = 1;
 		/*
@@ -3080,11 +3081,13 @@ void rtw_set_p2p_ps_offload_cmd(_adapter *adapter, u8 p2p_ps_state)
 		(&p2p_ps_para)->noa_start_time_para = pwdinfo->noa_start_time[0];
 		(&p2p_ps_para)->noa_count_para = pwdinfo->noa_count[0];
 		*/
+#endif
 		break;
 
 	case P2P_PS_SCAN_DONE:
-		/*This feature FW not ready 20161116 YiWei*/
+#if 1 /*This feature FW not ready 20161116 YiWei*/
 		return;
+#else
 		RTW_INFO("P2P_PS_SCAN_DONE\n");
 		(&p2p_ps_para)->discovery = 0;
 		/*
@@ -3095,6 +3098,7 @@ void rtw_set_p2p_ps_offload_cmd(_adapter *adapter, u8 p2p_ps_state)
 		(&p2p_ps_para)->noa_start_time_para = pwdinfo->noa_start_time[0];
 		(&p2p_ps_para)->noa_count_para = pwdinfo->noa_count[0];
 		*/
+#endif
 		break;
 
 	default:
@@ -8036,12 +8040,9 @@ static void rtw_hal_wow_disable(_adapter *adapter)
 	#endif
 
 #ifdef CONFIG_GTK_OL
-	if (((pwrctl->wowlan_wake_reason != RX_DISASSOC) ||
-		(pwrctl->wowlan_wake_reason != RX_DEAUTH) ||
-		(pwrctl->wowlan_wake_reason != FW_DECISION_DISCONNECT)) &&
-		psecuritypriv->binstallKCK_KEK == _TRUE &&
-		psecuritypriv->dot11PrivacyAlgrthm == _AES_ &&
-		psecuritypriv->dot118021XGrpPrivacy == _AES_) {
+	if ((pwrctl->wowlan_wake_reason != RX_DISASSOC) &&
+		(pwrctl->wowlan_wake_reason != RX_DEAUTH) &&
+		(pwrctl->wowlan_wake_reason != FW_DECISION_DISCONNECT)) {
 		rtw_hal_get_aoac_rpt(adapter);
 		rtw_hal_update_sw_security_info(adapter);
 	}
@@ -9798,7 +9799,7 @@ u8 rtw_get_current_txpwr(_adapter *padapter, u8 macid)
 
 	current_rate_id = rtw_get_current_tx_rate(padapter, macid);
 
-	if (DESC_RATE1M <=current_rate_id && current_rate_id <= DESC_RATE11M) {
+	if (current_rate_id <= DESC_RATE11M) {
 
 		index = current_rate_id;
 		current_txpwr = cck[index];

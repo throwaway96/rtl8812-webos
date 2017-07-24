@@ -156,7 +156,7 @@ int usbctrl_vendorreq(struct intf_hdl *pintfhdl, u8 request, u16 value, u16 inde
 			u16 t_reg = 0;
 			u16 t_index = 0;
 
-			if (0x00 <= value && value <= 0xff)
+			if (value <= 0xff)
 				t_reg = 0xe1;
 			else if (0x1000 <= value && value <= 0x10ff)
 				t_reg = 0xe1;

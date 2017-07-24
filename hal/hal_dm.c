@@ -305,7 +305,7 @@ void rtw_hal_turbo_edca(_adapter *adapter)
 	}
 
 	/* Check if the status needs to be changed. */
-	if ((bbtchange) || (!precvpriv->is_any_non_be_pkts)) {
+	if (bbtchange) {
 		cur_tx_bytes = dvobj->traffic_stat.cur_tx_bytes;
 		cur_rx_bytes = dvobj->traffic_stat.cur_rx_bytes;
 
@@ -382,16 +382,6 @@ void rtw_hal_turbo_edca(_adapter *adapter)
 		}
 
 		hal_data->is_turbo_edca = _TRUE;
-	} else {
-		/*  */
-		/* Turn Off EDCA turbo here. */
-		/* Restore original EDCA according to the declaration of AP. */
-		/*  */
-		if (hal_data->is_turbo_edca) {
-			edca_param = hal_data->ac_param_be;
-			rtw_hal_set_hwreg(adapter, HW_VAR_AC_PARAM_BE, (u8 *)(&edca_param));
-			hal_data->is_turbo_edca = _FALSE;
-		}
 	}
 
 }
