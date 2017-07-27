@@ -402,6 +402,7 @@ void rtl8822b_set_FwPwrMode_cmd(PADAPTER adapter, u8 psmode)
 	int i;
 	u8 smart_ps = 0, mode = 0;
 	struct pwrctrl_priv *pwrpriv = adapter_to_pwrctl(adapter);
+	struct mlme_priv *pmlmepriv = &adapter->mlmepriv;
 	struct mlme_ext_priv *pmlmeext = &adapter->mlmeextpriv;
 	u8 h2c[RTW_HALMAC_H2C_MAX_SIZE] = {0};
 	u8 PowerState = 0, awake_intvl = 1, byte5 = 0, rlbm = 0;
@@ -409,6 +410,12 @@ void rtl8822b_set_FwPwrMode_cmd(PADAPTER adapter, u8 psmode)
 	struct wifidirect_info *wdinfo = &adapter->wdinfo;
 #endif /* CONFIG_P2P */
 
+#ifdef CONFIG_RTW_ONE_PIN_GPIO
+	if (!check_fwstate(pmlmepriv, _FW_LINKED)) {
+		RTW_INFO("%s, disconnect case\n", __func__);
+		return;
+	}
+#endif /* CONFIG_RTW_ONE_PIN_GPIO */
 
 	if (pwrpriv->dtim > 0)
 		RTW_INFO(FUNC_ADPT_FMT ": FW LPS mode = %d, SmartPS=%d, dtim=%d, HW port id=%d\n",
@@ -586,6 +593,19 @@ void rtl8822b_set_FwPwrModeInIPS_cmd(PADAPTER adapter, u8 cmd_param)
 
 	RTW_DBG_DUMP("H2C-FwPwrModeInIPS Parm:", h2c, RTW_HALMAC_H2C_MAX_SIZE);
 	rtw_halmac_send_h2c(adapter_to_dvobj(adapter), h2c);
+}
+
+void rtl8822b_set_FwPwrModeInIPS_cmd_wowlan(PADAPTER padapter, u8 ps_mode)
+{
+	u8 param[H2C_INACTIVE_PS_LEN] = {0};
+
+	RTW_INFO("%s, ps_mode: %d\n", __func__, ps_mode);
+	if (ps_mode == PS_MODE_ACTIVE)
+		SET_H2CCMD_INACTIVE_PS_EN(param, 0);
+	else
+		SET_H2CCMD_INACTIVE_PS_EN(param, 1);
+
+	rtl8822b_fillh2ccmd(padapter, H2C_INACTIVE_PS_, sizeof(param), param);
 }
 
 static s32 rtl8822b_set_FwLowPwrLps_cmd(PADAPTER adapter, u8 enable)

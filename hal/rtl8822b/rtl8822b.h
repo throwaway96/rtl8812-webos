@@ -105,6 +105,7 @@ void rtl8822b_set_FwMacIdConfig_cmd(PADAPTER , u64 bitmap, u8 *arg, u8 bw);
 void rtl8822b_set_FwRssiSetting_cmd(PADAPTER, u8 *param);
 void rtl8822b_set_FwPwrMode_cmd(PADAPTER, u8 psmode);
 void rtl8822b_set_FwPwrModeInIPS_cmd(PADAPTER adapter, u8 cmd_param);
+void rtl8822b_set_FwPwrModeInIPS_cmd_wowlan(PADAPTER padapter, u8 ps_mode);
 void rtl8822b_req_txrpt_cmd(PADAPTER, u8 macid);
 void rtl8822b_fw_update_beacon_cmd(PADAPTER);
 void rtl8822b_c2h_handler(PADAPTER, u8 *pbuf, u16 length);

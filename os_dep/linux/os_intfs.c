@@ -374,6 +374,12 @@ char *rtw_initmac = 0;  /* temp mac address if users want to use instead of the 
 	#endif
 
 #endif
+#ifdef CONFIG_RTW_ONE_PIN_GPIO
+int rtw_wowlan_sta_mix_mode = 1;
+#else
+int rtw_wowlan_sta_mix_mode = 0;
+#endif /* CONFIG_RTW_ONE_PIN_GPIO */
+module_param(rtw_wowlan_sta_mix_mode, int, 0644);
 
 module_param(rtw_pwrtrim_enable, int, 0644);
 module_param(rtw_initmac, charp, 0644);
@@ -1056,6 +1062,7 @@ uint loadparam(_adapter *padapter)
 #ifdef CONFIG_SUPPORT_TRX_SHARED
 	registry_par->trx_share_mode = rtw_trx_share_mode;
 #endif
+	registry_par->wowlan_sta_mix_mode = rtw_wowlan_sta_mix_mode;
 
 #ifdef CONFIG_PCI_HCI
 	registry_par->pci_aspm_config = rtw_pci_aspm_enable;
@@ -4115,17 +4122,20 @@ int rtw_suspend_common(_adapter *padapter)
 
 	rtw_ps_deny_cancel(padapter, PS_DENY_SUSPEND);
 
-	if (rtw_mi_check_status(padapter, MI_AP_MODE) == _FALSE) {
+	if (rtw_mi_check_status(padapter, MI_AP_MODE) == _FALSE
+#ifdef CONFIG_RTW_ONE_PIN_GPIO
+		||WOWLAN_IS_STA_MIX_MODE(padapter)
+#endif /* CONFIG_RTW_ONE_PIN_GPIO */
+	) {
 #ifdef CONFIG_WOWLAN
-		if (check_fwstate(pmlmepriv, _FW_LINKED))
+		if (check_fwstate(pmlmepriv, _FW_LINKED)
+#ifdef CONFIG_RTW_ONE_PIN_GPIO
+			||WOWLAN_IS_STA_MIX_MODE(padapter)
+#endif /* CONFIG_RTW_ONE_PIN_GPIO */
+		)
 			pwrpriv->wowlan_mode = _TRUE;
 		else if (pwrpriv->wowlan_pno_enable == _TRUE)
 			pwrpriv->wowlan_mode |= pwrpriv->wowlan_pno_enable;
-
-#ifdef LGE_PRIVATE
-		if (adapter_wdev_data(padapter)->idle_mode == _TRUE) 
-			pwrpriv->wowlan_mode = _FALSE;
-#endif /* LGE_PRIVATE */
 
 #ifdef CONFIG_P2P_WOWLAN
 		if (!rtw_p2p_chk_state(&padapter->wdinfo, P2P_STATE_NONE) || P2P_ROLE_DISABLE != padapter->wdinfo.role)
@@ -4591,14 +4601,12 @@ int rtw_resume_common(_adapter *padapter)
 #endif
 	}
 
-#ifdef CONFIG_RTW_ONE_PIN_GPIO
 #ifdef LGE_PRIVATE
 	adapter_wdev_data(padapter)->wowl = _FALSE;
 	adapter_wdev_data(padapter)->wowl_activate = _FALSE;
 	adapter_wdev_data(padapter)->idle_mode = _FALSE;
 	adapter_wdev_data(padapter)->block_scan = _FALSE;
 #endif /* LGE_PRIVATE */
-#endif /* CONFIG_RTW_ONE_PIN_GPIO */
 
 	RTW_PRINT("%s:%d in %d ms\n", __FUNCTION__ , ret,
 		  rtw_get_passing_time_ms(start_time));

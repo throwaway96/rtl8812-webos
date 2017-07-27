@@ -2559,6 +2559,9 @@ void rtl8822b_sethwreg(PADAPTER adapter, u8 variable, u8 *val)
 	case HW_VAR_H2C_PS_TUNE_PARAM:
 		break;
 */
+	case HW_VAR_H2C_INACTIVE_IPS:
+		rtl8822b_set_FwPwrModeInIPS_cmd_wowlan(adapter, *val);
+		break;
 	case HW_VAR_H2C_FW_JOINBSSRPT:
 		hw_var_set_h2c_fw_joinbssrpt(adapter, *val);
 		break;

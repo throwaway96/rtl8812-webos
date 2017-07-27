@@ -4026,6 +4026,12 @@ static u8 rtw_hal_set_wowlan_ctrl_cmd(_adapter *adapter, u8 enable, u8 change_un
 	sdio_wakeup_enable = 0;
 #endif /* CONFIG_GPIO_WAKEUP */
 
+#ifdef CONFIG_RTW_ONE_PIN_GPIO
+	if(adapter_wdev_data(adapter)->wowl == _FALSE) {
+		magic_pkt = 0;
+		discont_wake = 0;
+	}
+#endif/* CONFIG_RTW_ONE_PIN_GPIO */
 #if 0 /* magic key only */
 	if (!ppwrpriv->wowlan_pno_enable)
 		magic_pkt = enable;
@@ -4118,7 +4124,9 @@ static u8 rtw_hal_set_remote_wake_ctrl_cmd(_adapter *adapter, u8 enable)
 	u8 ret = _FAIL, count = 0;
 
 	RTW_INFO("%s(): enable=%d\n", __func__, enable);
-
+#ifdef CONFIG_RTW_ONE_PIN_GPIO
+	if(adapter_wdev_data(adapter)->wowl == _TRUE) {
+#endif /* CONFIG_RTW_ONE_PIN_GPIO */
 	if (!ppwrpriv->wowlan_pno_enable) {
 		SET_H2CCMD_REMOTE_WAKECTRL_ENABLE(
 			u1H2CRemoteWakeCtrlParm, enable);
@@ -4186,6 +4194,12 @@ static u8 rtw_hal_set_remote_wake_ctrl_cmd(_adapter *adapter, u8 enable)
 			u1H2CRemoteWakeCtrlParm, enable);
 	}
 #endif
+#ifdef CONFIG_RTW_ONE_PIN_GPIO
+	} else {
+		SET_H2CCMD_REMOTE_WAKECTRL_ENABLE(
+				u1H2CRemoteWakeCtrlParm, enable);
+	}
+#endif /* CONFIG_RTW_ONE_PIN_GPIO */
 
 #ifdef CONFIG_P2P_WOWLAN
 	if (_TRUE == ppwrpriv->wowlan_p2p_mode) {
@@ -4273,11 +4287,17 @@ void rtw_hal_set_fw_wow_related_cmd(_adapter *padapter, u8 enable)
 	rtw_hal_set_wowlan_ctrl_cmd(padapter, enable, _FALSE);
 
 	if (enable) {
+#ifdef CONFIG_RTW_ONE_PIN_GPIO
+		if(adapter_wdev_data(padapter)->wowl == _TRUE)
+#endif /* CONFIG_RTW_ONE_PIN_GPIO */
 		rtw_hal_set_global_info_cmd(padapter,
 					    psecpriv->dot118021XGrpPrivacy,
 					    psecpriv->dot11PrivacyAlgrthm);
 
 		if (!(ppwrpriv->wowlan_pno_enable)) {
+#ifdef CONFIG_RTW_ONE_PIN_GPIO
+			if(adapter_wdev_data(padapter)->wowl == _TRUE)
+#endif /* CONFIG_RTW_ONE_PIN_GPIO */
 			rtw_hal_set_disconnect_decision_cmd(padapter, enable);
 #ifdef CONFIG_ARP_KEEP_ALIVE
 			if ((psecpriv->dot11PrivacyAlgrthm == _WEP40_) ||
@@ -4288,6 +4308,9 @@ void rtw_hal_set_fw_wow_related_cmd(_adapter *padapter, u8 enable)
 #else
 			pkt_type = 0;
 #endif /* CONFIG_ARP_KEEP_ALIVE */
+#ifdef CONFIG_RTW_ONE_PIN_GPIO
+			if(adapter_wdev_data(padapter)->wowl == _TRUE)
+#endif /* CONFIG_RTW_ONE_PIN_GPIO */
 			rtw_hal_set_keep_alive_cmd(padapter, enable, pkt_type);
 		}
 		rtw_hal_set_remote_wake_ctrl_cmd(padapter, enable);
@@ -7865,7 +7888,14 @@ static void rtw_hal_wow_enable(_adapter *adapter)
 	rtw_hal_dl_pattern(adapter, 1);
 
 	rtw_hal_fw_dl(adapter, _TRUE);
+#ifdef CONFIG_RTW_ONE_PIN_GPIO
+	if(adapter_wdev_data(adapter)->wowl == _TRUE)
+#endif /* CONFIG_RTW_ONE_PIN_GPIO */
 	media_status_rpt = RT_MEDIA_CONNECT;
+#ifdef CONFIG_RTW_ONE_PIN_GPIO
+	else
+		media_status_rpt = RT_MEDIA_DISCONNECT;
+#endif /* CONFIG_RTW_ONE_PIN_GPIO */
 	rtw_hal_set_hwreg(adapter, HW_VAR_H2C_FW_JOINBSSRPT,
 			  (u8 *)&media_status_rpt);
 
@@ -7876,8 +7906,14 @@ static void rtw_hal_wow_enable(_adapter *adapter)
 			#ifdef CONFIG_FW_MULTI_PORT_SUPPORT
 			rtw_hal_set_default_port_id_cmd(adapter, psta->mac_id);
 			#endif
-
+#ifdef CONFIG_RTW_ONE_PIN_GPIO
+			if(adapter_wdev_data(adapter)->wowl == _TRUE)
+#endif /* CONFIG_RTW_ONE_PIN_GPIO */
 			rtw_sta_media_status_rpt(adapter, psta, 1);
+#ifdef CONFIG_RTW_ONE_PIN_GPIO
+			else
+				rtw_sta_media_status_rpt(adapter, psta, 0);
+#endif /* CONFIG_RTW_ONE_PIN_GPIO */
 		}
 	}
 

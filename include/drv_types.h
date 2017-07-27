@@ -419,7 +419,7 @@ struct registry_priv {
 	u8 trx_share_mode;
 #endif
 	u8 check_hw_status;
-
+	u8 wowlan_sta_mix_mode;
 	u32 pci_aspm_config;
 
 #ifdef CONFIG_TDLS
@@ -444,6 +444,9 @@ struct registry_priv {
 #define GetRegRFEType(_Adapter)	(_Adapter->registrypriv.RFE_Type)
 #define GetRegGLNAType(_Adapter)	(_Adapter->registrypriv.GLNA_Type)
 #define GetRegPowerTrackingType(_Adapter)	(_Adapter->registrypriv.PowerTracking_Type)
+
+#define WOWLAN_IS_STA_MIX_MODE(_Adapter) \
+	(_Adapter->registrypriv.wowlan_sta_mix_mode)
 
 #define BSSID_OFT(field) ((ULONG)FIELD_OFFSET(WLAN_BSSID_EX, field))
 #define BSSID_SZ(field)   sizeof(((PWLAN_BSSID_EX) 0)->field)

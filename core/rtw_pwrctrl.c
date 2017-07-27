@@ -904,6 +904,12 @@ void rtw_set_ps_mode(PADAPTER padapter, u8 ps_mode, u8 smart_ps, u8 bcn_ant_mode
 				rtw_hal_set_hwreg(padapter, HW_VAR_LPS_PG_HANDLE, (u8 *)(&lps_pg_hdl_id));
 			}
 #endif
+#ifdef CONFIG_RTW_ONE_PIN_GPIO
+			if(adapter_wdev_data(padapter)->wowl == _FALSE)
+				rtw_hal_set_hwreg(padapter, HW_VAR_H2C_INACTIVE_IPS,
+					(u8 *)(&ps_mode));
+			if(adapter_wdev_data(padapter)->wowl == _TRUE)
+#endif /* CONFIG_RTW_ONE_PIN_GPIO */
 			rtw_hal_set_hwreg(padapter, HW_VAR_H2C_FW_PWRMODE, (u8 *)(&ps_mode));
 
 #ifdef CONFIG_LPS_PG
@@ -933,6 +939,9 @@ void rtw_set_ps_mode(PADAPTER padapter, u8 ps_mode, u8 smart_ps, u8 bcn_ant_mode
 #ifdef CONFIG_P2P_WOWLAN
 		    || (_TRUE == pwrpriv->wowlan_p2p_mode)
 #endif /* CONFIG_P2P_WOWLAN */
+#ifdef CONFIG_RTW_ONE_PIN_GPIO
+			|| WOWLAN_IS_STA_MIX_MODE(padapter)
+#endif /* CONFIG_RTW_ONE_PIN_GPIO */
 		   ) {
 			u8 pslv;
 
@@ -971,8 +980,15 @@ void rtw_set_ps_mode(PADAPTER padapter, u8 ps_mode, u8 smart_ps, u8 bcn_ant_mode
 			pwrpriv->pwr_mode = ps_mode;
 			pwrpriv->smart_ps = smart_ps;
 			pwrpriv->bcn_ant_mode = bcn_ant_mode;
+#ifdef CONFIG_RTW_ONE_PIN_GPIO
+			if(adapter_wdev_data(padapter)->wowl == _TRUE)
+#endif /* CONFIG_RTW_ONE_PIN_GPIO */
 			rtw_hal_set_hwreg(padapter, HW_VAR_H2C_FW_PWRMODE, (u8 *)(&ps_mode));
-
+#ifdef CONFIG_RTW_ONE_PIN_GPIO
+			if(adapter_wdev_data(padapter)->wowl == _FALSE)
+				rtw_hal_set_hwreg(padapter, HW_VAR_H2C_INACTIVE_IPS,
+					(u8 *)(&ps_mode));
+#endif /* CONFIG_RTW_ONE_PIN_GPIO */
 #ifdef CONFIG_P2P_PS
 			/* Set CTWindow after LPS */
 			if (pwdinfo->opp_ps == 1)

@@ -344,6 +344,21 @@ s32 rtw_hal_customer_str_write(_adapter *adapter, const u8 *cs);
 #define SET_H2CCMD_AP_WOW_PS_RF(__pH2CCmd, __Value)			SET_BITS_TO_LE_1BYTE(__pH2CCmd, 2, 1, __Value)
 #define SET_H2CCMD_AP_WOW_PS_DURATION(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE((__pH2CCmd)+1, 0, 8, __Value)
 
+/* INACTIVE_PS 0x27, duration unit is TBTT */
+#define SET_H2CCMD_INACTIVE_PS_EN(__pH2CCmd, __Value) \
+	SET_BITS_TO_LE_1BYTE(__pH2CCmd, 0, 1, __Value)
+#define SET_H2CCMD_INACTIVE_IGNORE_PS(__pH2CCmd, __Value) \
+	SET_BITS_TO_LE_1BYTE(__pH2CCmd, 1, 1, __Value)
+#define SET_H2CCMD_INACTIVE_PERIOD_SCAN_EN(__pH2CCmd, __Value) \
+	SET_BITS_TO_LE_1BYTE(__pH2CCmd, 2, 1, __Value)
+#define SET_H2CCMD_INACTIVE_PS_FREQ(__pH2CCmd, __Value) \
+	SET_BITS_TO_LE_1BYTE(__pH2CCmd + 1, 0, 8, __Value)
+#define SET_H2CCMD_INACTIVE_PS_DURATION(__pH2CCmd, __Value) \
+	SET_BITS_TO_LE_1BYTE(__pH2CCmd + 2, 0, 8, __Value)
+#define SET_H2CCMD_INACTIVE_PS_PERIOD_SCAN_TIME(__pH2CCmd, __Value) \
+	SET_BITS_TO_LE_1BYTE(__pH2CCmd + 3, 0, 8, __Value)
+
+
 #ifdef CONFIG_LPS_POFF
 /*PARTIAL OFF Control 0x29*/
 #define SET_H2CCMD_LPS_POFF_CTRL_EN(__pH2CCmd, __Value) \
