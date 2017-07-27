@@ -4340,7 +4340,12 @@ static void rx_process_rssi(_adapter *padapter, union recv_frame *prframe)
 		}
 
 		signal_stat->total_num++;
-		signal_stat->total_val  += pattrib->phy_info.SignalStrength;
+
+		if (pattrib->phy_info.SignalStrength > (signal_stat->avg_val - 9))
+			signal_stat->total_val  += pattrib->phy_info.SignalStrength;
+		else
+			signal_stat->total_val = signal_stat->total_val + (signal_stat->avg_val - 9);
+
 		signal_stat->avg_val = signal_stat->total_val / signal_stat->total_num;
 #else /* CONFIG_NEW_SIGNAL_STAT_PROCESS */
 
