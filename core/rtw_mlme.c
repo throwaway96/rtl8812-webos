@@ -1441,7 +1441,7 @@ void rtw_free_assoc_resources(_adapter *adapter, int lock_scanned_queue)
 #endif /* CONFIG_TDLS */
 
 
-	RTW_INFO("%s-"ADPT_FMT" tgt_network MacAddress=" MAC_FMT"ssid=%s\n",
+	RTW_INFO("%s-"ADPT_FMT" tgt_network MacAddress=" MAC_FMT" ssid=%s\n",
 		__func__, ADPT_ARG(adapter), MAC_ARG(tgt_network->network.MacAddress), tgt_network->network.Ssid.Ssid);
 
 	if (check_fwstate(pmlmepriv, WIFI_STATION_STATE)) {

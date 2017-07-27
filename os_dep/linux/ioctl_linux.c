@@ -7861,9 +7861,9 @@ static int rtw_hostapd_sta_flush(struct net_device *dev)
 	RTW_INFO("%s\n", __FUNCTION__);
 
 	flush_all_cam_entry(padapter);	/* clear CAM */
-
+#ifdef CONFIG_AP_MODE
 	ret = rtw_sta_flush(padapter, _TRUE);
-
+#endif
 	return ret;
 
 }

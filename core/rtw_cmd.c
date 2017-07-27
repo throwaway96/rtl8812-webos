@@ -1765,6 +1765,10 @@ u8 rtw_clearstakey_cmd(_adapter *padapter, struct sta_info *sta, u8 enqueue)
 	s16 cam_id = 0;
 	u8	res = _SUCCESS;
 
+	if (!sta) {
+		RTW_ERR("%s sta == NULL\n", __func__);
+		goto exit;
+	}
 
 	if (!enqueue) {
 		while ((cam_id = rtw_camid_search(padapter, sta->hwaddr, -1, -1)) >= 0) {
