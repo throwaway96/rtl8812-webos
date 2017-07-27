@@ -105,6 +105,21 @@ u32 cca_ifem_ccut_rfetype3[12][4] = {
 	{0x00000000, 0x00000000, 0x00000000, 0x00000000}
 }; /*Reg83C*/
 
+u32
+phydm_check_bit_mask(u32 bit_mask, u32 data_original, u32 data)
+{
+	u8 bit_shift;
+	if (bit_mask != 0xfffff) {
+		for (bit_shift = 0; bit_shift <= 19; bit_shift++) {
+			if (((bit_mask >> bit_shift) & 0x1) == 1)
+				break;
+		}
+		return ((data_original)&(~bit_mask)) | (data << bit_shift);
+	}
+
+	return data;
+}
+
 boolean
 phydm_rfe_8822b(
 	struct PHY_DM_STRUCT				*p_dm_odm,
@@ -767,13 +782,6 @@ config_phydm_read_rf_reg_8822b(
 		return INVALID_RF_DATA;
 	}
 
-	/*  Error handling. Check if RF power is enable or not */
-	/*  0xffffffff means RF power is disable */
-	if (!phydm_check_rf_power(p_dm_odm, rf_path)) {
-		ODM_RT_TRACE(p_dm_odm, ODM_PHY_CONFIG, ODM_DBG_TRACE, ("config_phydm_read_rf_reg_8822b(): Read fail, RF is disabled\n"));
-		return INVALID_RF_DATA;
-	}
-
 	/* Calculate offset */
 	reg_addr &= 0xff;
 	direct_addr = offset_read_rf[rf_path] + (reg_addr << 2);
@@ -821,16 +829,7 @@ config_phydm_write_rf_reg_8822b(
 		}
 
 		/* check bit mask */
-		if (bit_mask != 0xfffff) {
-			for (bit_shift = 0; bit_shift <= 19; bit_shift++) {
-				if (((bit_mask >> bit_shift) & 0x1) == 1)
-					break;
-			}
-			data = ((data_original)&(~bit_mask)) | (data << bit_shift);
-		}
-	} else if (!phydm_check_rf_power(p_dm_odm, rf_path)) {
-		ODM_RT_TRACE(p_dm_odm, ODM_PHY_CONFIG, ODM_DBG_TRACE, ("config_phydm_write_rf_reg_8822b(): Write fail, RF is disabled\n"));
-		return false;
+		data = phydm_check_bit_mask(bit_mask, data_original, data);
 	}
 
 	/* Put write addr in [27:20]  and write data in [19:00] */
