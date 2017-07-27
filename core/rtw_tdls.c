@@ -631,6 +631,56 @@ void rtw_tdls_process_vht_cap(_adapter *padapter, struct sta_info *ptdls_sta, u8
 	ptdls_sta->vhtpriv.vht_highest_rate = rtw_get_vht_highest_rate(ptdls_sta->vhtpriv.vht_mcs_map);
 }
 
+void rtw_tdls_process_vht_operation(_adapter *padapter, struct sta_info *ptdls_sta, u8 *data, u8 Length)
+{
+	struct mlme_priv		*pmlmepriv = &padapter->mlmepriv;
+	struct mlme_ext_priv	*pmlmeext = &padapter->mlmeextpriv;
+	struct registry_priv *regsty = adapter_to_regsty(padapter);
+	u8 operation_bw = 0;
+
+	if (GET_VHT_OPERATION_ELE_CHL_WIDTH(data) >= 1) {
+
+		operation_bw = CHANNEL_WIDTH_80;
+
+		if (hal_is_bw_support(padapter, operation_bw) && REGSTY_IS_BW_5G_SUPPORT(regsty, operation_bw)
+			&& (operation_bw <= pmlmeext->cur_bwmode))
+			ptdls_sta->bw_mode = operation_bw;
+		else
+			ptdls_sta->bw_mode = pmlmeext->cur_bwmode;
+	} else
+		ptdls_sta->bw_mode = pmlmeext->cur_bwmode;
+}
+
+void rtw_tdls_process_vht_op_mode_notify(_adapter *padapter, struct sta_info *ptdls_sta, u8 *data, u8 Length)
+{
+	struct mlme_priv		*pmlmepriv = &padapter->mlmepriv;
+	struct vht_priv		*pvhtpriv = &pmlmepriv->vhtpriv;
+	struct mlme_ext_priv	*pmlmeext = &padapter->mlmeextpriv;
+	struct registry_priv *regsty = adapter_to_regsty(padapter);
+	u8	target_bw;
+	u8	target_rxss, current_rxss;
+
+	if (pvhtpriv->vht_option == _FALSE)
+		return;
+
+	target_bw = GET_VHT_OPERATING_MODE_FIELD_CHNL_WIDTH(data);
+	target_rxss = (GET_VHT_OPERATING_MODE_FIELD_RX_NSS(data) + 1);
+
+	if (hal_is_bw_support(padapter, target_bw) && REGSTY_IS_BW_5G_SUPPORT(regsty, target_bw)
+		&& (target_bw <= pmlmeext->cur_bwmode))
+		ptdls_sta->bw_mode = target_bw;
+	else
+		ptdls_sta->bw_mode = pmlmeext->cur_bwmode;
+
+	current_rxss = rtw_vht_mcsmap_to_nss(ptdls_sta->vhtpriv.vht_mcs_map);
+	if (target_rxss != current_rxss) {
+		u8	vht_mcs_map[2] = {};
+
+		rtw_vht_nss_to_mcsmap(target_rxss, vht_mcs_map, ptdls_sta->vhtpriv.vht_mcs_map);
+		_rtw_memcpy(ptdls_sta->vhtpriv.vht_mcs_map, vht_mcs_map, 2);
+	}
+}
+
 u8 *rtw_tdls_set_aid(_adapter *padapter, u8 *pframe, struct pkt_attrib *pattrib)
 {
 	return rtw_set_ie(pframe, EID_AID, 2, (u8 *)&(padapter->mlmepriv.cur_network.aid), &(pattrib->pktlen));
@@ -1796,8 +1846,7 @@ sint On_TDLS_Setup_Req(_adapter *padapter, union recv_frame *precv_frame)
 			 - prx_pkt_attrib->icv_len
 			 - LLC_HEADER_SIZE
 			 - ETH_TYPE_LEN
-			 - PAYLOAD_TYPE_LEN
-			 - FIXED_IE;
+			 - PAYLOAD_TYPE_LEN;
 
 	if (ptdls_sta == NULL)
 		ptdls_sta = rtw_alloc_stainfo(pstapriv, psa);
@@ -2008,8 +2057,7 @@ int On_TDLS_Setup_Rsp(_adapter *padapter, union recv_frame *precv_frame)
 			 - prx_pkt_attrib->icv_len
 			 - LLC_HEADER_SIZE
 			 - ETH_TYPE_LEN
-			 - PAYLOAD_TYPE_LEN
-			 - FIXED_IE;
+			 - PAYLOAD_TYPE_LEN;
 
 	_rtw_memcpy(&status_code, ptr + 2, 2);
 
@@ -2082,7 +2130,7 @@ int On_TDLS_Setup_Rsp(_adapter *padapter, union recv_frame *precv_frame)
 			rtw_tdls_process_vht_cap(padapter, ptdls_sta, pIE->data, pIE->Length);
 			break;
 		case EID_OpModeNotification:
-			rtw_process_vht_op_mode_notify(padapter, pIE->data, ptdls_sta);
+			rtw_tdls_process_vht_op_mode_notify(padapter, ptdls_sta, pIE->data, pIE->Length);
 			break;
 #endif
 		case EID_BSSCoexistence:
@@ -2184,8 +2232,7 @@ int On_TDLS_Setup_Cfm(_adapter *padapter, union recv_frame *precv_frame)
 			 - prx_pkt_attrib->icv_len
 			 - LLC_HEADER_SIZE
 			 - ETH_TYPE_LEN
-			 - PAYLOAD_TYPE_LEN
-			 - FIXED_IE;
+			 - PAYLOAD_TYPE_LEN;
 
 	_rtw_memcpy(&status_code, ptr + 2, 2);
 
@@ -2223,9 +2270,10 @@ int On_TDLS_Setup_Cfm(_adapter *padapter, union recv_frame *precv_frame)
 #endif
 #ifdef CONFIG_80211AC_VHT
 		case EID_VHTOperation:
+			rtw_tdls_process_vht_operation(padapter, ptdls_sta, pIE->data, pIE->Length);
 			break;
 		case EID_OpModeNotification:
-			rtw_process_vht_op_mode_notify(padapter, pIE->data, ptdls_sta);
+			rtw_tdls_process_vht_op_mode_notify(padapter, ptdls_sta, pIE->data, pIE->Length);
 			break;
 #endif
 		case _LINK_ID_IE_:
@@ -2301,8 +2349,7 @@ int On_TDLS_Dis_Req(_adapter *padapter, union recv_frame *precv_frame)
 			 - prx_pkt_attrib->icv_len
 			 - LLC_HEADER_SIZE
 			 - ETH_TYPE_LEN
-			 - PAYLOAD_TYPE_LEN
-			 - FIXED_IE;
+			 - PAYLOAD_TYPE_LEN;
 
 	/* Parsing information element */
 	for (j = FIXED_IE; j < parsing_length;) {
@@ -2512,8 +2559,7 @@ sint On_TDLS_Ch_Switch_Req(_adapter *padapter, union recv_frame *precv_frame)
 			 - prx_pkt_attrib->icv_len
 			 - LLC_HEADER_SIZE
 			 - ETH_TYPE_LEN
-			 - PAYLOAD_TYPE_LEN
-			 - FIXED_IE;
+			 - PAYLOAD_TYPE_LEN;
 
 	pchsw_info->off_ch_num = *(ptr + 2);
 
@@ -2638,8 +2684,7 @@ sint On_TDLS_Ch_Switch_Rsp(_adapter *padapter, union recv_frame *precv_frame)
 			 - prx_pkt_attrib->icv_len
 			 - LLC_HEADER_SIZE
 			 - ETH_TYPE_LEN
-			 - PAYLOAD_TYPE_LEN
-			 - FIXED_IE;
+			 - PAYLOAD_TYPE_LEN;
 
 	_rtw_memcpy(&status_code, ptr + 2, 2);
 
