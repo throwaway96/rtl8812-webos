@@ -53,6 +53,7 @@
 	/* rtl8822bu_ops.c */
 	void rtl8822bu_set_hal_ops(PADAPTER padapter);
 	void rtl8822bu_set_hw_type(struct dvobj_priv *pdvobj);
+	void rtl8822bu_reset_halmac(PADAPTER padapter);
 
 	/* rtl8822bu_io.c */
 	void rtl8822bu_set_intf_ops(struct _io_ops *pops);

@@ -331,3 +331,21 @@ int rtl8822bu_halmac_init_adapter(PADAPTER padapter)
 
 	return err;
 }
+
+int rtl8822bu_halmac_reset_adapter(PADAPTER padapter)
+{
+	struct dvobj_priv *d;
+	PHALMAC_PLATFORM_API api;
+	int err;
+
+
+	d = adapter_to_dvobj(padapter);
+	api = &rtw_halmac_platform_api;
+	api->SEND_RSVD_PAGE = usb_write_data_rsvd_page;
+	api->SEND_H2C_PKT = usb_write_data_h2c;
+	
+	rtw_halmac_deinit_adapter(d);
+	err = rtw_halmac_init_adapter(d, api);
+
+	return err;
+}

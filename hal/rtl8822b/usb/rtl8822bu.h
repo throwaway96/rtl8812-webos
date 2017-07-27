@@ -39,6 +39,7 @@ void rtl8822bu_interface_configure(PADAPTER);
 
 /* rtl8822bu_halmac.c */
 int rtl8822bu_halmac_init_adapter(PADAPTER);
+int rtl8822bu_halmac_reset_adapter(PADAPTER padapter);
 
 /* rtl8822bu_io.c */
 

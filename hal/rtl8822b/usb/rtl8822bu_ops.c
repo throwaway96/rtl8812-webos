@@ -222,6 +222,10 @@ static u8 read_adapter_info(PADAPTER padapter)
 	return _SUCCESS;
 }
 
+void rtl8822bu_reset_halmac(PADAPTER padapter)
+{
+	rtl8822bu_halmac_reset_adapter(padapter);
+}
 
 void rtl8822bu_set_hal_ops(PADAPTER padapter)
 {

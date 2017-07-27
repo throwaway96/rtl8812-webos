@@ -2103,6 +2103,110 @@ void rtw_init_pwrctrl_priv(PADAPTER padapter)
 
 }
 
+void rtw_init_pwrctrl_priv_reset(PADAPTER padapter)
+{
+	struct pwrctrl_priv *pwrctrlpriv = adapter_to_pwrctl(padapter);
+
+	u8 val8 = 0;
+
+#if defined(CONFIG_CONCURRENT_MODE)
+	if (padapter->adapter_type != PRIMARY_ADAPTER)
+		return;
+#endif
+
+
+#ifdef PLATFORM_WINDOWS
+	pwrctrlpriv->pnp_current_pwr_state = NdisDeviceStateD0;
+#endif
+
+	pwrctrlpriv->rf_pwrstate = rf_on;
+	pwrctrlpriv->ips_enter_cnts = 0;
+	pwrctrlpriv->ips_leave_cnts = 0;
+	pwrctrlpriv->lps_enter_cnts = 0;
+	pwrctrlpriv->lps_leave_cnts = 0;
+	pwrctrlpriv->bips_processing = _FALSE;
+
+	pwrctrlpriv->ips_mode = padapter->registrypriv.ips_mode;
+	pwrctrlpriv->ips_mode_req = padapter->registrypriv.ips_mode;
+	pwrctrlpriv->lps_level = padapter->registrypriv.lps_level;
+
+	pwrctrlpriv->pwr_state_check_interval = RTW_PWR_STATE_CHK_INTERVAL;
+	pwrctrlpriv->pwr_state_check_cnts = 0;
+	pwrctrlpriv->bInternalAutoSuspend = _FALSE;
+	pwrctrlpriv->bInSuspend = _FALSE;
+	pwrctrlpriv->bkeepfwalive = _FALSE;
+
+#ifdef CONFIG_AUTOSUSPEND
+#ifdef SUPPORT_HW_RFOFF_DETECTED
+	pwrctrlpriv->pwr_state_check_interval = (pwrctrlpriv->bHWPwrPindetect) ? 1000 : 2000;
+#endif
+#endif
+
+	pwrctrlpriv->LpsIdleCount = 0;
+
+#ifdef CONFIG_LPS_PG
+	pwrctrlpriv->lpspg_rsvd_page_locate = 0;
+#endif
+
+	/* pwrctrlpriv->FWCtrlPSMode =padapter->registrypriv.power_mgnt; */ /* PS_MODE_MIN; */
+	if (padapter->registrypriv.mp_mode == 1)
+		pwrctrlpriv->power_mgnt = PS_MODE_ACTIVE ;
+	else
+		pwrctrlpriv->power_mgnt = padapter->registrypriv.power_mgnt; /* PS_MODE_MIN; */
+	pwrctrlpriv->bLeisurePs = (PS_MODE_ACTIVE != pwrctrlpriv->power_mgnt) ? _TRUE : _FALSE;
+
+	pwrctrlpriv->bFwCurrentInPSMode = _FALSE;
+
+	pwrctrlpriv->rpwm = 0;
+	pwrctrlpriv->cpwm = PS_STATE_S4;
+
+	pwrctrlpriv->pwr_mode = PS_MODE_ACTIVE;
+	pwrctrlpriv->smart_ps = padapter->registrypriv.smart_ps;
+	pwrctrlpriv->bcn_ant_mode = 0;
+	pwrctrlpriv->dtim = 0;
+
+	pwrctrlpriv->tog = 0x80;
+
+#ifdef CONFIG_LPS_LCLK
+	rtw_hal_set_hwreg(padapter, HW_VAR_SET_RPWM, (u8 *)(&pwrctrlpriv->rpwm));
+
+#ifdef CONFIG_LPS_RPWM_TIMER
+	pwrctrlpriv->brpwmtimeout = _FALSE;
+#endif /* CONFIG_LPS_RPWM_TIMER */
+#endif /* CONFIG_LPS_LCLK */
+
+	pwrctrlpriv->wowlan_mode = _FALSE;
+	pwrctrlpriv->wowlan_ap_mode = _FALSE;
+	pwrctrlpriv->wowlan_p2p_mode = _FALSE;
+	pwrctrlpriv->wowlan_last_wake_reason = 0;
+
+
+#ifdef CONFIG_GPIO_WAKEUP
+	/*default low active*/
+	pwrctrlpriv->is_high_active = HIGH_ACTIVE;
+	val8 = (pwrctrlpriv->is_high_active == 0) ? 1 : 0;
+	rtw_hal_switch_gpio_wl_ctrl(padapter, WAKEUP_GPIO_IDX, _TRUE);
+#ifndef CONFIG_RTW_ONE_PIN_GPIO
+	rtw_hal_set_output_gpio(padapter, WAKEUP_GPIO_IDX, val8);
+#endif /* CONFIG_RTW_ONE_PIN_GPIO */
+	RTW_INFO("%s: set GPIO_%d %d as default.\n",
+		 __func__, WAKEUP_GPIO_IDX, val8);
+#endif /* CONFIG_GPIO_WAKEUP */
+
+#ifdef CONFIG_WOWLAN
+	rtw_wow_pattern_sw_reset(padapter);
+	pwrctrlpriv->wowlan_in_resume = _FALSE;
+#ifdef CONFIG_PNO_SUPPORT
+	pwrctrlpriv->pno_inited = _FALSE;
+	pwrctrlpriv->pnlo_info = NULL;
+	pwrctrlpriv->pscan_info = NULL;
+	pwrctrlpriv->pno_ssid_list = NULL;
+#endif /* CONFIG_PNO_SUPPORT */
+	pwrctrlpriv->wowlan_aoac_rpt_loc = 0;
+#endif /* CONFIG_WOWLAN */
+
+}
+
 
 void rtw_free_pwrctrl_priv(PADAPTER adapter)
 {

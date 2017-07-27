@@ -1045,7 +1045,16 @@ static int rtw_resume(struct usb_interface *pusb_intf)
 	padapter = dvobj_get_primary_adapter(dvobj);
 	pmlmeext = &padapter->mlmeextpriv;
 
-	RTW_INFO("==> %s (%s:%d)\n", __FUNCTION__, current->comm, current->pid);
+	RTW_INFO("==> %s (%s:%d), MAC_81=%x\n", __FUNCTION__, current->comm, current->pid, rtw_read8(padapter, REG_MCUFW_CTRL+1));
+
+	if(!(rtw_read8(padapter, REG_MCUFW_CTRL+1) & BIT7) && (pwrpriv->wowlan_mode || pwrpriv->wowlan_ap_mode)) {
+		rtl8822bu_reset_halmac(padapter);
+		rtw_hal_power_off(padapter);
+		padapter->bup = _FALSE ;
+		rtw_init_pwrctrl_priv_reset(padapter);
+		pwrpriv->bInSuspend = _TRUE;
+	}
+		
 	pdbgpriv->dbg_resume_cnt++;
 
 	if (pwrpriv->bInternalAutoSuspend)
