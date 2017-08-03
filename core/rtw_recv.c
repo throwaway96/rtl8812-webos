@@ -590,8 +590,8 @@ union recv_frame *decryptor(_adapter *padapter, union recv_frame *precv_frame)
 		u8 *iv = precv_frame->u.hdr.rx_data + prxattrib->hdrlen;
 		prxattrib->key_index = (((iv[3]) >> 6) & 0x3) ;
 
-		if (prxattrib->key_index > WEP_KEYS) {
-			RTW_INFO("prxattrib->key_index(%d) > WEP_KEYS\n", prxattrib->key_index);
+		if (prxattrib->key_index >= WEP_KEYS) {
+			RTW_INFO("prxattrib->key_index(%d) >= WEP_KEYS\n", prxattrib->key_index);
 
 			switch (prxattrib->encrypt) {
 			case _WEP40_:
@@ -924,6 +924,9 @@ sint OnTDLS(_adapter *adapter, union recv_frame *precv_frame)
 	u8 WFA_OUI[3] = { 0x50, 0x6f, 0x9a };
 #endif /* CONFIG_WFD */
 	struct tdls_info *ptdlsinfo = &(adapter->tdlsinfo);
+	u8 *ptr = precv_frame->u.hdr.rx_data;
+	struct sta_priv *pstapriv = &(adapter->stapriv);
+	struct sta_info *ptdls_sta = NULL;
 
 	/* point to action field */
 	paction += pattrib->hdrlen
@@ -948,34 +951,47 @@ sint OnTDLS(_adapter *adapter, union recv_frame *precv_frame)
 		return ret;
 	}
 
+	ptdls_sta = rtw_get_stainfo(pstapriv, get_sa(ptr));
+	if (ptdls_sta == NULL) {
+		switch (*paction) {
+		case TDLS_SETUP_REQUEST:
+		case TDLS_DISCOVERY_REQUEST:
+			break;
+		default:
+			RTW_INFO("[TDLS] %s - Direct Link Peer = "MAC_FMT" not found for action = %d\n", __func__, MAC_ARG(get_sa(ptr)), *paction);
+			ret = _FAIL;
+			goto exit;
+		}
+	}
+
 	switch (*paction) {
 	case TDLS_SETUP_REQUEST:
-		ret = On_TDLS_Setup_Req(adapter, precv_frame);
+		ret = On_TDLS_Setup_Req(adapter, precv_frame, ptdls_sta);
 		break;
 	case TDLS_SETUP_RESPONSE:
-		ret = On_TDLS_Setup_Rsp(adapter, precv_frame);
+		ret = On_TDLS_Setup_Rsp(adapter, precv_frame, ptdls_sta);
 		break;
 	case TDLS_SETUP_CONFIRM:
-		ret = On_TDLS_Setup_Cfm(adapter, precv_frame);
+		ret = On_TDLS_Setup_Cfm(adapter, precv_frame, ptdls_sta);
 		break;
 	case TDLS_TEARDOWN:
-		ret = On_TDLS_Teardown(adapter, precv_frame);
+		ret = On_TDLS_Teardown(adapter, precv_frame, ptdls_sta);
 		break;
 	case TDLS_DISCOVERY_REQUEST:
 		ret = On_TDLS_Dis_Req(adapter, precv_frame);
 		break;
 	case TDLS_PEER_TRAFFIC_INDICATION:
-		ret = On_TDLS_Peer_Traffic_Indication(adapter, precv_frame);
+		ret = On_TDLS_Peer_Traffic_Indication(adapter, precv_frame, ptdls_sta);
 		break;
 	case TDLS_PEER_TRAFFIC_RESPONSE:
-		ret = On_TDLS_Peer_Traffic_Rsp(adapter, precv_frame);
+		ret = On_TDLS_Peer_Traffic_Rsp(adapter, precv_frame, ptdls_sta);
 		break;
 #ifdef CONFIG_TDLS_CH_SW
 	case TDLS_CHANNEL_SWITCH_REQUEST:
-		ret = On_TDLS_Ch_Switch_Req(adapter, precv_frame);
+		ret = On_TDLS_Ch_Switch_Req(adapter, precv_frame, ptdls_sta);
 		break;
 	case TDLS_CHANNEL_SWITCH_RESPONSE:
-		ret = On_TDLS_Ch_Switch_Rsp(adapter, precv_frame);
+		ret = On_TDLS_Ch_Switch_Rsp(adapter, precv_frame, ptdls_sta);
 		break;
 #endif
 #ifdef CONFIG_WFD

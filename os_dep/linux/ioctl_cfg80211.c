@@ -3205,7 +3205,7 @@ static int cfg80211_rtw_connect(struct wiphy *wiphy, struct net_device *ndev,
 		wep_key_idx = sme->key_idx;
 		wep_key_len = sme->key_len;
 
-		if (sme->key_idx > WEP_KEYS) {
+		if (sme->key_idx >= WEP_KEYS) {
 			ret = -EINVAL;
 			goto cancel_ps_deny;
 		}
@@ -5796,7 +5796,7 @@ static int cfg80211_rtw_mgmt_tx(struct wiphy *wiphy,
 	u32 dump_cnt = 0;
 	bool ack = _TRUE;
 	u8 tx_ch;
-	u8 category, action = 0;
+	u8 category, action = ACT_PUBLIC_MAX;
 	u8 frame_styp;
 	int type = (-1);
 	u32 start = rtw_get_current_time();

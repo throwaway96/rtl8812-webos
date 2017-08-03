@@ -1804,11 +1804,10 @@ exit:
 
 }
 
-sint On_TDLS_Setup_Req(_adapter *padapter, union recv_frame *precv_frame)
+sint On_TDLS_Setup_Req(_adapter *padapter, union recv_frame *precv_frame, struct sta_info *ptdls_sta)
 {
 	struct tdls_info *ptdlsinfo = &padapter->tdlsinfo;
 	u8 *psa, *pmyid;
-	struct sta_info *ptdls_sta = NULL;
 	struct sta_priv *pstapriv = &padapter->stapriv;
 	u8 *ptr = precv_frame->u.hdr.rx_data;
 	struct mlme_priv *pmlmepriv = &(padapter->mlmepriv);
@@ -1836,7 +1835,6 @@ sint On_TDLS_Setup_Req(_adapter *padapter, union recv_frame *precv_frame)
 
 	_rtw_memset(&txmgmt, 0x00, sizeof(struct tdls_txmgmt));
 	psa = get_sa(ptr);
-	ptdls_sta = rtw_get_stainfo(pstapriv, psa);
 
 	pmyid = adapter_mac_addr(padapter);
 	ptr += prx_pkt_attrib->hdrlen + prx_pkt_attrib->iv_len + LLC_HEADER_SIZE + ETH_TYPE_LEN + PAYLOAD_TYPE_LEN;
@@ -2016,11 +2014,10 @@ exit:
 	return _SUCCESS;
 }
 
-int On_TDLS_Setup_Rsp(_adapter *padapter, union recv_frame *precv_frame)
+int On_TDLS_Setup_Rsp(_adapter *padapter, union recv_frame *precv_frame, struct sta_info *ptdls_sta)
 {
 	struct registry_priv	*pregistrypriv = &padapter->registrypriv;
 	struct tdls_info *ptdlsinfo = &padapter->tdlsinfo;
-	struct sta_info *ptdls_sta = NULL;
 	struct sta_priv *pstapriv = &padapter->stapriv;
 	u8 *ptr = precv_frame->u.hdr.rx_data;
 	_irqL irqL;
@@ -2042,13 +2039,6 @@ int On_TDLS_Setup_Rsp(_adapter *padapter, union recv_frame *precv_frame)
 
 	_rtw_memset(&txmgmt, 0x00, sizeof(struct tdls_txmgmt));
 	psa = get_sa(ptr);
-	ptdls_sta = rtw_get_stainfo(pstapriv, psa);
-
-	if (ptdls_sta == NULL) {
-		RTW_INFO("[%s] Direct Link Peer = "MAC_FMT" not found\n", __func__, MAC_ARG(psa));
-		ret = _FAIL;
-		goto exit;
-	}
 
 	ptr += prx_pkt_attrib->hdrlen + prx_pkt_attrib->iv_len + LLC_HEADER_SIZE + ETH_TYPE_LEN + PAYLOAD_TYPE_LEN;
 	parsing_length = ((union recv_frame *)precv_frame)->u.hdr.len
@@ -2199,10 +2189,9 @@ exit:
 
 }
 
-int On_TDLS_Setup_Cfm(_adapter *padapter, union recv_frame *precv_frame)
+int On_TDLS_Setup_Cfm(_adapter *padapter, union recv_frame *precv_frame, struct sta_info *ptdls_sta)
 {
 	struct tdls_info *ptdlsinfo = &padapter->tdlsinfo;
-	struct sta_info *ptdls_sta = NULL;
 	struct sta_priv *pstapriv = &padapter->stapriv;
 	u8 *ptr = precv_frame->u.hdr.rx_data;
 	_irqL irqL;
@@ -2217,13 +2206,6 @@ int On_TDLS_Setup_Cfm(_adapter *padapter, union recv_frame *precv_frame)
 	int ret = _SUCCESS;
 
 	psa = get_sa(ptr);
-	ptdls_sta = rtw_get_stainfo(pstapriv, psa);
-
-	if (ptdls_sta == NULL) {
-		RTW_INFO("[%s] Direct Link Peer = "MAC_FMT" not found\n", __FUNCTION__, MAC_ARG(psa));
-		ret = _FAIL;
-		goto exit;
-	}
 
 	ptr += prx_pkt_attrib->hdrlen + prx_pkt_attrib->iv_len + LLC_HEADER_SIZE + ETH_TYPE_LEN + PAYLOAD_TYPE_LEN;
 	parsing_length = ((union recv_frame *)precv_frame)->u.hdr.len
@@ -2380,28 +2362,21 @@ exit:
 
 }
 
-int On_TDLS_Teardown(_adapter *padapter, union recv_frame *precv_frame)
+int On_TDLS_Teardown(_adapter *padapter, union recv_frame *precv_frame, struct sta_info *ptdls_sta)
 {
-	u8 *psa;
 	u8 *ptr = precv_frame->u.hdr.rx_data;
 	struct rx_pkt_attrib	*prx_pkt_attrib = &precv_frame->u.hdr.attrib;
 	struct mlme_ext_priv	*pmlmeext = &(padapter->mlmeextpriv);
 	struct mlme_ext_info	*pmlmeinfo = &(pmlmeext->mlmext_info);
 	struct sta_priv	*pstapriv = &padapter->stapriv;
-	struct sta_info *ptdls_sta = NULL;
 	_irqL irqL;
 	u8 reason;
 
 	reason = *(ptr + prx_pkt_attrib->hdrlen + prx_pkt_attrib->iv_len + LLC_HEADER_SIZE + ETH_TYPE_LEN + PAYLOAD_TYPE_LEN + 2);
 	RTW_INFO("[TDLS] %s Reason code(%d)\n", __FUNCTION__, reason);
 
-	psa = get_sa(ptr);
-
-	ptdls_sta = rtw_get_stainfo(pstapriv, psa);
-	if (ptdls_sta != NULL) {
-		if (rtw_tdls_is_driver_setup(padapter))
-			rtw_tdls_cmd(padapter, ptdls_sta->hwaddr, TDLS_TEARDOWN_STA_LOCALLY);
-	}
+	if (rtw_tdls_is_driver_setup(padapter))
+		rtw_tdls_cmd(padapter, ptdls_sta->hwaddr, TDLS_TEARDOWN_STA_LOCALLY);
 
 	return _SUCCESS;
 
@@ -2421,44 +2396,32 @@ u8 TDLS_check_ch_state(uint state)
 }
 #endif
 
-int On_TDLS_Peer_Traffic_Indication(_adapter *padapter, union recv_frame *precv_frame)
+int On_TDLS_Peer_Traffic_Indication(_adapter *padapter, union recv_frame *precv_frame, struct sta_info *ptdls_sta)
 {
 	struct rx_pkt_attrib	*pattrib = &precv_frame->u.hdr.attrib;
-	struct sta_info *ptdls_sta = rtw_get_stainfo(&padapter->stapriv, pattrib->src);
 	u8 *ptr = precv_frame->u.hdr.rx_data;
 	struct tdls_txmgmt txmgmt;
 
 	ptr += pattrib->hdrlen + pattrib->iv_len + LLC_HEADER_SIZE + ETH_TYPE_LEN + PAYLOAD_TYPE_LEN;
 	_rtw_memset(&txmgmt, 0x00, sizeof(struct tdls_txmgmt));
 
-	if (ptdls_sta != NULL) {
-		txmgmt.dialog_token = *(ptr + 2);
-		issue_tdls_peer_traffic_rsp(padapter, ptdls_sta, &txmgmt);
-		/* issue_nulldata_to_TDLS_peer_STA(padapter, ptdls_sta->hwaddr, 0, 0, 0); */
-	} else {
-		RTW_INFO("from unknown sta:"MAC_FMT"\n", MAC_ARG(pattrib->src));
-		return _FAIL;
-	}
+	txmgmt.dialog_token = *(ptr + 2);
+	issue_tdls_peer_traffic_rsp(padapter, ptdls_sta, &txmgmt);
+	/* issue_nulldata_to_TDLS_peer_STA(padapter, ptdls_sta->hwaddr, 0, 0, 0); */
 
 	return _SUCCESS;
 }
 
 /* We process buffered data for 1. U-APSD, 2. ch. switch, 3. U-APSD + ch. switch here */
-int On_TDLS_Peer_Traffic_Rsp(_adapter *padapter, union recv_frame *precv_frame)
+int On_TDLS_Peer_Traffic_Rsp(_adapter *padapter, union recv_frame *precv_frame, struct sta_info *ptdls_sta)
 {
 	struct tdls_info *ptdlsinfo = &padapter->tdlsinfo;
 	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
 	struct rx_pkt_attrib	*pattrib = &precv_frame->u.hdr.attrib;
 	struct sta_priv *pstapriv = &padapter->stapriv;
-	struct sta_info *ptdls_sta = rtw_get_stainfo(pstapriv, pattrib->src);
 	u8 wmmps_ac = 0;
 	/* u8 state=TDLS_check_ch_state(ptdls_sta->tdls_sta_state); */
 	int i;
-
-	if (ptdls_sta == NULL) {
-		rtw_warn_on(1);
-		return;
-	}
 
 	ptdls_sta->sta_stats.rx_data_pkts++;
 
@@ -2517,35 +2480,23 @@ int On_TDLS_Peer_Traffic_Rsp(_adapter *padapter, union recv_frame *precv_frame)
 }
 
 #ifdef CONFIG_TDLS_CH_SW
-sint On_TDLS_Ch_Switch_Req(_adapter *padapter, union recv_frame *precv_frame)
+sint On_TDLS_Ch_Switch_Req(_adapter *padapter, union recv_frame *precv_frame, struct sta_info *ptdls_sta)
 {
 	struct tdls_ch_switch *pchsw_info = &padapter->tdlsinfo.chsw_info;
-	struct sta_info *ptdls_sta = NULL;
 	struct sta_priv *pstapriv = &padapter->stapriv;
 	u8 *ptr = precv_frame->u.hdr.rx_data;
 	struct rx_pkt_attrib	*prx_pkt_attrib = &precv_frame->u.hdr.attrib;
-	u8 *psa;
 	sint parsing_length;
 	PNDIS_802_11_VARIABLE_IEs	pIE;
 	u8 FIXED_IE = 4;
 	u16 j;
 	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
-	struct tdls_txmgmt txmgmt;
 	u8 zaddr[ETH_ALEN] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 	u16 switch_time = TDLS_CH_SWITCH_TIME * 1000, switch_timeout = TDLS_CH_SWITCH_TIMEOUT * 1000;
 	u8 take_care_iqk;
 
 	if (rtw_tdls_is_chsw_allowed(padapter) == _FALSE) {
 		RTW_INFO("[TDLS] Ignore %s since channel switch is not allowed\n", __func__);
-		return _FAIL;
-	}
-
-	_rtw_memset(&txmgmt, 0x00, sizeof(struct tdls_txmgmt));
-	psa = get_sa(ptr);
-	ptdls_sta = rtw_get_stainfo(pstapriv, psa);
-
-	if (ptdls_sta == NULL) {
-		RTW_INFO("[%s] Direct Link Peer = "MAC_FMT" not found\n", __func__, MAC_ARG(psa));
 		return _FAIL;
 	}
 
@@ -2624,10 +2575,6 @@ sint On_TDLS_Ch_Switch_Req(_adapter *padapter, union recv_frame *precv_frame)
 	if (!(pchsw_info->ch_sw_state & TDLS_CH_SW_INITIATOR_STATE))
 		_cancel_timer_ex(&ptdls_sta->ch_sw_monitor_timer);
 
-	/* Todo: check status */
-	txmgmt.status_code = 0;
-	_rtw_memcpy(txmgmt.peer, psa, ETH_ALEN);
-
 	if (_rtw_memcmp(pchsw_info->addr, zaddr, ETH_ALEN) == _TRUE)
 		_rtw_memcpy(pchsw_info->addr, ptdls_sta->hwaddr, ETH_ALEN);
 
@@ -2639,14 +2586,12 @@ sint On_TDLS_Ch_Switch_Req(_adapter *padapter, union recv_frame *precv_frame)
 	return _SUCCESS;
 }
 
-sint On_TDLS_Ch_Switch_Rsp(_adapter *padapter, union recv_frame *precv_frame)
+sint On_TDLS_Ch_Switch_Rsp(_adapter *padapter, union recv_frame *precv_frame, struct sta_info *ptdls_sta)
 {
 	struct tdls_ch_switch *pchsw_info = &padapter->tdlsinfo.chsw_info;
-	struct sta_info *ptdls_sta = NULL;
 	struct sta_priv *pstapriv = &padapter->stapriv;
 	u8 *ptr = precv_frame->u.hdr.rx_data;
 	struct rx_pkt_attrib	*prx_pkt_attrib = &precv_frame->u.hdr.attrib;
-	u8 *psa;
 	sint parsing_length;
 	PNDIS_802_11_VARIABLE_IEs	pIE;
 	u8 FIXED_IE = 4;
@@ -2657,14 +2602,6 @@ sint On_TDLS_Ch_Switch_Rsp(_adapter *padapter, union recv_frame *precv_frame)
 	if (rtw_tdls_is_chsw_allowed(padapter) == _FALSE) {
 		RTW_INFO("[TDLS] Ignore %s since channel switch is not allowed\n", __func__);
 		return _SUCCESS;
-	}
-
-	psa = get_sa(ptr);
-	ptdls_sta = rtw_get_stainfo(pstapriv, psa);
-
-	if (ptdls_sta == NULL) {
-		RTW_INFO("[%s] Direct Link Peer = "MAC_FMT" not found\n", __func__, MAC_ARG(psa));
-		return _FAIL;
 	}
 
 	/* If we receive Unsolicited TDLS Channel Switch Response when channel switch is running, */
@@ -2823,21 +2760,14 @@ void wfd_ie_tdls(_adapter *padapter, u8 *pframe, u32 *pktlen)
 }
 #endif /* CONFIG_WFD */
 
-void rtw_build_tdls_setup_req_ies(_adapter *padapter, struct xmit_frame *pxmitframe, u8 *pframe, struct tdls_txmgmt *ptxmgmt)
+void rtw_build_tdls_setup_req_ies(_adapter *padapter, struct xmit_frame *pxmitframe, u8 *pframe, struct tdls_txmgmt *ptxmgmt, struct sta_info *ptdls_sta)
 {
 	struct registry_priv	*pregistrypriv = &padapter->registrypriv;
 	struct mlme_ext_priv	*pmlmeext = &(padapter->mlmeextpriv);
 	struct pkt_attrib	*pattrib = &pxmitframe->attrib;
-	struct sta_info *ptdls_sta = rtw_get_stainfo((&padapter->stapriv) , pattrib->dst);
-
 	int i = 0 ;
 	u32 time;
 	u8 *pframe_head;
-
-	if (ptdls_sta == NULL) {
-		rtw_warn_on(1);
-		return;
-	}
 
 	/* SNonce */
 	if (pattrib->encrypt) {
@@ -2905,25 +2835,17 @@ void rtw_build_tdls_setup_req_ies(_adapter *padapter, struct xmit_frame *pxmitfr
 
 }
 
-void rtw_build_tdls_setup_rsp_ies(_adapter *padapter, struct xmit_frame *pxmitframe, u8 *pframe, struct tdls_txmgmt *ptxmgmt)
+void rtw_build_tdls_setup_rsp_ies(_adapter *padapter, struct xmit_frame *pxmitframe, u8 *pframe, struct tdls_txmgmt *ptxmgmt, struct sta_info *ptdls_sta)
 {
 	struct registry_priv	*pregistrypriv = &padapter->registrypriv;
 	struct mlme_ext_priv	*pmlmeext = &(padapter->mlmeextpriv);
 	struct pkt_attrib	*pattrib = &pxmitframe->attrib;
-	struct sta_info *ptdls_sta;
 	u8 k; /* for random ANonce */
 	u8  *pftie = NULL, *ptimeout_ie = NULL, *plinkid_ie = NULL, *prsnie = NULL, *pftie_mic = NULL;
 	u32 time;
 	u8 *pframe_head;
 
-	ptdls_sta = rtw_get_stainfo(&(padapter->stapriv) , pattrib->dst);
-
-	if (ptdls_sta == NULL) {
-		RTW_INFO("[%s] %d ptdls_sta is NULL\n", __FUNCTION__, __LINE__);
-		return;
-	}
-
-	if (pattrib->encrypt && ptdls_sta != NULL) {
+	if (pattrib->encrypt) {
 		for (k = 0; k < 8; k++) {
 			time = rtw_get_current_time();
 			_rtw_memcpy(&ptdls_sta->ANonce[4 * k], (u8 *)&time, 4);
@@ -3008,13 +2930,12 @@ void rtw_build_tdls_setup_rsp_ies(_adapter *padapter, struct xmit_frame *pxmitfr
 
 }
 
-void rtw_build_tdls_setup_cfm_ies(_adapter *padapter, struct xmit_frame *pxmitframe, u8 *pframe, struct tdls_txmgmt *ptxmgmt)
+void rtw_build_tdls_setup_cfm_ies(_adapter *padapter, struct xmit_frame *pxmitframe, u8 *pframe, struct tdls_txmgmt *ptxmgmt, struct sta_info *ptdls_sta)
 {
 	struct registry_priv	*pregistrypriv = &padapter->registrypriv;
 	struct mlme_ext_priv	*pmlmeext = &(padapter->mlmeextpriv);
 	struct mlme_ext_info	*pmlmeinfo = &(pmlmeext->mlmext_info);
 	struct pkt_attrib	*pattrib = &pxmitframe->attrib;
-	struct sta_info *ptdls_sta = rtw_get_stainfo((&padapter->stapriv) , pattrib->dst);
 
 	unsigned int ie_len;
 	unsigned char *p;
@@ -3029,11 +2950,6 @@ void rtw_build_tdls_setup_cfm_ies(_adapter *padapter, struct xmit_frame *pxmitfr
 
 	if (ptxmgmt->status_code != 0)
 		return;
-
-	if (ptdls_sta == NULL) {
-		rtw_warn_on(1);
-		return;
-	}
 
 	if (pattrib->encrypt) {
 		prsnie = pframe;
@@ -3083,16 +2999,10 @@ void rtw_build_tdls_setup_cfm_ies(_adapter *padapter, struct xmit_frame *pxmitfr
 #endif
 }
 
-void rtw_build_tdls_teardown_ies(_adapter *padapter, struct xmit_frame *pxmitframe, u8 *pframe, struct tdls_txmgmt *ptxmgmt)
+void rtw_build_tdls_teardown_ies(_adapter *padapter, struct xmit_frame *pxmitframe, u8 *pframe, struct tdls_txmgmt *ptxmgmt, struct sta_info *ptdls_sta)
 {
 	struct pkt_attrib	*pattrib = &pxmitframe->attrib;
-	struct sta_info *ptdls_sta = rtw_get_stainfo(&(padapter->stapriv) , pattrib->dst);
 	u8  *pftie = NULL, *pftie_mic = NULL, *plinkid_ie = NULL;
-
-	if (ptdls_sta == NULL) {
-		rtw_warn_on(1);
-		return;
-	}
 
 	pframe = rtw_tdls_set_payload_type(pframe, pattrib);
 	pframe = rtw_tdls_set_category(pframe, pattrib, RTW_WLAN_CATEGORY_TDLS);
@@ -3171,17 +3081,11 @@ void rtw_build_tdls_dis_rsp_ies(_adapter *padapter, struct xmit_frame *pxmitfram
 }
 
 
-void rtw_build_tdls_peer_traffic_indication_ies(_adapter *padapter, struct xmit_frame *pxmitframe, u8 *pframe, struct tdls_txmgmt *ptxmgmt)
+void rtw_build_tdls_peer_traffic_indication_ies(_adapter *padapter, struct xmit_frame *pxmitframe, u8 *pframe, struct tdls_txmgmt *ptxmgmt, struct sta_info *ptdls_sta)
 {
 
 	struct pkt_attrib	*pattrib = &pxmitframe->attrib;
 	u8 AC_queue = 0;
-	struct sta_info *ptdls_sta = rtw_get_stainfo(&padapter->stapriv, pattrib->dst);
-
-	if (ptdls_sta == NULL) {
-		rtw_warn_on(1);
-		return;
-	}
 
 	pframe = rtw_tdls_set_payload_type(pframe, pattrib);
 	pframe = rtw_tdls_set_category(pframe, pattrib, RTW_WLAN_CATEGORY_TDLS);
@@ -3207,16 +3111,10 @@ void rtw_build_tdls_peer_traffic_indication_ies(_adapter *padapter, struct xmit_
 
 }
 
-void rtw_build_tdls_peer_traffic_rsp_ies(_adapter *padapter, struct xmit_frame *pxmitframe, u8 *pframe, struct tdls_txmgmt *ptxmgmt)
+void rtw_build_tdls_peer_traffic_rsp_ies(_adapter *padapter, struct xmit_frame *pxmitframe, u8 *pframe, struct tdls_txmgmt *ptxmgmt, struct sta_info *ptdls_sta)
 {
 
 	struct pkt_attrib	*pattrib = &pxmitframe->attrib;
-	struct sta_info *ptdls_sta = rtw_get_stainfo(&padapter->stapriv, pattrib->dst);
-
-	if (ptdls_sta == NULL) {
-		rtw_warn_on(1);
-		return;
-	}
 
 	pframe = rtw_tdls_set_payload_type(pframe, pattrib);
 	pframe = rtw_tdls_set_category(pframe, pattrib, RTW_WLAN_CATEGORY_TDLS);
@@ -3230,18 +3128,12 @@ void rtw_build_tdls_peer_traffic_rsp_ies(_adapter *padapter, struct xmit_frame *
 }
 
 #ifdef CONFIG_TDLS_CH_SW
-void rtw_build_tdls_ch_switch_req_ies(_adapter *padapter, struct xmit_frame *pxmitframe, u8 *pframe, struct tdls_txmgmt *ptxmgmt)
+void rtw_build_tdls_ch_switch_req_ies(_adapter *padapter, struct xmit_frame *pxmitframe, u8 *pframe, struct tdls_txmgmt *ptxmgmt, struct sta_info *ptdls_sta)
 {
 	struct tdls_info *ptdlsinfo = &padapter->tdlsinfo;
 	struct pkt_attrib	*pattrib = &pxmitframe->attrib;
 	struct sta_priv	*pstapriv = &padapter->stapriv;
-	struct sta_info *ptdls_sta = rtw_get_stainfo(pstapriv, pattrib->dst);
 	u16 switch_time = TDLS_CH_SWITCH_TIME * 1000, switch_timeout = TDLS_CH_SWITCH_TIMEOUT * 1000;
-
-	if (ptdls_sta == NULL) {
-		rtw_warn_on(1);
-		return;
-	}
 
 	ptdls_sta->ch_switch_time = switch_time;
 	ptdls_sta->ch_switch_timeout = switch_timeout;
@@ -3272,17 +3164,11 @@ void rtw_build_tdls_ch_switch_req_ies(_adapter *padapter, struct xmit_frame *pxm
 
 }
 
-void rtw_build_tdls_ch_switch_rsp_ies(_adapter *padapter, struct xmit_frame *pxmitframe, u8 *pframe, struct tdls_txmgmt *ptxmgmt)
+void rtw_build_tdls_ch_switch_rsp_ies(_adapter *padapter, struct xmit_frame *pxmitframe, u8 *pframe, struct tdls_txmgmt *ptxmgmt, struct sta_info *ptdls_sta)
 {
 
 	struct pkt_attrib	*pattrib = &pxmitframe->attrib;
 	struct sta_priv	*pstapriv = &padapter->stapriv;
-	struct sta_info *ptdls_sta = rtw_get_stainfo(pstapriv, pattrib->dst);
-
-	if (ptdls_sta == NULL) {
-		rtw_warn_on(1);
-		return;
-	}
 
 	pframe = rtw_tdls_set_payload_type(pframe, pattrib);
 	pframe = rtw_tdls_set_category(pframe, pattrib, RTW_WLAN_CATEGORY_TDLS);
