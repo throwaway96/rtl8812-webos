@@ -1998,7 +1998,8 @@ enum PHYDM_CMD_ID {
 	PHYDM_DYNAMIC_RA_PATH,
 	PHYDM_PSD,
 	PHYDM_DEBUG_PORT,
-	PHYDM_DIS_DYM_ANT_WEIGHTING
+	PHYDM_DIS_DYM_ANT_WEIGHTING,
+	PHYDM_DIS_HTSTF_CONTROL
 };
 
 struct _PHYDM_COMMAND phy_dm_ary[] = {
@@ -2036,7 +2037,8 @@ struct _PHYDM_COMMAND phy_dm_ary[] = {
 	{"drp", PHYDM_DYNAMIC_RA_PATH},
 	{"psd", PHYDM_PSD},
 	{"dbgport", PHYDM_DEBUG_PORT},	
-	{"dis_dym_ant_wgt", PHYDM_DIS_DYM_ANT_WEIGHTING}
+	{"dis_dym_ant_wgt", PHYDM_DIS_DYM_ANT_WEIGHTING},
+	{"dis_htstf", PHYDM_DIS_HTSTF_CONTROL}
 };
 
 #endif /*#if CONFIG_PHYDM_DEBUG_FUNCTION*/
@@ -2862,7 +2864,27 @@ phydm_cmd_parser(
 			p_dm_odm->is_disable_dym_ant_weighting = 0;
 			PHYDM_SNPRINTF((output + used, out_len - used, "\r\n Enable dynmic antenna weighting !\n"));
 		}
-		break;	
+		break;
+
+	case PHYDM_DIS_HTSTF_CONTROL:
+		{
+			if (input[1])
+				PHYDM_SSCANF(input[1], DCMD_DECIMAL, &var1[0]);
+
+			if (var1[0] == 1) {
+				
+				/* setting being false is for debug */
+				p_dm_odm->bhtstfdisabled = true;
+				PHYDM_SNPRINTF((output + used, out_len - used, "Dynamic HT-STF Gain Control is Disable\n"));
+			}
+			else {
+				
+				/* default setting should be true, always be dynamic control*/
+				p_dm_odm->bhtstfdisabled = false;
+				PHYDM_SNPRINTF((output + used, out_len - used, "Dynamic HT-STF Gain Control is Enable\n"));
+			}
+		}
+		break;
 		
 	default:
 		PHYDM_SNPRINTF((output + used, out_len - used, "SET, unknown command!\n"));

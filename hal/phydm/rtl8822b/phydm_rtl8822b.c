@@ -235,6 +235,40 @@ phydm_txcurrentcalibration(
 }
 
 void
+phydm_somlrxhp_setting(
+	struct 	PHY_DM_STRUCT		*p_dm_odm,
+	boolean switch_soml
+)
+{
+	if (switch_soml == true) {
+		odm_set_bb_reg(p_dm_odm, 0x19a8, MASKDWORD, 0xd90a0000);
+	/* Following are RxHP settings for T2R as always low, workaround for OTA test, required to classify */
+		odm_set_bb_reg(p_dm_odm, 0xc04, (BIT(21)|BIT(18)), 0x0);
+		odm_set_bb_reg(p_dm_odm, 0xe04, (BIT(21)|BIT(18)), 0x0);
+	} else {
+		odm_set_bb_reg(p_dm_odm, 0x19a8, MASKDWORD, 0x010a0000);
+	}
+	
+	/* Dynamic RxHP setting with SoML on/off apply on all RFE type, except of QFN eFEM (1,6,7,9) */
+	if ((switch_soml == false) && ((p_dm_odm->rfe_type == 1) || (p_dm_odm->rfe_type == 6) || (p_dm_odm->rfe_type == 7) || (p_dm_odm->rfe_type == 9))) {
+		odm_set_bb_reg(p_dm_odm, 0x8cc, MASKDWORD, 0x08108000);
+		odm_set_bb_reg(p_dm_odm, 0x8d8, BIT(27), 0x0);
+	}
+		
+	if (*p_dm_odm->p_channel <= 14) {
+		if ((switch_soml == true) && (!((p_dm_odm->rfe_type == 3) || (p_dm_odm->rfe_type == 5)))) {
+			odm_set_bb_reg(p_dm_odm, 0x8cc, MASKDWORD, 0x08108000);
+			odm_set_bb_reg(p_dm_odm, 0x8d8, BIT(27), 0x0);
+		}
+	} else if (*p_dm_odm->p_channel > 35) {
+		if (switch_soml == true) {
+			odm_set_bb_reg(p_dm_odm, 0x8cc, MASKDWORD, 0x08108000);
+			odm_set_bb_reg(p_dm_odm, 0x8d8, BIT(27), 0x0);
+		}
+	}
+}
+
+void
 phydm_dynamic_ant_weighting_8822b(
 	struct PHY_DM_STRUCT		*p_dm_odm
 )
@@ -250,16 +284,16 @@ phydm_dynamic_ant_weighting_8822b(
 		if (p_dm_odm->rssi_min >= rssi_l2h) {
 			odm_set_bb_reg(p_dm_odm, 0x98c, 0x7fc0000, 0x0);
 			odm_set_bb_reg(p_dm_odm, 0x818, BIT(26), 0x0);
-			odm_set_bb_reg(p_dm_odm, 0xc04, BIT(18), 0x1);
-			odm_set_bb_reg(p_dm_odm, 0xe04, BIT(18), 0x1);	
+			odm_set_bb_reg(p_dm_odm, 0xc04, (BIT(18)|BIT(21)), 0x0);
+			odm_set_bb_reg(p_dm_odm, 0xe04, (BIT(18)|BIT(21)), 0x0);
 			/*equal weighting*/
 			reg_8 = odm_get_bb_reg(p_dm_odm, 0xf94, BIT(0)|BIT(1)|BIT(2));
 			ODM_RT_TRACE(p_dm_odm, ODM_COMP_COMMON, ODM_DBG_LOUD, ("Equal weighting ,rssi_min = %d\n, 0xf94[2:0] = 0x%x\n", p_dm_odm->rssi_min, reg_8));
 		} else if (p_dm_odm->rssi_min <= rssi_h2l) {
 			odm_set_bb_reg(p_dm_odm, 0x98c, MASKDWORD, 0x43440000);
 			odm_set_bb_reg(p_dm_odm, 0x818, BIT(26), 0x1);
-			odm_set_bb_reg(p_dm_odm, 0xc04, BIT(18), 0x0);
-			odm_set_bb_reg(p_dm_odm, 0xe04, BIT(18), 0x0);	
+			odm_set_bb_reg(p_dm_odm, 0xc04, (BIT(18)|BIT(21)), 0x0);
+			odm_set_bb_reg(p_dm_odm, 0xe04, (BIT(18)|BIT(21)), 0x0);	
 			/*fix sec_min_wgt = 1/2*/
 			reg_8 = odm_get_bb_reg(p_dm_odm, 0xf94, BIT(0)|BIT(1)|BIT(2));
 			ODM_RT_TRACE(p_dm_odm, ODM_COMP_COMMON, ODM_DBG_LOUD, ("AGC weighting ,rssi_min = %d\n, 0xf94[2:0] = 0x%x\n", p_dm_odm->rssi_min, reg_8));
@@ -267,8 +301,8 @@ phydm_dynamic_ant_weighting_8822b(
 	} else {
 			odm_set_bb_reg(p_dm_odm, 0x98c, MASKDWORD, 0x43440000);
 			odm_set_bb_reg(p_dm_odm, 0x818, BIT(26), 0x1);
-			odm_set_bb_reg(p_dm_odm, 0xc04, BIT(18), 0x0);
-			odm_set_bb_reg(p_dm_odm, 0xe04, BIT(18), 0x0);
+			odm_set_bb_reg(p_dm_odm, 0xc04, (BIT(18)|BIT(21)), 0x0);
+			odm_set_bb_reg(p_dm_odm, 0xe04, (BIT(18)|BIT(21)), 0x0);
 			reg_8 = odm_get_bb_reg(p_dm_odm, 0xf94, BIT(0)|BIT(1)|BIT(2));
 			ODM_RT_TRACE(p_dm_odm, ODM_COMP_COMMON, ODM_DBG_LOUD, ("AGC weighting ,rssi_min = %d\n, 0xf94[2:0] = 0x%x\n", p_dm_odm->rssi_min, reg_8));
 		/*fix sec_min_wgt = 1/2*/
@@ -280,8 +314,10 @@ phydm_dynamic_ant_weighting_8822b(
 		set_result_nbi = phydm_nbi_setting(p_dm_odm, NBI_DISABLE, *p_dm_odm->p_channel, 20, 2440, PHYDM_DONT_CARE);
 	}
 	
-	if ((*p_dm_odm->p_band_width == ODM_BW20M) && (*p_dm_odm->p_channel == 11) && (p_dm_odm->rfe_type == 3)) {
+	if ((*p_dm_odm->p_band_width == ODM_BW20M) && (*p_dm_odm->p_channel == 11) && (p_dm_odm->rfe_type == 3) && (p_dm_odm->RSSI_A < 40)) {
 		odm_set_bb_reg(p_dm_odm, 0x830, BIT(13)|BIT(14)|BIT(15)|BIT(16), 0xa);
+	} else {
+		odm_set_bb_reg(p_dm_odm, 0x830, BIT(13)|BIT(14)|BIT(15)|BIT(16), 0x7);
 	}
 
 }
@@ -292,7 +328,11 @@ phydm_hwsetting_8822b(
 	struct PHY_DM_STRUCT		*p_dm_odm
 )
 {
-	phydm_dynamic_switch_htstf_mumimo_8822b(p_dm_odm);
+	if (p_dm_odm->bhtstfdisabled == false)
+		phydm_dynamic_switch_htstf_mumimo_8822b(p_dm_odm);
+	else
+		ODM_RT_TRACE(p_dm_odm, ODM_COMP_COMMON, ODM_DBG_LOUD, ("Default HT-STF gain control setting\n"));
+	
 	phydm_dynamic_ant_weighting_8822b(p_dm_odm);
 }
 

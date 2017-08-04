@@ -800,6 +800,7 @@ enum phy_reg_pg_type {
 	u32			noisy_decision_smooth;
 	boolean			is_disable_dym_ecs;
 	boolean			is_disable_dym_ant_weighting;
+	boolean		bhtstfdisabled;		/* for dynamic HTSTF gain control	*/
 
 #if (DM_ODM_SUPPORT_TYPE & (ODM_CE | ODM_WIN))
 	struct _ODM_NOISE_MONITOR_ noise_level;
