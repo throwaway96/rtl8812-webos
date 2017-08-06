@@ -15719,6 +15719,7 @@ u8 tdls_hdl(_adapter *padapter, unsigned char *pbuf)
 	u8 zaddr[ETH_ALEN] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 	u8 ret;
 	u8 doiqk;
+	struct mi_state mstate;
 
 	if (!pbuf)
 		return H2C_PARAMETERS_ERROR;
@@ -15896,8 +15897,13 @@ u8 tdls_hdl(_adapter *padapter, unsigned char *pbuf)
 		break;
 #endif
 	case TDLS_RS_RCR:
-		rtw_hal_set_hwreg(padapter, HW_VAR_TDLS_RS_RCR, 0);
-		RTW_INFO("[TDLS] write REG_RCR, set bit6 on\n");
+		rtw_mi_status(padapter, &mstate);
+		if (MSTATE_AP_NUM(&mstate) || MSTATE_AP_STARTING_NUM(&mstate)) {
+			RTW_INFO("[TDLS] has ap or starting ap, do not set REG_RCR bit6 on\n");
+		} else {
+			rtw_hal_set_hwreg(padapter, HW_VAR_TDLS_RS_RCR, 0);
+			RTW_INFO("[TDLS] write REG_RCR, set bit6 on\n");
+		}
 		break;
 	case TDLS_TEARDOWN_STA:
 		_rtw_memset(&txmgmt, 0x00, sizeof(struct tdls_txmgmt));

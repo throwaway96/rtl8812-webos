@@ -200,7 +200,7 @@ int rtw_bfee_rf_number = 0; /*BeamformeeCapRfNum  Rf path number, 0 for auto, ot
 #endif /* CONFIG_80211N_HT */
 
 #ifdef CONFIG_80211AC_VHT
-int rtw_vht_enable = 1; /* 0:disable, 1:enable, 2:force auto enable */
+int rtw_vht_enable = 2; /* 0:disable, 1:enable, 2:force auto enable */
 module_param(rtw_vht_enable, int, 0644);
 
 int rtw_ampdu_factor = 7;
@@ -680,13 +680,13 @@ int rtw_mcc_sta_bw80_target_tx_tp = MCC_STA_BW80_TARGET_TX_TP;
 int rtw_mcc_single_tx_cri = MCC_SINGLE_TX_CRITERIA;
 int rtw_mcc_policy_table_idx = 0;
 /* primary adapter duration */
-int rtw_mcc_duration = 20;
+int rtw_mcc_duration = 0;
 int rtw_mcc_tsf_sync_offset = 0;
 int rtw_mcc_start_time_offset = 0;
 int rtw_mcc_interval = 0;
 int rtw_mcc_guard_offset0 = -1;
 int rtw_mcc_guard_offset1 = -1;
-int rtw_mcc_enable_runtime_duration = 1;
+int rtw_mcc_enable_runtime_duration = 0;
 module_param(rtw_en_mcc, int, 0644);
 module_param(rtw_mcc_single_tx_cri, int, 0644);
 module_param(rtw_mcc_ap_bw20_target_tx_tp, int, 0644);

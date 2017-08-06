@@ -1897,6 +1897,35 @@ int rtw_check_beacon_data(_adapter *padapter, u8 *pbuf,  int len)
 
 		pmlmepriv->htpriv.ampdu_enable = pregistrypriv->ampdu_enable ? _TRUE : _FALSE;
 
+		if (MLME_IS_GO(padapter)) {
+			/* enable HT40 for GO */
+			u8 cbw40_enable = 0;
+
+			if (hal_chk_bw_cap(padapter, BW_CAP_40M)) {
+				if (channel > 14) {
+					if (REGSTY_IS_BW_5G_SUPPORT(pregistrypriv, CHANNEL_WIDTH_40))
+						cbw40_enable = _TRUE;
+				} else {
+					if (REGSTY_IS_BW_2G_SUPPORT(pregistrypriv, CHANNEL_WIDTH_40))
+						cbw40_enable = _TRUE;
+				}
+			}
+
+			if (cbw40_enable && rtw_get_offset_by_ch(pbss_network->Configuration.DSConfig) == HAL_PRIME_CHNL_OFFSET_LOWER) {
+				SET_HT_CAP_ELE_CHL_WIDTH(pHT_caps_ie + 2, 1);
+				SET_HT_OP_ELE_STA_CHL_WIDTH(pHT_info_ie + 2, 1);
+				SET_HT_OP_ELE_2ND_CHL_OFFSET(pHT_info_ie + 2, 1);
+			} else if (cbw40_enable && rtw_get_offset_by_ch(pbss_network->Configuration.DSConfig) == HAL_PRIME_CHNL_OFFSET_UPPER) {
+				SET_HT_CAP_ELE_CHL_WIDTH(pHT_caps_ie + 2, 1);
+				SET_HT_OP_ELE_STA_CHL_WIDTH(pHT_info_ie + 2, 1);
+				SET_HT_OP_ELE_2ND_CHL_OFFSET(pHT_info_ie + 2, 3);
+			} else {
+				SET_HT_CAP_ELE_CHL_WIDTH(pHT_caps_ie + 2, 0);
+				SET_HT_OP_ELE_STA_CHL_WIDTH(pHT_info_ie + 2, 0);
+				SET_HT_OP_ELE_2ND_CHL_OFFSET(pHT_info_ie + 2, 0);
+			}
+		}
+
 		HT_caps_handler(padapter, (PNDIS_802_11_VARIABLE_IEs)pHT_caps_ie);
 
 		HT_info_handler(padapter, (PNDIS_802_11_VARIABLE_IEs)pHT_info_ie);
@@ -3875,10 +3904,10 @@ bool rtw_ap_chbw_decision(_adapter *adapter, s16 req_ch, s8 req_bw, s8 req_offse
 		rtw_adjust_chbw(adapter, u_ch, &dec_bw, &dec_offset);
 #ifdef CONFIG_MCC_MODE
 		if (MCC_EN(adapter)) {
-			if (!rtw_is_chbw_grouped(u_ch, u_bw, u_offset, dec_ch, dec_bw, dec_offset)) {
-				mlmeext->cur_channel = *ch = dec_ch;
-				mlmeext->cur_bwmode = *bw = dec_bw;
-				mlmeext->cur_ch_offset = *offset = dec_offset;
+			if (!rtw_is_chbw_grouped(u_ch, u_bw, u_offset, cur_ie_ch, cur_ie_bw, cur_ie_offset)) {
+				mlmeext->cur_channel = *ch = dec_ch = cur_ie_ch;
+				mlmeext->cur_bwmode = *bw = dec_bw = cur_ie_bw;
+				mlmeext->cur_ch_offset = *offset = dec_offset = cur_ie_offset;
 				/* channel bw offset can not be allowed, need MCC */
 				*chbw_allow = _FALSE;
 				RTW_INFO(FUNC_ADPT_FMT" enable mcc: %u,%u,%u\n", FUNC_ADPT_ARG(adapter)

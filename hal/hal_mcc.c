@@ -34,16 +34,7 @@
 #define TU 1024 /* 1 TU equals 1024 microseconds */
 /* port 1 druration, TSF sync offset, start time offset, interval (unit:TU (1024 microseconds))*/
 u8 mcc_switch_channel_policy_table[][7]={
-	{35, 50, 30, 100, 0, 0, 30},
-	{19, 50, 40, 100, 2, 2, 30},
-	{25, 50, 30, 100, 5, 5, 30},
-	/* for GC/STA */
-
-	/* for G3 */
-	{80, 0, 20, 100, 0, 0, 30},
-	{80, 0, 20, 100, 0, 0, 30},
-	{80, 0, 20, 100, 0, 0, 30},
-	{80, 0, 20, 100, 0, 0, 30},
+	{20, 50, 40, 100, 0, 0, 30},
 };
 
 const int mcc_max_policy_num = sizeof(mcc_switch_channel_policy_table) /sizeof(u8) /7;
@@ -448,7 +439,8 @@ static void rtw_hal_config_mcc_role_setting(PADAPTER padapter, u8 order)
 			- mcc_switch_channel_policy_table[pmccobjpriv->policy_index][MCC_GUARD_OFFSET1_IDX];
 	mcc_interval = mcc_switch_channel_policy_table[pmccobjpriv->policy_index][MCC_INTERVAL_IDX];
 
-	if (mcc_mstate.starting_ap_num == 0 && mcc_mstate.ap_num == 0) {
+	if (MSTATE_AP_STARTING_NUM(&mcc_mstate) == 0
+		&& MSTATE_AP_NUM(&mcc_mstate) == 0) {
 		pmccadapriv->order = order;
 
 		if (pmccadapriv->order == 0) {
@@ -735,7 +727,8 @@ static u8 rtw_hal_mcc_update_timing_parameters(PADAPTER padapter, u8 force_updat
 	u8 need_update = _FALSE;
 
 	/* for STA+STA, modify policy table */
-	if (mcc_mstate.starting_ap_num == 0 && mcc_mstate.ap_num == 0) {
+	if (MSTATE_AP_STARTING_NUM(&mcc_mstate) == 0
+		&& MSTATE_AP_NUM(&mcc_mstate) == 0) {
 		struct dvobj_priv *dvobj = adapter_to_dvobj(padapter);
 		struct mcc_obj_priv *pmccobjpriv = &(dvobj->mcc_objpriv);
 		struct mcc_adapter_priv *pmccadapriv = NULL;
@@ -1517,7 +1510,8 @@ static void rtw_hal_set_mcc_time_setting_cmd(PADAPTER padapter)
 	u8 swchannel_early_time = MCC_SWCH_FW_EARLY_TIME;
 	
 
-	if (mcc_mstate.starting_ap_num == 0 && mcc_mstate.ap_num == 0)
+	if (MSTATE_AP_STARTING_NUM(&mcc_mstate) == 0
+		&& MSTATE_AP_NUM(&mcc_mstate) == 0)
 		/* For STA+GC/STA+STA, TSF of GC/STA does not need to sync from TSF of other STA/GC */
 		fw_eable = 0;
 	else
@@ -2865,8 +2859,8 @@ u8 rtw_hal_set_mcc_setting_join_done_chk_ch(PADAPTER padapter)
 				_enter_critical_mutex(&pmccobjpriv->mcc_mutex, NULL);
 				ret = rtw_hal_set_mcc_setting(padapter, MCC_SETCMD_STATUS_START_CONNECT);
 				_exit_critical_mutex(&pmccobjpriv->mcc_mutex, NULL);
-			}
 		}
+	}
 	}
 
 	return ret;
