@@ -35,6 +35,8 @@
 /* port 1 druration, TSF sync offset, start time offset, interval (unit:TU (1024 microseconds))*/
 u8 mcc_switch_channel_policy_table[][7]={
 	{20, 50, 40, 100, 0, 0, 30},
+	{80, 50, 10, 100, 0, 0, 30},
+	{36, 50, 32, 100, 0, 0, 30},
 };
 
 const int mcc_max_policy_num = sizeof(mcc_switch_channel_policy_table) /sizeof(u8) /7;
@@ -143,7 +145,7 @@ static void rtw_hal_mcc_build_p2p_noa_attr(PADAPTER padapter, u8 *ie, u32 *ie_le
 	p2p_noa_attr_len = p2p_noa_attr_len + 1;
 	
 	/* attrute length(2 bytes) length = noa_desc_num*13 + 2 */
-	RTW_PUT_LE16(p2p_noa_attr_ie + p2p_noa_attr_len, (noa_desc_num*13 + 2));
+	RTW_PUT_LE16(p2p_noa_attr_ie + p2p_noa_attr_len, (noa_desc_num * 13 + 2));
 	p2p_noa_attr_len = p2p_noa_attr_len + 2;
 
 	/* Index (1 byte) */
@@ -188,6 +190,7 @@ static void rtw_hal_mcc_build_p2p_noa_attr(PADAPTER padapter, u8 *ie, u32 *ie_le
 static void rtw_hal_mcc_update_go_p2p_ie(PADAPTER padapter)
 {
 	struct mcc_adapter_priv *pmccadapriv = &padapter->mcc_adapterpriv;
+	struct mcc_obj_priv *mccobjpriv = &(adapter_to_dvobj(padapter)->mcc_objpriv);
 	u8 *pos = NULL;
 
 
@@ -195,13 +198,21 @@ static void rtw_hal_mcc_update_go_p2p_ie(PADAPTER padapter)
 	if (pmccadapriv->p2p_go_noa_ie_len == 0)
 		rtw_hal_mcc_build_p2p_noa_attr(padapter, pmccadapriv->p2p_go_noa_ie, &pmccadapriv->p2p_go_noa_ie_len);
 	else {
-	/* has noa attribut, modify it */
+		/* has noa attribut, modify it */
+		u32 noa_duration = 0;
+		
 		/* update index */
 		pos = pmccadapriv->p2p_go_noa_ie + pmccadapriv->p2p_go_noa_ie_len - 15;
 		/* 0~255 */
 		(*pos) = ((*pos) + 1) % 256;
 		if (0)
 			RTW_INFO("indxe:%d\n", (*pos));
+
+
+		/* update duration */
+		noa_duration = mcc_switch_channel_policy_table[mccobjpriv->policy_index][MCC_DURATION_IDX] * TU;
+		pos = pmccadapriv->p2p_go_noa_ie + pmccadapriv->p2p_go_noa_ie_len - 12;
+		RTW_PUT_LE32(pos, noa_duration);
 
 		/* update start time */
 		pos = pmccadapriv->p2p_go_noa_ie + pmccadapriv->p2p_go_noa_ie_len - 4;
@@ -216,16 +227,8 @@ static void rtw_hal_mcc_update_go_p2p_ie(PADAPTER padapter)
 	}
 
 	if (0) {
-		u8 i = 0;
 		RTW_INFO("p2p_go_noa_ie_len:%d\n", pmccadapriv->p2p_go_noa_ie_len);
-		
-		for (i = 0;i < pmccadapriv->p2p_go_noa_ie_len; i++) {
-			if ((i+1)%8 != 0)
-				printk("0x%02x ", pmccadapriv->p2p_go_noa_ie[i]);
-			else
-				printk("0x%02x\n", pmccadapriv->p2p_go_noa_ie[i]);
-		}
-		printk("\n");
+		RTW_INFO_DUMP("\n", pmccadapriv->p2p_go_noa_ie, pmccadapriv->p2p_go_noa_ie_len);
 	}
 	update_beacon(padapter, _VENDOR_SPECIFIC_IE_, P2P_OUI, _TRUE);
 }
@@ -2436,35 +2439,85 @@ void rtw_hal_mcc_c2h_handler(PADAPTER padapter, u8 buflen, u8 *tmpBuf)
 	}
 }
 
-/* only for no AP & GO case */
 void rtw_hal_mcc_update_parameter(PADAPTER padapter, u8 force_update)
 {	
 	struct dvobj_priv *dvobj = adapter_to_dvobj(padapter);
 	struct mcc_obj_priv *pmccobjpriv = &(dvobj->mcc_objpriv);
 	u8 cmd[H2C_MCC_TIME_SETTING_LEN] = {0};
-	u8 start_time_offset = 0, interval = 0, duration = 0;
 	u8 swchannel_early_time = MCC_SWCH_FW_EARLY_TIME;
-	u8 policy_idx = 0, need_update = _FALSE;
 
 	rtw_mi_status(padapter, &mcc_mstate);
 
-	if (mcc_mstate.ap_num != 0)
-		return;
+	if (MSTATE_AP_NUM(&mcc_mstate) == 0) {
+		u8 need_update = _FALSE;
+		u8 start_time_offset = 0, interval = 0, duration = 0;
 
-	need_update = rtw_hal_mcc_update_timing_parameters(padapter, force_update);
+		need_update = rtw_hal_mcc_update_timing_parameters(padapter, force_update);
 
-	if (need_update == _FALSE)
-		return;
-	
-	start_time_offset = pmccobjpriv->start_time;
-	interval = pmccobjpriv->interval;
-	duration = pmccobjpriv->iface[0]->mcc_adapterpriv.mcc_duration;
+		if (need_update == _FALSE)
+			return;
+		
+		start_time_offset = pmccobjpriv->start_time;
+		interval = pmccobjpriv->interval;
+		duration = pmccobjpriv->iface[0]->mcc_adapterpriv.mcc_duration;
 
-	SET_H2CCMD_MCC_TIME_SETTING_START_TIME(cmd, start_time_offset);
-	SET_H2CCMD_MCC_TIME_SETTING_INTERVAL(cmd, interval);
-	SET_H2CCMD_MCC_TIME_SETTING_EARLY_SWITCH_RPT(cmd, swchannel_early_time);
-	SET_H2CCMD_MCC_TIME_SETTING_UPDATE(cmd, _TRUE);
-	SET_H2CCMD_MCC_TIME_SETTING_ORDER0_DURATION(cmd, duration);
+		SET_H2CCMD_MCC_TIME_SETTING_START_TIME(cmd, start_time_offset);
+		SET_H2CCMD_MCC_TIME_SETTING_INTERVAL(cmd, interval);
+		SET_H2CCMD_MCC_TIME_SETTING_EARLY_SWITCH_RPT(cmd, swchannel_early_time);
+		SET_H2CCMD_MCC_TIME_SETTING_UPDATE(cmd, _TRUE);
+		SET_H2CCMD_MCC_TIME_SETTING_ORDER0_DURATION(cmd, duration);
+	} else {
+		u8 policy_idx = pmccobjpriv->policy_index;
+		u8 duration = mcc_switch_channel_policy_table[policy_idx][MCC_DURATION_IDX];
+		u8 tsf_sync_offset = mcc_switch_channel_policy_table[policy_idx][MCC_TSF_SYNC_OFFSET_IDX];
+		u8 start_time_offset = mcc_switch_channel_policy_table[policy_idx][MCC_START_TIME_OFFSET_IDX];
+		u8 interval = mcc_switch_channel_policy_table[policy_idx][MCC_INTERVAL_IDX];
+		u8 guard_offset0 = mcc_switch_channel_policy_table[policy_idx][MCC_GUARD_OFFSET0_IDX];
+		u8 guard_offset1 = mcc_switch_channel_policy_table[policy_idx][MCC_GUARD_OFFSET1_IDX];
+		u8 order0_duration = 0;
+		u8 i = 0;
+
+		RTW_INFO("%s: policy_idx=%d\n", __func__, policy_idx);
+
+		/* GO/AP is order 0, GC/STA is order 1 */
+		order0_duration = pmccobjpriv->iface[0]->mcc_adapterpriv.mcc_duration = interval - duration;
+		pmccobjpriv->iface[1]->mcc_adapterpriv.mcc_duration = duration;
+
+		/* update IE */
+		for (i = 0; i < dvobj->iface_nums; i++) {
+			PADAPTER iface = NULL;
+			struct mcc_adapter_priv *mccadapriv = NULL;
+
+			iface = dvobj->padapters[i];
+			if (iface == NULL)
+				continue;
+		
+			mccadapriv = &iface->mcc_adapterpriv;
+			if (mccadapriv == NULL)
+				continue;
+			
+			if (mccadapriv->role == MCC_ROLE_GO)
+				rtw_hal_mcc_update_go_p2p_ie(iface);
+		}
+
+		/* update H2C cmd */
+		/* FW set enable */
+		SET_H2CCMD_MCC_TIME_SETTING_FW_EN(cmd, _TRUE);
+		/* TSF Sync offset */
+		SET_H2CCMD_MCC_TIME_SETTING_TSF_SYNC_OFFSET(cmd, tsf_sync_offset);
+		/* start time offset */
+		SET_H2CCMD_MCC_TIME_SETTING_START_TIME(cmd, (start_time_offset + guard_offset0));
+		/* interval */
+		SET_H2CCMD_MCC_TIME_SETTING_INTERVAL(cmd, interval);
+		/* Early time to inform driver by C2H before switch channel */
+		SET_H2CCMD_MCC_TIME_SETTING_EARLY_SWITCH_RPT(cmd, swchannel_early_time);
+		/* Port0 sync from Port1, not support multi-port */
+		SET_H2CCMD_MCC_TIME_SETTING_ORDER_BASE(cmd, HW_PORT1);
+		SET_H2CCMD_MCC_TIME_SETTING_ORDER_SYNC(cmd, HW_PORT0);
+		SET_H2CCMD_MCC_TIME_SETTING_UPDATE(cmd, _TRUE);
+		SET_H2CCMD_MCC_TIME_SETTING_ORDER0_DURATION(cmd, order0_duration);
+	}
+
 	rtw_hal_fill_h2c_cmd(padapter, H2C_MCC_TIME_SETTING, H2C_MCC_TIME_SETTING_LEN, cmd);
 }
 
@@ -2489,6 +2542,8 @@ void rtw_hal_mcc_sw_status_check(PADAPTER padapter)
 	if (!MCC_EN(padapter))
 		return;
 
+	rtw_mi_status(padapter, &mcc_mstate);
+
 	_enter_critical_mutex(&pmccobjpriv->mcc_mutex, NULL);
 
 	if (rtw_hal_check_mcc_status(padapter, MCC_STATUS_DOING_MCC)) {
@@ -2502,7 +2557,7 @@ void rtw_hal_mcc_sw_status_check(PADAPTER padapter)
 			}
 		}		
 
-		if (!noa_enable)
+		if (!noa_enable && MSTATE_AP_NUM(&mcc_mstate) == 0)
 			rtw_hal_mcc_update_parameter(padapter, _FALSE);
 
 		threshold = pmccobjpriv->mcc_stop_threshold;
@@ -3176,21 +3231,23 @@ u8 rtw_set_mcc_duration_hdl(PADAPTER adapter, u8 type, const u8 *val)
 			/* 0 = fair scheduling */
 			case 0:
 				mccobjpriv->duration= 40;
+				mccobjpriv->policy_index = 2;
 				break;
 			/* 1 = favor STA */
 			case 1:
 				mccobjpriv->duration= 70;
+				mccobjpriv->policy_index = 1;
 				break;
 			/* 2 = favor P2P*/
 			case 2:
-				mccobjpriv->duration= 30;
-				break;
 			default:
 				mccobjpriv->duration= 30;
+				mccobjpriv->policy_index = 0;
 				break;
 		}
 	} else {
 		mccobjpriv->duration = *val;
+		mccobjpriv->policy_index = *val;
 	}
 
 	/* only update sw parameter under MCC 

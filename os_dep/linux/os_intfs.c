@@ -678,7 +678,7 @@ int rtw_mcc_sta_bw20_target_tx_tp = MCC_STA_BW20_TARGET_TX_TP;
 int rtw_mcc_sta_bw40_target_tx_tp = MCC_STA_BW40_TARGET_TX_TP;
 int rtw_mcc_sta_bw80_target_tx_tp = MCC_STA_BW80_TARGET_TX_TP;
 int rtw_mcc_single_tx_cri = MCC_SINGLE_TX_CRITERIA;
-int rtw_mcc_policy_table_idx = 0;
+int rtw_mcc_policy_table_idx = 2;
 /* primary adapter duration */
 int rtw_mcc_duration = 0;
 int rtw_mcc_tsf_sync_offset = 0;
@@ -686,7 +686,7 @@ int rtw_mcc_start_time_offset = 0;
 int rtw_mcc_interval = 0;
 int rtw_mcc_guard_offset0 = -1;
 int rtw_mcc_guard_offset1 = -1;
-int rtw_mcc_enable_runtime_duration = 0;
+int rtw_mcc_enable_runtime_duration = 1;
 module_param(rtw_en_mcc, int, 0644);
 module_param(rtw_mcc_single_tx_cri, int, 0644);
 module_param(rtw_mcc_ap_bw20_target_tx_tp, int, 0644);
