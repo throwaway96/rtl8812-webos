@@ -211,6 +211,16 @@ u8 p2p_roch_cmd(_adapter *adapter
 	, u8 flags
 );
 u8 p2p_cancel_roch_cmd(_adapter *adapter, u64 cookie, struct wireless_dev *wdev, u8 flags);
+
+struct mgnt_tx_parm {
+	u8 tx_ch;
+	u8 no_cck;
+	const u8 *buf;
+	size_t len;
+	int wait_ack;
+};
+u8 rtw_mgnt_tx_cmd(_adapter *adapter, u8 tx_ch, u8 no_cck, const u8 *buf, size_t len, int wait_ack, u8 flags);
+
 #endif /* CONFIG_IOCTL_CFG80211 */
 #endif /* CONFIG_P2P */
 
@@ -247,6 +257,7 @@ enum rtw_drvextra_cmd_id {
 	MP_CMD_WK_CID,
 	CUSTOMER_STR_WK_CID,
 	MCC_SET_DURATION_WK_CID,
+	MGNT_TX_WK_CID,
 	MAX_WK_CID
 };
 
@@ -987,6 +998,7 @@ Result:
 #define H2C_RESERVED			0x07
 #define H2C_ENQ_HEAD			0x08
 #define H2C_ENQ_HEAD_FAIL		0x09
+#define H2C_CMD_FAIL			0x0A
 
 extern u8 rtw_setassocsta_cmd(_adapter  *padapter, u8 *mac_addr);
 extern u8 rtw_setstandby_cmd(_adapter *padapter, uint action);
@@ -1070,7 +1082,7 @@ u8 rtw_test_h2c_cmd(_adapter *adapter, u8 *buf, u8 len);
 
 u8 rtw_enable_hw_update_tsf_cmd(_adapter *padapter);
 
-u8 rtw_set_ch_cmd(_adapter *padapter, u8 ch, u8 bw, u8 ch_offset, u8 enqueue);
+u8 rtw_set_chbw_cmd(_adapter *padapter, u8 ch, u8 bw, u8 ch_offset, u8 flags);
 
 u8 rtw_set_chplan_cmd(_adapter *adapter, int flags, u8 chplan, u8 swconfig);
 u8 rtw_set_country_cmd(_adapter *adapter, int flags, const char *country_code, u8 version, u8 swconfig);

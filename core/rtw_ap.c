@@ -4077,6 +4077,37 @@ exit:
 	return changed;
 }
 
+u8 rtw_ap_sta_linking_state_check(_adapter *adapter)
+{
+	struct sta_info *psta;
+	struct mlme_priv *pmlmepriv = &adapter->mlmepriv;
+	struct sta_priv *pstapriv = &adapter->stapriv;
+	int i;
+	_list *plist, *phead;
+	_irqL irqL;
+	u8 rst = _FALSE;
+
+	if (check_fwstate(pmlmepriv, WIFI_AP_STATE) == _FALSE)
+		return _FALSE;
+
+	if (pstapriv->auth_list_cnt !=0)
+		return _TRUE;
+
+	_enter_critical_bh(&pstapriv->asoc_list_lock, &irqL);
+	phead = &pstapriv->asoc_list;
+	plist = get_next(phead);
+	while ((rtw_end_of_queue_search(phead, plist)) == _FALSE) {
+		psta = LIST_CONTAINOR(plist, struct sta_info, asoc_list);
+		plist = get_next(plist);
+		if (!(psta->state &_FW_LINKED)) {
+			rst = _TRUE;
+			break;
+		}
+	}
+	_exit_critical_bh(&pstapriv->asoc_list_lock, &irqL);
+	return rst;
+}
+
 /*#define DBG_SWTIMER_BASED_TXBCN*/
 
 #ifdef CONFIG_SWTIMER_BASED_TXBCN

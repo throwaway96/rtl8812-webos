@@ -1171,7 +1171,7 @@ u8 mlme_evt_hdl(_adapter *padapter, unsigned char *pbuf);
 u8 h2c_msg_hdl(_adapter *padapter, unsigned char *pbuf);
 u8 chk_bmc_sleepq_hdl(_adapter *padapter, unsigned char *pbuf);
 u8 tx_beacon_hdl(_adapter *padapter, unsigned char *pbuf);
-u8 set_ch_hdl(_adapter *padapter, u8 *pbuf);
+u8 rtw_set_chbw_hdl(_adapter *padapter, u8 *pbuf);
 u8 set_chplan_hdl(_adapter *padapter, unsigned char *pbuf);
 u8 led_blink_hdl(_adapter *padapter, unsigned char *pbuf);
 u8 set_csa_hdl(_adapter *padapter, unsigned char *pbuf);	/* Kurt: Handling DFS channel switch announcement ie. */
@@ -1231,7 +1231,7 @@ struct cmd_hdl wlancmds[] = {
 	GEN_MLME_EXT_HANDLER(0, NULL)
 	GEN_MLME_EXT_HANDLER(0, NULL)
 	GEN_MLME_EXT_HANDLER(sizeof(struct addBaReq_parm), add_ba_hdl)
-	GEN_MLME_EXT_HANDLER(sizeof(struct set_ch_parm), set_ch_hdl) /* 46 */
+	GEN_MLME_EXT_HANDLER(sizeof(struct set_ch_parm), rtw_set_chbw_hdl) /* 46 */
 	GEN_MLME_EXT_HANDLER(0, NULL)
 	GEN_MLME_EXT_HANDLER(0, NULL)
 	GEN_MLME_EXT_HANDLER(0, NULL)

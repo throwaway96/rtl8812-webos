@@ -2121,12 +2121,12 @@ exit:
 
 }
 
-u8 rtw_set_ch_cmd(_adapter *padapter, u8 ch, u8 bw, u8 ch_offset, u8 enqueue)
+u8 rtw_set_chbw_cmd(_adapter *padapter, u8 ch, u8 bw, u8 ch_offset, u8 flags)
 {
 	struct cmd_obj *pcmdobj;
 	struct set_ch_parm *set_ch_parm;
 	struct cmd_priv *pcmdpriv = &padapter->cmdpriv;
-
+	struct submit_ctx sctx;
 	u8 res = _SUCCESS;
 
 
@@ -2145,7 +2145,13 @@ u8 rtw_set_ch_cmd(_adapter *padapter, u8 ch, u8 bw, u8 ch_offset, u8 enqueue)
 	set_ch_parm->bw = bw;
 	set_ch_parm->ch_offset = ch_offset;
 
-	if (enqueue) {
+	if (flags & RTW_CMDF_DIRECTLY) {
+		/* no need to enqueue, do the cmd hdl directly and free cmd parameter */
+		if (H2C_SUCCESS != rtw_set_chbw_hdl(padapter, (u8 *)set_ch_parm))
+			res = _FAIL;
+
+		rtw_mfree((u8 *)set_ch_parm, sizeof(*set_ch_parm));
+	} else {
 		/* need enqueue, prepare cmd_obj and enqueue */
 		pcmdobj = (struct cmd_obj *)rtw_zmalloc(sizeof(struct	cmd_obj));
 		if (pcmdobj == NULL) {
@@ -2155,13 +2161,21 @@ u8 rtw_set_ch_cmd(_adapter *padapter, u8 ch, u8 bw, u8 ch_offset, u8 enqueue)
 		}
 
 		init_h2fwcmd_w_parm_no_rsp(pcmdobj, set_ch_parm, GEN_CMD_CODE(_SetChannel));
-		res = rtw_enqueue_cmd(pcmdpriv, pcmdobj);
-	} else {
-		/* no need to enqueue, do the cmd hdl directly and free cmd parameter */
-		if (H2C_SUCCESS != set_ch_hdl(padapter, (u8 *)set_ch_parm))
-			res = _FAIL;
 
-		rtw_mfree((u8 *)set_ch_parm, sizeof(*set_ch_parm));
+		if (flags & RTW_CMDF_WAIT_ACK) {
+			pcmdobj->sctx = &sctx;
+			rtw_sctx_init(&sctx, 10 * 1000);
+		}
+
+		res = rtw_enqueue_cmd(pcmdpriv, pcmdobj);
+
+		if (res == _SUCCESS && (flags & RTW_CMDF_WAIT_ACK)) {
+			rtw_sctx_wait(&sctx, __func__);
+			_enter_critical_mutex(&pcmdpriv->sctx_mutex, NULL);
+			if (sctx.status == RTW_SCTX_SUBMITTED)
+				pcmdobj->sctx = NULL;
+			_exit_critical_mutex(&pcmdpriv->sctx_mutex, NULL);
+		}
 	}
 
 	/* do something based on res... */
@@ -3294,6 +3308,80 @@ inline u8 p2p_cancel_roch_cmd(_adapter *adapter, u64 cookie, struct wireless_dev
 {
 	return _p2p_roch_cmd(adapter, cookie, wdev, NULL, 0, 0, flags);
 }
+
+inline u8 rtw_mgnt_tx_cmd(_adapter *adapter, u8 tx_ch, u8 no_cck, const u8 *buf, size_t len, int wait_ack, u8 flags)
+{
+	struct cmd_obj *cmdobj;
+	struct drvextra_cmd_parm *parm;
+	struct mgnt_tx_parm *mgnt_parm;
+	struct cmd_priv *pcmdpriv = &adapter->cmdpriv;
+	struct submit_ctx sctx;
+	u8	res = _SUCCESS;
+
+	mgnt_parm = (struct mgnt_tx_parm *)rtw_zmalloc(sizeof(struct mgnt_tx_parm));
+	if (mgnt_parm == NULL) {
+		res = _FAIL;
+			goto exit;
+	}
+
+	mgnt_parm->tx_ch = tx_ch;
+	mgnt_parm->no_cck = no_cck;
+	mgnt_parm->buf = buf;
+	mgnt_parm->len = len;
+	mgnt_parm->wait_ack = wait_ack;
+
+	if (flags & RTW_CMDF_DIRECTLY) {
+		/* no need to enqueue, do the cmd hdl directly and free cmd parameter */
+		if (H2C_SUCCESS != rtw_mgnt_tx_handler(adapter, (u8 *)mgnt_parm))
+			res = _FAIL;
+		rtw_mfree((u8 *)mgnt_parm, sizeof(*mgnt_parm));
+	} else {
+		/* need enqueue, prepare cmd_obj and enqueue */
+		parm = (struct drvextra_cmd_parm *)rtw_zmalloc(sizeof(struct drvextra_cmd_parm));
+		if (parm == NULL) {
+			rtw_mfree((u8 *)mgnt_parm, sizeof(*mgnt_parm));
+			res = _FAIL;
+			goto exit;
+		}
+
+		parm->ec_id = MGNT_TX_WK_CID;
+		parm->type = 0;
+		parm->size = sizeof(*mgnt_parm);
+		parm->pbuf = (u8 *)mgnt_parm;
+
+		cmdobj = (struct cmd_obj *)rtw_zmalloc(sizeof(*cmdobj));
+		if (cmdobj == NULL) {
+			res = _FAIL;
+			rtw_mfree((u8 *)mgnt_parm, sizeof(*mgnt_parm));
+			rtw_mfree((u8 *)parm, sizeof(*parm));
+			goto exit;
+		}
+
+		init_h2fwcmd_w_parm_no_rsp(cmdobj, parm, GEN_CMD_CODE(_Set_Drv_Extra));
+
+		if (flags & RTW_CMDF_WAIT_ACK) {
+			cmdobj->sctx = &sctx;
+			rtw_sctx_init(&sctx, 10 * 1000);
+		}
+
+		res = rtw_enqueue_cmd(pcmdpriv, cmdobj);
+
+		if (res == _SUCCESS && (flags & RTW_CMDF_WAIT_ACK)) {
+			rtw_sctx_wait(&sctx, __func__);
+			_enter_critical_mutex(&pcmdpriv->sctx_mutex, NULL);
+			if (sctx.status == RTW_SCTX_SUBMITTED)
+				cmdobj->sctx = NULL;
+			_exit_critical_mutex(&pcmdpriv->sctx_mutex, NULL);
+			if (sctx.status != RTW_SCTX_DONE_SUCCESS)
+				res = _FAIL;
+		}
+	}
+
+exit:
+	return res;
+}
+
+
 #endif /* CONFIG_IOCTL_CFG80211 */
 #endif /* CONFIG_P2P */
 
@@ -4658,6 +4746,9 @@ u8 rtw_drvextra_cmd_hdl(_adapter *padapter, unsigned char *pbuf)
 		ret = rtw_set_mcc_duration_hdl(padapter, pdrvextra_cmd->type, pdrvextra_cmd->pbuf);
 		break;
 #endif /* CONFIG_MCC_MODE */
+	case MGNT_TX_WK_CID:
+		ret = rtw_mgnt_tx_handler(padapter, pdrvextra_cmd->pbuf);
+		break;
 	default:
 		break;
 	}

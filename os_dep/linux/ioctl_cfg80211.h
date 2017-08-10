@@ -51,6 +51,11 @@
 	#endif
 #endif
 
+#ifndef CONFIG_RADIO_WORK
+#define RTW_ROCH_DURATION_ENLARGE
+#define RTW_ROCH_BACK_OP
+#endif
+
 #if !defined(CONFIG_P2P) && RTW_P2P_GROUP_INTERFACE
 	#error "RTW_P2P_GROUP_INTERFACE can't be enabled when CONFIG_P2P is disabled\n"
 #endif
@@ -264,6 +269,7 @@ void rtw_pd_iface_free(struct wiphy *wiphy);
 
 void rtw_cfg80211_set_is_mgmt_tx(_adapter *adapter, u8 val);
 u8 rtw_cfg80211_get_is_mgmt_tx(_adapter *adapter);
+u8 rtw_mgnt_tx_handler(_adapter *adapter, u8 *buf);
 
 void rtw_cfg80211_issue_p2p_provision_request(_adapter *padapter, const u8 *buf, size_t len);
 

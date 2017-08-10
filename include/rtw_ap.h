@@ -73,16 +73,17 @@ bool rtw_ap_chbw_decision(_adapter *adapter, s16 req_ch, s8 req_bw, s8 req_offse
 extern void rtw_start_auto_ap(_adapter *adapter);
 #endif /* CONFIG_AUTO_AP_MODE */
 
-#endif /* end of CONFIG_AP_MODE */
-
-#endif
 void update_bmc_sta(_adapter *padapter);
 
 void rtw_process_ht_action_smps(_adapter *padapter, u8 *ta, u8 ctrl_field);
 void rtw_process_public_act_bsscoex(_adapter *padapter, u8 *pframe, uint frame_len);
 int rtw_ht_operation_update(_adapter *padapter);
+u8 rtw_ap_sta_linking_state_check(_adapter *adapter);
 
 #ifdef CONFIG_SWTIMER_BASED_TXBCN
 void tx_beacon_handlder(struct dvobj_priv *pdvobj);
 void tx_beacon_timer_handlder(struct dvobj_priv *pdvobj);
-#endif
+#endif /*CONFIG_SWTIMER_BASED_TXBCN*/
+
+#endif /* end of CONFIG_AP_MODE */
+#endif /*__RTW_AP_H_*/

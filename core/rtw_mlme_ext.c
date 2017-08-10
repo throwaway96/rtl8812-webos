@@ -3536,7 +3536,7 @@ unsigned int on_action_spct_ch_switch(_adapter *padapter, struct sta_info *psta,
 		 * 2. things after channel switching
 		 */
 
-		ret = rtw_set_ch_cmd(padapter, ch, bwmode, ch_offset, _TRUE);
+		ret = rtw_set_chbw_cmd(padapter, ch, bwmode, ch_offset, 0);
 	}
 
 exit:
@@ -15607,7 +15607,7 @@ exit:
 }
 
 
-u8 set_ch_hdl(_adapter *padapter, u8 *pbuf)
+u8 rtw_set_chbw_hdl(_adapter *padapter, u8 *pbuf)
 {
 	struct set_ch_parm *set_ch_parm;
 	struct mlme_priv		*pmlmepriv = &padapter->mlmepriv;

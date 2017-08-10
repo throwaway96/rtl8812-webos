@@ -3286,10 +3286,130 @@ void p2p_concurrent_handler(_adapter	*padapter)
 #endif
 
 #ifdef CONFIG_IOCTL_CFG80211
+static u8 _stay_in_cur_chan(_adapter *padapter)
+{
+	int i;
+	_adapter *iface;
+	struct mlme_priv *pmlmepriv;
+	struct dvobj_priv *dvobj = adapter_to_dvobj(padapter);
+	u8 rst = _FALSE;
+
+	for (i = 0; i < dvobj->iface_nums; i++) {
+		iface = dvobj->padapters[i];
+		if (iface) {
+			pmlmepriv = &iface->mlmepriv;
+
+			if (check_fwstate(pmlmepriv, _FW_UNDER_LINKING | WIFI_UNDER_WPS) == _TRUE) {
+				RTW_ERR(ADPT_FMT"- _FW_UNDER_LINKING |WIFI_UNDER_WPS (mlme state:0x%x)\n",
+						ADPT_ARG(iface), get_fwstate(&iface->mlmepriv));
+				rst = _TRUE;
+				break;
+			}
+			#ifdef CONFIG_AP_MODE
+			if (check_fwstate(pmlmepriv, WIFI_AP_STATE)) {
+				if (rtw_ap_sta_linking_state_check(iface) == _TRUE) {
+					RTW_ERR(ADPT_FMT"- SoftAP -have sta under linking\n", ADPT_ARG(iface));
+					rst = _TRUE;
+					break;
+				}
+			}
+			#endif
+		}
+	}
+
+	return rst;
+}
+
 static int ro_ch_handler(_adapter *adapter, u8 *buf)
 {
-	/* TODO: move remain on channel logical here */
-	return H2C_SUCCESS;
+	int ret = H2C_SUCCESS;
+	struct p2p_roch_parm *roch_parm = (struct p2p_roch_parm *)buf;
+	struct rtw_wdev_priv *pwdev_priv = adapter_wdev_data(adapter);
+	struct cfg80211_wifidirect_info *pcfg80211_wdinfo = &adapter->cfg80211_wdinfo;
+	struct wifidirect_info *pwdinfo = &adapter->wdinfo;
+	struct mlme_ext_priv *pmlmeext = &adapter->mlmeextpriv;
+	u8 ready_on_channel = _FALSE;
+	u8 remain_ch;
+	unsigned int duration;
+
+	_enter_critical_mutex(&pwdev_priv->roch_mutex, NULL);
+
+	if (rtw_cfg80211_get_is_roch(adapter) != _TRUE)
+		goto exit;
+
+	remain_ch = (u8) ieee80211_frequency_to_channel(roch_parm->ch.center_freq);
+	duration = roch_parm->duration;
+
+	RTW_INFO(FUNC_ADPT_FMT" ch:%u duration:%d, cookie:0x%llx\n"
+		, FUNC_ADPT_ARG(adapter), remain_ch, roch_parm->duration, roch_parm->cookie);
+
+	if (roch_parm->wdev && roch_parm->cookie) {
+		if (pcfg80211_wdinfo->ro_ch_wdev != roch_parm->wdev) {
+			RTW_WARN(FUNC_ADPT_FMT" ongoing wdev:%p, wdev:%p\n"
+				, FUNC_ADPT_ARG(adapter), pcfg80211_wdinfo->ro_ch_wdev, roch_parm->wdev);
+			rtw_warn_on(1);
+		}
+
+		if (pcfg80211_wdinfo->remain_on_ch_cookie != roch_parm->cookie) {
+			RTW_WARN(FUNC_ADPT_FMT" ongoing cookie:0x%llx, cookie:0x%llx\n"
+				, FUNC_ADPT_ARG(adapter), pcfg80211_wdinfo->remain_on_ch_cookie, roch_parm->cookie);
+			rtw_warn_on(1);
+		}
+	}
+
+	if (_stay_in_cur_chan(adapter) == _TRUE)
+		remain_ch = rtw_mi_get_union_chan(adapter);
+
+#ifdef CONFIG_CONCURRENT_MODE
+	if (rtw_mi_check_status(adapter, MI_LINKED) && (0 != rtw_mi_get_union_chan(adapter))) {
+		if ((remain_ch != rtw_mi_get_union_chan(adapter)) && !check_fwstate(&adapter->mlmepriv, _FW_LINKED)) {
+			if (ATOMIC_READ(&pwdev_priv->switch_ch_to) == 1 ||
+				(remain_ch != pmlmeext->cur_channel)) {
+
+				rtw_mi_buddy_issue_nulldata(adapter, NULL, 1, 3, 500);
+				ATOMIC_SET(&pwdev_priv->switch_ch_to, 0);
+
+				#ifdef RTW_ROCH_BACK_OP
+				RTW_INFO("%s, set switch ch timer, duration=%d\n", __func__, duration - pwdinfo->ext_listen_interval);
+				_set_timer(&pwdinfo->ap_p2p_switch_timer, duration - pwdinfo->ext_listen_interval);
+				#endif
+			}
+		}
+		ready_on_channel = _TRUE;
+	} else
+#endif /* CONFIG_CONCURRENT_MODE */
+	{
+		if (remain_ch != rtw_get_oper_ch(adapter))
+			ready_on_channel = _TRUE;
+	}
+
+	if (ready_on_channel == _TRUE) {
+		#ifndef RTW_SINGLE_WIPHY
+		if (!check_fwstate(&adapter->mlmepriv, _FW_LINKED))
+		#endif
+		{
+			#ifdef CONFIG_CONCURRENT_MODE
+			if (rtw_get_oper_ch(adapter) != remain_ch)
+			#endif
+			{
+				/* if (!padapter->mlmepriv.LinkDetectInfo.bBusyTraffic) */
+				set_channel_bwmode(adapter, remain_ch, HAL_PRIME_CHNL_OFFSET_DONT_CARE, CHANNEL_WIDTH_20);
+			}
+		}
+	}
+
+#ifdef CONFIG_BT_COEXIST
+	rtw_btcoex_ScanNotify(adapter, _TRUE);
+#endif
+
+	RTW_INFO("%s, set ro ch timer, duration=%d\n", __func__, duration);
+	_set_timer(&pcfg80211_wdinfo->remain_on_ch_timer, duration);
+
+
+exit:
+	_exit_critical_mutex(&pwdev_priv->roch_mutex, NULL);
+
+	return ret;
 }
 
 static int cancel_ro_ch_handler(_adapter *padapter, u8 *buf)
