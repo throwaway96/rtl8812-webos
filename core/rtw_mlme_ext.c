@@ -14159,6 +14159,20 @@ void site_survey(_adapter *padapter, u8 survey_channel, RT_SCAN_TYPE ScanType)
 			} else
 #endif /* CONFIG_P2P */
 			{
+				/* in order to find hidden AP fastly */
+				int i;
+
+				for (i = 0; i < RTW_SSID_SCAN_AMOUNT; i++) {
+					if (pmlmeext->sitesurvey_res.ssid[i].SsidLength) {
+						/* IOT issue, When wifi_spec is not set, send one probe req without WPS IE. */
+						if (padapter->registrypriv.wifi_spec)
+							issue_probereq(padapter, &(pmlmeext->sitesurvey_res.ssid[i]), NULL);
+						else
+							issue_probereq_ex(padapter, &(pmlmeext->sitesurvey_res.ssid[i]), NULL, 0, 0, 0, 0);
+						issue_probereq(padapter, &(pmlmeext->sitesurvey_res.ssid[i]), NULL);
+					}
+				}
+
 				if (pmlmeext->sitesurvey_res.scan_mode == SCAN_ACTIVE) {
 					/* IOT issue, When wifi_spec is not set, send one probe req without WPS IE. */
 					if (padapter->registrypriv.wifi_spec)
@@ -14168,7 +14182,6 @@ void site_survey(_adapter *padapter, u8 survey_channel, RT_SCAN_TYPE ScanType)
 					issue_probereq(padapter, NULL, NULL);
 				}
 
-				ssid_scan = 1;
 			}
 		}
 
