@@ -4718,7 +4718,7 @@ int rtw_lge_parse_country(_adapter *padapter, u8 *list_str)
 			RTW_INFO("%s country [%s, %s]\n", __func__, country, ccode_ver);
 
 		if (rtw_set_country(padapter, country, rtw_atoi(ccode_ver)) == _FAIL) {
-			rtw_set_country(padapter, "DC", 0); 
+			rtw_set_country(padapter, "DC", 0);
 			strncpy(adapter_wdev_data(padapter)->country, "DC", 3);
 			adapter_wdev_data(padapter)->ccode_version = 0;
 		} else {
