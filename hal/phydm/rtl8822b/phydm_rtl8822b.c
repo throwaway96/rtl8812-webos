@@ -316,6 +316,7 @@ phydm_dynamic_ant_weighting_8822b(
 	
 	if ((*p_dm_odm->p_band_width == ODM_BW20M) && (*p_dm_odm->p_channel == 11) && (p_dm_odm->rfe_type == 3) && (p_dm_odm->RSSI_A < 40)) {
 		odm_set_bb_reg(p_dm_odm, 0x830, BIT(13)|BIT(14)|BIT(15)|BIT(16), 0xa);
+		odm_set_bb_reg(p_dm_odm, 0x838, BIT(4)|BIT(5)|BIT(6)|BIT(7), 0x6);
 	} else {
 		odm_set_bb_reg(p_dm_odm, 0x830, BIT(13)|BIT(14)|BIT(15)|BIT(16), 0x7);
 	}
