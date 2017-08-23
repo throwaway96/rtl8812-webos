@@ -63,15 +63,25 @@ enum TDLS_CH_SW_CHNL {
 	TDLS_CH_SW_OFF_CHNL
 };
 
+#define TDLS_MIC_CTRL_LEN 2
+#define TDLS_FTIE_DATA_LEN (TDLS_MIC_CTRL_LEN + TDLS_MIC_LEN + \
+							WPA_NONCE_LEN + WPA_NONCE_LEN)
 struct wpa_tdls_ftie {
 	u8 ie_type; /* FTIE */
 	u8 ie_len;
-	u8 mic_ctrl[2];
-	u8 mic[TDLS_MIC_LEN];
-	u8 Anonce[WPA_NONCE_LEN]; /* Responder Nonce in TDLS */
-	u8 Snonce[WPA_NONCE_LEN]; /* Initiator Nonce in TDLS */
+	union {
+		struct {
+			u8 mic_ctrl[TDLS_MIC_CTRL_LEN];
+			u8 mic[TDLS_MIC_LEN];
+			u8 Anonce[WPA_NONCE_LEN]; /* Responder Nonce in TDLS */
+			u8 Snonce[WPA_NONCE_LEN]; /* Initiator Nonce in TDLS */
+		};
+		struct {
+			u8 data[TDLS_FTIE_DATA_LEN];
+		};
+	};
 	/* followed by optional elements */
-} ;
+};
 
 struct wpa_tdls_lnkid {
 	u8 ie_type; /* Link Identifier IE */

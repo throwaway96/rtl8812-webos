@@ -781,10 +781,9 @@ u8 *rtw_tdls_set_ftie(struct tdls_txmgmt *ptxmgmt, u8 *pframe, struct pkt_attrib
 			_rtw_memcpy(FTIE.Anonce, ANonce, WPA_NONCE_LEN);
 		if (SNonce != NULL)
 			_rtw_memcpy(FTIE.Snonce, SNonce, WPA_NONCE_LEN);
-		rtw_set_ie(pframe, _FTIE_ , 2, (u8 *)FTIE.mic_ctrl, &(pattrib->pktlen));
-		rtw_set_ie(pframe, _FTIE_, TDLS_MIC_LEN, (u8 *)FTIE.mic, &(pattrib->pktlen));
-		rtw_set_ie(pframe, _FTIE_, WPA_NONCE_LEN, (u8 *)FTIE.Anonce, &(pattrib->pktlen));
-		return rtw_set_ie(pframe, _FTIE_, WPA_NONCE_LEN, (u8 *)FTIE.Snonce, &(pattrib->pktlen));
+
+		return rtw_set_ie(pframe, _FTIE_ , TDLS_FTIE_DATA_LEN,
+						  (u8 *)FTIE.data, &(pattrib->pktlen));
 	}
 }
 
