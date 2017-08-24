@@ -376,7 +376,7 @@ void rtw_hal_turbo_edca(_adapter *adapter)
 
 			rtw_hal_set_hwreg(adapter, HW_VAR_AC_PARAM_BE, (u8 *)(&edca_param));
 
-			RTW_INFO("Turbo EDCA =0x%x\n", edca_param);
+			RTW_DBG("Turbo EDCA =0x%x\n", edca_param);
 
 			hal_data->prv_traffic_idx = traffic_index;
 		}

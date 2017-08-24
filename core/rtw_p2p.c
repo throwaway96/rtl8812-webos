@@ -3402,7 +3402,8 @@ static int ro_ch_handler(_adapter *adapter, u8 *buf)
 	rtw_btcoex_ScanNotify(adapter, _TRUE);
 #endif
 
-	RTW_INFO("%s, set ro ch timer, duration=%d\n", __func__, duration);
+	if(0)
+		RTW_INFO("%s, set ro ch timer, duration=%d\n", __func__, duration);
 	_set_timer(&pcfg80211_wdinfo->remain_on_ch_timer, duration);
 
 

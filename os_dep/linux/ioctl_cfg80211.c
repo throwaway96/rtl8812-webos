@@ -2308,7 +2308,7 @@ static int cfg80211_rtw_scan(struct wiphy *wiphy
 	pwdinfo = &(padapter->wdinfo);
 #endif /* CONFIG_P2P */
 
-	RTW_INFO(FUNC_ADPT_FMT"%s\n", FUNC_ADPT_ARG(padapter)
+	RTW_DBG(FUNC_ADPT_FMT"%s\n", FUNC_ADPT_ARG(padapter)
 		, wdev == wiphy_to_pd_wdev(wiphy) ? " PD" : "");
 
 #ifdef CONFIG_MP_INCLUDED
@@ -5155,7 +5155,7 @@ static s32 cfg80211_rtw_remain_on_channel(struct wiphy *wiphy,
 
 	*cookie = ATOMIC_INC_RETURN(&pcfg80211_wdinfo->ro_ch_cookie_gen);
 
-	RTW_INFO(FUNC_ADPT_FMT"%s ch:%u duration:%d, cookie:0x%llx\n"
+	RTW_DBG(FUNC_ADPT_FMT"%s ch:%u duration:%d, cookie:0x%llx\n"
 		, FUNC_ADPT_ARG(padapter), wdev == wiphy_to_pd_wdev(wiphy) ? " PD" : ""
 		, remain_ch, duration, *cookie);
 
@@ -5270,7 +5270,7 @@ static s32 cfg80211_rtw_remain_on_channel(struct wiphy *wiphy,
 exit:
 	if (err == -EBUSY) {
 		rtw_cfg80211_remain_on_channel_expired(wdev, *cookie, channel, channel_type, GFP_KERNEL);
-		RTW_INFO("cfg80211_remain_on_channel_expired cookie:0x%llx\n", *cookie);
+		RTW_DBG("cfg80211_remain_on_channel_expired cookie:0x%llx\n", *cookie);
 		err = 0;
 	}
 
@@ -5318,7 +5318,7 @@ static s32 cfg80211_rtw_cancel_remain_on_channel(struct wiphy *wiphy,
 	pwdinfo = &padapter->wdinfo;
 	pcfg80211_wdinfo = &padapter->cfg80211_wdinfo;
 
-	RTW_INFO(FUNC_ADPT_FMT"%s cookie:0x%llx\n"
+	RTW_DBG(FUNC_ADPT_FMT"%s cookie:0x%llx\n"
 		, FUNC_ADPT_ARG(padapter), wdev == wiphy_to_pd_wdev(wiphy) ? " PD" : ""
 		, cookie);
 

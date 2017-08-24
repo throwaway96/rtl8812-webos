@@ -12614,7 +12614,7 @@ void linked_status_chk(_adapter *padapter, u8 from_timer)
 
 #ifdef CONFIG_LAYER2_ROAMING
 		if (rtw_chk_roam_flags(padapter, RTW_ROAM_ACTIVE)) {
-			RTW_INFO("signal_strength_data.avg_val = %d\n", precvpriv->signal_strength_data.avg_val);
+			RTW_DBG("signal_strength_data.avg_val = %d\n", precvpriv->signal_strength_data.avg_val);
 			if (precvpriv->signal_strength_data.avg_val < pmlmepriv->roam_rssi_threshold) {
 				pmlmepriv->need_to_roam = _TRUE;
 				rtw_drv_scan_by_self(padapter, RTW_AUTO_SCAN_REASON_ROAM);

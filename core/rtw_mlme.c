@@ -1643,7 +1643,7 @@ void rtw_indicate_disconnect(_adapter *padapter, u16 reason, u8 locally_generate
 
 inline void rtw_indicate_scan_done(_adapter *padapter, bool aborted)
 {
-	RTW_INFO(FUNC_ADPT_FMT"\n", FUNC_ADPT_ARG(padapter));
+	RTW_DBG(FUNC_ADPT_FMT"\n", FUNC_ADPT_ARG(padapter));
 
 	rtw_os_indicate_scan_done(padapter, aborted);
 
@@ -3211,7 +3211,7 @@ int rtw_select_roaming_candidate(struct mlme_priv *mlme)
 	}
 
 	if (candidate == NULL) {
-		RTW_INFO("%s: return _FAIL(candidate == NULL)\n", __FUNCTION__);
+		RTW_DBG("%s: return _FAIL(candidate == NULL)\n", __FUNCTION__);
 		ret = _FAIL;
 		goto exit;
 	} else {

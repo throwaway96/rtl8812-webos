@@ -559,7 +559,7 @@ void rtw_update_ramask(_adapter *padapter, struct sta_info *psta, u32 mac_id, u8
 	hal_data->INIDATA_RATE[mac_id] = psta->init_rate;
 
 
-	RTW_INFO("%s => mac_id:%d, networkType:0x%02x, mask:0x%016llx\n\t ==> rssi_level:%d, rate_bitmap:0x%016llx, shortGIrate=%d\n\t ==> bw:%d, ignore_bw:0x%d\n",
+	RTW_DBG("%s => mac_id:%d, networkType:0x%02x, mask:0x%016llx\n\t ==> rssi_level:%d, rate_bitmap:0x%016llx, shortGIrate=%d\n\t ==> bw:%d, ignore_bw:0x%d\n",
 			__func__, mac_id, psta->wireless_mode, mask, rssi_level, rate_bitmap, short_gi, bw, (!is_update_bw));
 
 	rtw_macid_ctl_set_bw(macid_ctl, mac_id, bw);
