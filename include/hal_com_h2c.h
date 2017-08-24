@@ -351,6 +351,8 @@ s32 rtw_hal_customer_str_write(_adapter *adapter, const u8 *cs);
 	SET_BITS_TO_LE_1BYTE(__pH2CCmd, 1, 1, __Value)
 #define SET_H2CCMD_INACTIVE_PERIOD_SCAN_EN(__pH2CCmd, __Value) \
 	SET_BITS_TO_LE_1BYTE(__pH2CCmd, 2, 1, __Value)
+#define SET_H2CCMD_INACTIVE_DISBBRF(__pH2CCmd, __Value) \
+	SET_BITS_TO_LE_1BYTE(__pH2CCmd, 3, 1, __Value)
 #define SET_H2CCMD_INACTIVE_PS_FREQ(__pH2CCmd, __Value) \
 	SET_BITS_TO_LE_1BYTE(__pH2CCmd + 1, 0, 8, __Value)
 #define SET_H2CCMD_INACTIVE_PS_DURATION(__pH2CCmd, __Value) \

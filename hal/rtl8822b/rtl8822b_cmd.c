@@ -602,8 +602,10 @@ void rtl8822b_set_FwPwrModeInIPS_cmd_wowlan(PADAPTER padapter, u8 ps_mode)
 	RTW_INFO("%s, ps_mode: %d\n", __func__, ps_mode);
 	if (ps_mode == PS_MODE_ACTIVE)
 		SET_H2CCMD_INACTIVE_PS_EN(param, 0);
-	else
+	else {
 		SET_H2CCMD_INACTIVE_PS_EN(param, 1);
+		SET_H2CCMD_INACTIVE_DISBBRF(param, 1);
+	}
 
 	rtl8822b_fillh2ccmd(padapter, H2C_INACTIVE_PS_, sizeof(param), param);
 }

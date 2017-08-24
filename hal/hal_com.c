@@ -2984,6 +2984,37 @@ s32 rtw_set_ps_rsvd_page(_adapter *adapter)
 	return ret;
 }
 
+void rtw_hal_set_magic_pkt_ctrl(_adapter *adapter)
+{
+	u8 port_id = adapter->hw_port;
+	u8 wow_crtl = rtw_read8(adapter, REG_WOW_CTRL);
+	wow_crtl = wow_crtl & ((~BIT4) & (~BIT6) & (~BIT7));
+
+
+	switch (adapter->hw_port) {
+		case HW_PORT1:
+			wow_crtl |= BIT4;
+			break;
+		case HW_PORT2:
+			wow_crtl |= BIT6;
+			break;
+		case HW_PORT3:
+			wow_crtl |= (BIT6 | BIT4);
+			break;
+		case HW_PORT4:
+			wow_crtl |= BIT7;
+			break;
+		case HW_PORT0:
+		default:
+			break;
+	}
+
+	rtw_write8(adapter, REG_WOW_CTRL, wow_crtl);
+
+	RTW_INFO("%s port_id :%d, REG_WOW_CTRL:0x%02x\n", __func__,
+		adapter->hw_port, rtw_read8(adapter, REG_WOW_CTRL));
+}
+
 #endif
 
 #ifdef CONFIG_P2P_PS
@@ -7905,6 +7936,7 @@ static void rtw_hal_wow_enable(_adapter *adapter)
 		if (psta != NULL) {
 			#ifdef CONFIG_FW_MULTI_PORT_SUPPORT
 			rtw_hal_set_default_port_id_cmd(adapter, psta->mac_id);
+			rtw_hal_set_magic_pkt_ctrl(adapter);
 			#endif
 #ifdef CONFIG_RTW_ONE_PIN_GPIO
 			if(adapter_wdev_data(adapter)->wowl == _TRUE)

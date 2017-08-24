@@ -4215,6 +4215,11 @@ int rtw_resume_process_wow(_adapter *padapter)
 		rtw_set_ps_mode(padapter, PS_MODE_ACTIVE, 0, 0, "WOWLAN");
 #endif /* CONFIG_LPS */
 
+#ifdef CONFIG_RTW_ONE_PIN_GPIO
+		if(adapter_wdev_data(padapter)->wowl == _FALSE)
+			rtw_hal_init_phy(padapter);
+#endif /* CONFIG_RTW_ONE_PIN_GPIO */
+		
 		pwrpriv->bFwCurrentInPSMode = _FALSE;
 
 #if defined(CONFIG_SDIO_HCI) || defined(CONFIG_PCI_HCI)
@@ -4234,6 +4239,8 @@ int rtw_resume_process_wow(_adapter *padapter)
 		poidparam.subcode = WOWLAN_DISABLE;
 		rtw_hal_set_hwreg(padapter, HW_VAR_WOWLAN, (u8 *)&poidparam);
 
+
+		
 #ifdef CONFIG_CONCURRENT_MODE
 		rtw_mi_buddy_reset_drv_sw(padapter);
 #endif
