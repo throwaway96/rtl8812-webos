@@ -514,6 +514,7 @@ u8 rtw_set_802_11_infrastructure_mode(_adapter *padapter,
 	struct	mlme_priv	*pmlmepriv = &padapter->mlmepriv;
 	struct	wlan_network	*cur_network = &pmlmepriv->cur_network;
 	NDIS_802_11_NETWORK_INFRASTRUCTURE *pold_state = &(cur_network->network.InfrastructureMode);
+	u8 ap2sta_mode = _FALSE;
 
 
 
@@ -523,7 +524,7 @@ u8 rtw_set_802_11_infrastructure_mode(_adapter *padapter,
 		if (*pold_state == Ndis802_11APMode) {
 			/* change to other mode from Ndis802_11APMode			 */
 			cur_network->join_res = -1;
-
+			ap2sta_mode = _TRUE;
 #ifdef CONFIG_NATIVEAP_MLME
 			stop_ap_mode(padapter);
 #endif
@@ -555,6 +556,9 @@ u8 rtw_set_802_11_infrastructure_mode(_adapter *padapter,
 
 		case Ndis802_11Infrastructure:
 			set_fwstate(pmlmepriv, WIFI_STATION_STATE);
+
+			if (ap2sta_mode)
+				rtw_init_bcmc_stainfo(padapter);
 			break;
 
 		case Ndis802_11APMode:
