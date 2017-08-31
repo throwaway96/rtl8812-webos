@@ -6621,9 +6621,22 @@ unsigned int on_action_public_p2p(union recv_frame *precv_frame)
 #ifdef CONFIG_P2P
 	_cancel_timer_ex(&pwdinfo->reset_ch_sitesurvey);
 #ifdef CONFIG_IOCTL_CFG80211
+#ifdef PURE_SUPPLICANT
+	if (pwdinfo->driver_interface == DRIVER_CFG80211) {
+#ifdef RTW_P2P_GROUP_INTERFACE
+		/* this is only for single wiphy case. */
+		if (rtw_mi_buddy_stay_in_p2p_mode(padapter))
+			rtw_cfg80211_rx_p2p_action_public(padapter, precv_frame);
+#else
+		if (adapter_wdev_data(padapter)->p2p_enabled)
+			rtw_cfg80211_rx_p2p_action_public(padapter, precv_frame);
+#endif
+	} else
+#else /* PURE_SUPPLICANT */
 	if (adapter_wdev_data(padapter)->p2p_enabled && pwdinfo->driver_interface == DRIVER_CFG80211)
 		rtw_cfg80211_rx_p2p_action_public(padapter, precv_frame);
 	else
+#endif /* PURE_SUPPLICANT */
 #endif /* CONFIG_IOCTL_CFG80211 */
 	{
 		/*	Do nothing if the driver doesn't enable the P2P function. */
