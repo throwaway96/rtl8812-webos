@@ -6625,7 +6625,8 @@ unsigned int on_action_public_p2p(union recv_frame *precv_frame)
 	if (pwdinfo->driver_interface == DRIVER_CFG80211) {
 #ifdef RTW_P2P_GROUP_INTERFACE
 		/* this is only for single wiphy case. */
-		if (rtw_mi_buddy_stay_in_p2p_mode(padapter))
+		if (rtw_mi_stay_in_p2p_mode(padapter)
+			|| rtw_mi_buddy_stay_in_p2p_mode(padapter))
 			rtw_cfg80211_rx_p2p_action_public(padapter, precv_frame);
 #else
 		if (adapter_wdev_data(padapter)->p2p_enabled)
