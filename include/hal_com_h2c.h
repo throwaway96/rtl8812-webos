@@ -414,8 +414,9 @@ s32 rtw_hal_customer_str_write(_adapter *adapter, const u8 *cs);
 #define SET_H2CCMD_MCC_CTRL_V2_DISTXNULL(__pH2CCmd, __Value)		SET_BITS_TO_LE_1BYTE((__pH2CCmd)+4, 5, 1, __Value)
 #define SET_H2CCMD_MCC_CTRL_V2_C2HRPT(__pH2CCmd, __Value)			SET_BITS_TO_LE_1BYTE((__pH2CCmd)+4, 6, 2, __Value)
 #define SET_H2CCMD_MCC_CTRL_V2_TSFX(__pH2CCmd, __Value)				SET_BITS_TO_LE_1BYTE((__pH2CCmd)+5, 0, 4, __Value)
-#define SET_H2CCMD_MCC_CTRL_V2_RSVD0(__pH2CCmd, __Value)			SET_BITS_TO_LE_1BYTE((__pH2CCmd)+5, 4, 4, __Value)
+#define SET_H2CCMD_MCC_CTRL_V2_NULL_EARLY(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE((__pH2CCmd)+5, 4, 4, __Value)
 #define SET_H2CCMD_MCC_CTRL_V2_UPDATE_PARM(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE((__pH2CCmd)+6, 7, 1, __Value)
+
 
 /* MCC CTRL CMD 0x18 */
 #define SET_H2CCMD_MCC_CTRL_ORDER(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE(__pH2CCmd, 0, 4, __Value)

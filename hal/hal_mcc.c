@@ -37,6 +37,7 @@ u8 mcc_switch_channel_policy_table[][7]={
 	{20, 50, 40, 100, 0, 0, 30},
 	{80, 50, 10, 100, 0, 0, 30},
 	{36, 50, 32, 100, 0, 0, 30},
+	{30, 50, 35, 100, 0, 0, 30},
 };
 
 const int mcc_max_policy_num = sizeof(mcc_switch_channel_policy_table) /sizeof(u8) /7;
@@ -300,6 +301,8 @@ void rtw_hal_clear_mcc_status(PADAPTER padapter, u8 mcc_status)
 void rtw_hal_mcc_update_switch_channel_policy_table(PADAPTER padapter)
 {
 	struct registry_priv *registry_par = &padapter->registrypriv;
+	struct dvobj_priv *dvobj = adapter_to_dvobj(padapter);
+	_adapter *iface = NULL;
 	u8 idx = 0;
 
 	if (registry_par->rtw_mcc_policy_table_idx < 0)
@@ -329,6 +332,19 @@ void rtw_hal_mcc_update_switch_channel_policy_table(PADAPTER padapter)
 
 	if (registry_par->rtw_mcc_guard_offset1 >= 0)
 		mcc_switch_channel_policy_table[idx][MCC_GUARD_OFFSET1_IDX] = registry_par->rtw_mcc_guard_offset1;
+
+	for (idx = 0; idx < dvobj->iface_nums; idx++) {
+		struct mlme_ext_priv *pmlmeext = NULL;
+		iface = dvobj->padapters[idx];
+
+		if (iface == NULL)
+			continue;
+
+		pmlmeext = &iface->mlmeextpriv;
+
+		if (MLME_IS_GO(iface) && pmlmeext->cur_channel <= 14)
+			registry_par->rtw_mcc_policy_table_idx = 3;
+	}
 
 }
 
@@ -531,10 +547,30 @@ static void rtw_hal_config_mcc_role_setting(PADAPTER padapter, u8 order)
 			break;
 		}
 
-		RTW_INFO(FUNC_ADPT_FMT": order:%d, role:%d, mcc duration:%d, target tx bytes:%d, mgmt queue macid:%d, bitmap:0x%02x\n"
-			, FUNC_ADPT_ARG(padapter), pmccadapriv->order, pmccadapriv->role, pmccadapriv->mcc_duration
-			, pmccadapriv->mcc_target_tx_bytes_to_port, pmccadapriv->mgmt_queue_macid, pmccadapriv->mcc_macid_bitmap);
 	}
+
+	/* setting Null data parameters */
+	if (pmccadapriv->role == MCC_ROLE_STA) {
+			pmccadapriv->null_early = 3;
+			pmccadapriv->null_rty_num= 5;
+	} else if (pmccadapriv->role == MCC_ROLE_GC) {
+			pmccadapriv->null_early = 2;
+			pmccadapriv->null_rty_num= 5;
+	} else {
+			pmccadapriv->null_early = 0;
+			pmccadapriv->null_rty_num= 0;
+	}
+
+	RTW_INFO("********* "FUNC_ADPT_FMT" *********\n", FUNC_ADPT_ARG(padapter));
+	RTW_INFO("order:%d\n", pmccadapriv->order);
+	RTW_INFO("role:%d\n", pmccadapriv->role);
+	RTW_INFO("mcc duration:%d\n", pmccadapriv->mcc_duration);
+	RTW_INFO("null_early:%d\n", pmccadapriv->null_early);
+	RTW_INFO("null_rty_num:%d\n", pmccadapriv->null_rty_num);
+	RTW_INFO("mgmt queue macid:%d\n", pmccadapriv->mgmt_queue_macid);
+	RTW_INFO("bitmap:0x%02x\n", pmccadapriv->mcc_macid_bitmap);
+	RTW_INFO("target tx bytes:%d\n", pmccadapriv->mcc_target_tx_bytes_to_port);
+	RTW_INFO("**********************************\n");
 
 	pmccobjpriv->iface[pmccadapriv->order] = padapter;
 
@@ -1738,7 +1774,7 @@ static void rtw_hal_set_mcc_ctrl_cmd_v2(PADAPTER padapter, u8 stop)
 	u8 order = 0, totalnum = 0;
 	u8 center_ch = 0, pri_ch_idx = 0, bw = 0;
 	u8 duration = 0, role = 0, incurch = 0, rfetype = 0, distxnull = 0, c2hrpt = 0;
-	u8 dis_sw_retry = 0, tsfx = 0, update_parm = 0;
+	u8 dis_sw_retry = 0, null_early_time=2, tsfx = 0, update_parm = 0;
 	struct dvobj_priv *dvobj = adapter_to_dvobj(padapter);
 	struct mcc_obj_priv *pmccobjpriv = &(dvobj->mcc_objpriv);
 	struct mlme_ext_priv *pmlmeext = NULL;
@@ -1789,6 +1825,8 @@ static void rtw_hal_set_mcc_ctrl_cmd_v2(PADAPTER padapter, u8 stop)
 			break;
 		}
 
+		null_early_time = iface->mcc_adapterpriv.null_early;
+
 		c2hrpt = MCC_C2H_REPORT_ALL_STATUS;
 		tsfx = iface->hw_port;
 		update_parm = 0;
@@ -1805,6 +1843,7 @@ static void rtw_hal_set_mcc_ctrl_cmd_v2(PADAPTER padapter, u8 stop)
 		SET_H2CCMD_MCC_CTRL_V2_DISTXNULL(cmd, distxnull);
 		SET_H2CCMD_MCC_CTRL_V2_C2HRPT(cmd, c2hrpt);
 		SET_H2CCMD_MCC_CTRL_V2_TSFX(cmd, tsfx);
+		SET_H2CCMD_MCC_CTRL_V2_NULL_EARLY(cmd, null_early_time);
 		SET_H2CCMD_MCC_CTRL_V2_UPDATE_PARM(cmd, update_parm);
 
 #ifdef CONFIG_MCC_MODE_DEBUG
@@ -2392,8 +2431,7 @@ void rtw_hal_mcc_c2h_handler(PADAPTER padapter, u8 buflen, u8 *tmpBuf)
 	pdvobjpriv->oper_channel = pmccobjpriv->iface[pmccobjpriv->current_order]->mlmeextpriv.cur_channel;
 
 	if (0)
-		RTW_INFO("[MCC] mcc_c2h_status=%d,current order=%d,oper_channel=%d\n",
-			pmccobjpriv->mcc_c2h_status, pmccobjpriv->current_order, pdvobjpriv->oper_channel);
+		RTW_INFO("%d,order:%d,TSF:0x%llx\n", tmpBuf[0], tmpBuf[1], RTW_GET_LE64(tmpBuf + 2));
 	
 	switch (pmccobjpriv->mcc_c2h_status) {
 	case MCC_RPT_SUCCESS:
@@ -3232,22 +3270,26 @@ u8 rtw_set_mcc_duration_hdl(PADAPTER adapter, u8 type, const u8 *val)
 			case 0:
 				mccobjpriv->duration= 40;
 				mccobjpriv->policy_index = 2;
+				mccobjpriv->mchan_sched_mode = MCC_FAIR_SCHEDULE;
 				break;
 			/* 1 = favor STA */
 			case 1:
 				mccobjpriv->duration= 70;
 				mccobjpriv->policy_index = 1;
+				mccobjpriv->mchan_sched_mode = MCC_FAVOE_STA;
 				break;
 			/* 2 = favor P2P*/
 			case 2:
 			default:
 				mccobjpriv->duration= 30;
 				mccobjpriv->policy_index = 0;
+				mccobjpriv->mchan_sched_mode = MCC_FAVOE_P2P;
 				break;
 		}
 	} else {
 		mccobjpriv->duration = *val;
 		mccobjpriv->policy_index = *val;
+		mccobjpriv->mchan_sched_mode = *val;
 	}
 
 	/* only update sw parameter under MCC 

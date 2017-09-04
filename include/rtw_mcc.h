@@ -124,6 +124,12 @@ enum MCC_DURATION_SETTING {
 	MCC_DURATION_DIRECET = 1,
 };
 
+enum MCC_SCHED_MODE {
+	MCC_FAIR_SCHEDULE = 0,
+	MCC_FAVOE_STA = 1,
+	MCC_FAVOE_P2P = 2,
+};
+
 /*  mcc data for adapter */
 struct mcc_adapter_priv {
 	u8 order;		/* FW document, softap/AP must be 0 */
@@ -160,6 +166,9 @@ struct mcc_adapter_priv {
 #ifdef CONFIG_TDLS
 	u8 backup_tdls_en;
 #endif /* CONFIG_TDLS */
+
+	u8 null_early;
+	u8 null_rty_num;
 };
 
 struct mcc_obj_priv {
@@ -189,6 +198,8 @@ struct mcc_obj_priv {
 	u8 mcc_pwr_idx_rsvd_page[MAX_MCC_NUM];
 	u8 enable_runtime_duration;
 	u32 backup_phydm_ability;
+	/* for LG */
+	u8 mchan_sched_mode;
 };
 
 /* backup IQK val */

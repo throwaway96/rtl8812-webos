@@ -4097,6 +4097,18 @@ static void fill_fake_txdesc(PADAPTER adapter, u8 *pDesc, u32 BufferLen,
 	SET_TX_DESC_USE_RATE_8822B(pDesc, 1);
 	SET_TX_DESC_DATARATE_8822B(pDesc, MRateToHwRate(pmlmeext->tx_rate));
 
+#ifdef CONFIG_MCC_MODE
+	if (IsPsPoll == _FALSE && IsPsPoll == _FALSE && IsPsPoll == _FALSE) {
+		if (rtw_hal_check_mcc_status(adapter, MCC_STATUS_PROCESS_MCC_START_SETTING)) {
+			u8 rty_num = adapter->mcc_adapterpriv.null_rty_num;
+			if (rty_num != 0) {
+				SET_TX_DESC_RTY_LMT_EN_8822B(pDesc, 1);
+				SET_TX_DESC_RTS_DATA_RTY_LMT_8822B(pDesc, rty_num);
+			}
+		}
+	}
+#endif
+
 	/*
 	 * Encrypt the data frame if under security mode excepct null data.
 	 */

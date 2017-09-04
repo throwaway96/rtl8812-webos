@@ -1488,6 +1488,8 @@ int rtw_check_beacon_data(_adapter *padapter, u8 *pbuf,  int len)
 	struct mlme_ext_priv	*pmlmeext = &(padapter->mlmeextpriv);
 	struct mlme_ext_info	*pmlmeinfo = &(pmlmeext->mlmext_info);
 	u8 rf_num = 0;
+	struct rtw_ieee80211_ht_cap *pht_cap = NULL;
+	uint ht_cap_len = 0;
 
 	/* SSID */
 	/* Supported rates */
@@ -1746,7 +1748,8 @@ int rtw_check_beacon_data(_adapter *padapter, u8 *pbuf,  int len)
 	if (p && ie_len > 0) {
 		u8 rf_type = 0;
 		HT_CAP_AMPDU_FACTOR max_rx_ampdu_factor = MAX_AMPDU_FACTOR_64K;
-		struct rtw_ieee80211_ht_cap *pht_cap = (struct rtw_ieee80211_ht_cap *)(p + 2);
+		pht_cap = (struct rtw_ieee80211_ht_cap *)(p + 2);
+		ht_cap_len = ie_len;
 
 		if (0) {
 			RTW_INFO(FUNC_ADPT_FMT" HT_CAP_IE from upper layer:\n", FUNC_ADPT_ARG(padapter));
@@ -1769,21 +1772,29 @@ int rtw_check_beacon_data(_adapter *padapter, u8 *pbuf,  int len)
 
 		if (!TEST_FLAG(pmlmepriv->htpriv.ldpc_cap, LDPC_HT_ENABLE_RX))
 			pht_cap->cap_info &= ~(IEEE80211_HT_CAP_LDPC_CODING);
+		else
+			pht_cap->cap_info |= IEEE80211_HT_CAP_LDPC_CODING;
 
 		if (!TEST_FLAG(pmlmepriv->htpriv.stbc_cap, STBC_HT_ENABLE_TX))
 			pht_cap->cap_info &= ~(IEEE80211_HT_CAP_TX_STBC);
 
 		if (!TEST_FLAG(pmlmepriv->htpriv.stbc_cap, STBC_HT_ENABLE_RX))
 			pht_cap->cap_info &= ~(IEEE80211_HT_CAP_RX_STBC_3R);
+		else
+			pht_cap->cap_info |= IEEE80211_HT_CAP_RX_STBC_1R;
 
 		/* Update A-MPDU Parameters field */
 		pht_cap->ampdu_params_info &= ~(IEEE80211_HT_CAP_AMPDU_FACTOR | IEEE80211_HT_CAP_AMPDU_DENSITY);
 
 		if ((psecuritypriv->wpa_pairwise_cipher & WPA_CIPHER_CCMP) ||
-		    (psecuritypriv->wpa2_pairwise_cipher & WPA_CIPHER_CCMP))
-			pht_cap->ampdu_params_info |= (IEEE80211_HT_CAP_AMPDU_DENSITY & (0x07 << 2));
-		else
+		    (psecuritypriv->wpa2_pairwise_cipher & WPA_CIPHER_CCMP)) {
+			HT_CAP_AMPDU_DENSITY best_ampdu_density = AMPDU_DENSITY_VALUE_7;
+
+			rtw_hal_get_def_var(padapter, HW_VAR_BEST_AMPDU_DENSITY, &best_ampdu_density);
+			pht_cap->ampdu_params_info |= (IEEE80211_HT_CAP_AMPDU_DENSITY & (best_ampdu_density << 2));
+		} else {
 			pht_cap->ampdu_params_info |= (IEEE80211_HT_CAP_AMPDU_DENSITY & 0x00);
+		}
 
 		rtw_hal_get_def_var(padapter, HW_VAR_MAX_RX_AMPDU_FACTOR, &max_rx_ampdu_factor);
 		pht_cap->ampdu_params_info |= (IEEE80211_HT_CAP_AMPDU_FACTOR & max_rx_ampdu_factor); /* set  Max Rx AMPDU size  to 64K */
@@ -1906,8 +1917,17 @@ int rtw_check_beacon_data(_adapter *padapter, u8 *pbuf,  int len)
 					if (REGSTY_IS_BW_5G_SUPPORT(pregistrypriv, CHANNEL_WIDTH_40))
 						cbw40_enable = _TRUE;
 				} else {
-					if (REGSTY_IS_BW_2G_SUPPORT(pregistrypriv, CHANNEL_WIDTH_40))
-						cbw40_enable = _TRUE;
+					cbw40_enable = _FALSE;
+				}
+			}
+
+			/* improve P2P GO HT20 TP */
+			if (cbw40_enable == _FALSE) {
+				if (pht_cap && ht_cap_len > 0) {
+					if (pmlmepriv->htpriv.sgi_20m == _FALSE) {
+						pmlmepriv->htpriv.sgi_20m = _TRUE;
+						pht_cap->cap_info |= (IEEE80211_HT_CAP_SGI_20);
+					}
 				}
 			}
 
