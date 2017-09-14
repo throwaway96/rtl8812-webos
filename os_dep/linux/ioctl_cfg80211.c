@@ -5859,6 +5859,29 @@ static int cfg80211_rtw_mgmt_tx(struct wiphy *wiphy,
 
 dump:
 
+#ifdef LGE_PRIVATE
+#ifdef CONFIG_MCC_MODE
+	if (MCC_EN(padapter)) {
+		if (type == P2P_PROVISION_DISC_RESP) {
+			int i;
+			_adapter *iface;
+			struct dvobj_priv *dvobj = adapter_to_dvobj(padapter);
+
+			u8 ret = 0;
+
+			for (i = 0; i < dvobj->iface_nums; i++) {
+				iface = dvobj->padapters[i];
+				if ((iface) && rtw_is_adapter_up(iface)) {
+
+					if ((iface == padapter)) continue;
+					padapter = iface;
+				}
+			}
+		}
+	}
+#endif /* CONFIG_MCC_MODE */
+#endif /* LGE_PRIVATE */
+
 	rtw_ps_deny(padapter, PS_DENY_MGNT_TX);
 	if (_FAIL == rtw_pwr_wakeup(padapter)) {
 		ret = -EFAULT;
@@ -6847,6 +6870,9 @@ static void rtw_cfg80211_preinit_wiphy(_adapter *adapter, struct wiphy *wiphy)
 	wiphy->flags |= WIPHY_FLAG_HAVE_AP_SME;
 	/* remove WIPHY_FLAG_OFFCHAN_TX, because we not support this feature */
 	/* wiphy->flags |= WIPHY_FLAG_OFFCHAN_TX | WIPHY_FLAG_HAVE_AP_SME; */
+#ifdef LGE_PRIVATE
+	wiphy->flags |= WIPHY_FLAG_OFFCHAN_TX;
+#endif /* LGE_PRIVATE */
 #endif
 
 #if defined(CONFIG_PM) && (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 0, 0))
