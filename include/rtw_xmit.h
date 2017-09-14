@@ -457,6 +457,9 @@ struct pkt_attrib {
 
 	u8 icmp_pkt;
 
+	u16 udp_src;
+	u16 udp_dst;
+
 #ifdef CONFIG_BEAMFORMING
 	u16 txbf_p_aid;/*beamforming Partial_AID*/
 	u16 txbf_g_id;/*beamforming Group ID*/

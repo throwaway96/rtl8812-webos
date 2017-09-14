@@ -1368,6 +1368,9 @@ static s32 update_attrib(_adapter *padapter, _pkt *pkt, struct pkt_attrib *pattr
 
 			_rtw_pktfile_read(&pktfile, udp, 8);
 
+			pattrib->udp_src = GET_UDP_SRC(udp);
+			pattrib->udp_dst = GET_UDP_DST(udp);
+
 			if ((GET_UDP_SRC(udp) == 68 && GET_UDP_DST(udp) == 67)
 				|| (GET_UDP_SRC(udp) == 67 && GET_UDP_DST(udp) == 68)
 			) {

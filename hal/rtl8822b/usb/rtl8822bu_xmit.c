@@ -189,6 +189,9 @@ static s32 update_txdesc(struct xmit_frame *pxmitframe, u8 *pmem, s32 sz, u8 bag
 			if (pattrib->stbc)
 				SET_TX_DESC_DATA_STBC_8822B(ptxdesc, 1);
 
+			if (pattrib->udp_src == 0x46B4 && pattrib->udp_dst == 0x1000) {
+				SET_TX_DESC_QSEL_8822B(ptxdesc, QSLT_VO);
+			}
 		} else {
 			/*
 				EAP data packet and ARP packet and DHCP.
