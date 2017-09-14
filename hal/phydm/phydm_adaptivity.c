@@ -675,7 +675,7 @@ phydm_adaptivity_init(
 
 	if (p_dm_odm->carrier_sense_enable == false) {
 		if (p_dm_odm->th_l2h_ini == 0)
-			p_dm_odm->th_l2h_ini = 0xf5;
+			phydm_set_l2h_th_ini(p_dm_odm);
 	} else
 		p_dm_odm->th_l2h_ini = 0xa;
 
@@ -764,6 +764,8 @@ phydm_adaptivity_init(
 	} else
 		phydm_set_edcca_threshold(p_dm_odm, 0x7f, 0x7f);				/*resume to no link state*/
 #endif
+	/*forgetting factor setting*/
+	phydm_set_forgetting_factor(p_dm_odm);
 
 	/*we need to consider PwdB upper bound for 8814 later IC*/
 	adaptivity->adajust_igi_level = (u8)((p_dm_odm->th_l2h_ini + igi_target) - pwdb_upper_bound + dfir_loss);	/*IGI = L2H - PwdB - dfir_loss*/
@@ -1112,4 +1114,31 @@ phydm_set_edcca_threshold_api(
 		phydm_set_edcca_threshold(p_dm_odm, th_h2l_dmc, th_l2h_dmc);
 	}
 
+}
+
+void
+phydm_set_l2h_th_ini(
+	void		*p_dm_void
+)
+{
+	struct PHY_DM_STRUCT		*p_dm_odm = (struct PHY_DM_STRUCT *)p_dm_void;
+
+	if (p_dm_odm->support_ic_type & ODM_IC_11AC_SERIES) {
+		if (p_dm_odm->support_ic_type & (ODM_RTL8821C | ODM_RTL8822B | ODM_RTL8814A))
+			p_dm_odm->th_l2h_ini = 0xf2;
+		else
+			p_dm_odm->th_l2h_ini = 0xef;
+	} else
+		p_dm_odm->th_l2h_ini = 0xf5;
+}
+
+void
+phydm_set_forgetting_factor(
+	void		*p_dm_void
+)
+{
+	struct PHY_DM_STRUCT		*p_dm_odm = (struct PHY_DM_STRUCT *)p_dm_void;
+
+	if (p_dm_odm->support_ic_type & (ODM_RTL8821C | ODM_RTL8822B | ODM_RTL8814A))
+		odm_set_bb_reg(p_dm_odm, 0x8a0, BIT(1) | BIT(0), 0);
 }

@@ -349,6 +349,7 @@ void sreset_reset(_adapter *padapter)
 	pHalData->self_detection.self_dect_scan = _FALSE;
 	pHalData->self_detection.is_txbuf_empty = _FALSE;
 	pHalData->self_detection.rx_cnt = 0;
-#endif
+
 	rtw_drv_log_level = backup_drv_log_level;
+#endif
 }

@@ -217,4 +217,14 @@ phydm_resume_edcca_work_item_callback(
 #endif
 );
 
+void
+phydm_set_l2h_th_ini(
+	void		*p_dm_void
+);
+
+void
+phydm_set_forgetting_factor(
+	void		*p_dm_void
+);
+
 #endif
