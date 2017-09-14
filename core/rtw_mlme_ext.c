@@ -12173,6 +12173,9 @@ void mlmeext_joinbss_event_callback(_adapter *padapter, int join_res)
 		rtw_hal_set_hwreg(padapter, HW_VAR_MLME_JOIN, (u8 *)(&join_type));
 		rtw_hal_set_hwreg(padapter, HW_VAR_BSSID, null_addr);
 
+		if (pmlmepriv->connect_sctx)
+			rtw_sctx_done(&pmlmepriv->connect_sctx);
+
 		goto exit_mlmeext_joinbss_event_callback;
 	}
 #ifdef CONFIG_ARP_KEEP_ALIVE

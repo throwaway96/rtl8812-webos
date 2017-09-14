@@ -123,7 +123,8 @@ sint	_rtw_init_mlme_priv(_adapter *padapter)
 	rtw_init_mlme_timer(padapter);
 
 exit:
-
+	_rtw_mutex_init(&pmlmepriv->connect_sctx_mutex);
+	
 
 	return res;
 }
@@ -287,6 +288,8 @@ void _rtw_free_mlme_priv(struct mlme_priv *pmlmepriv)
 
 		if (pmlmepriv->free_bss_buf)
 			rtw_vmfree(pmlmepriv->free_bss_buf, MAX_BSS_CNT * sizeof(struct wlan_network));
+
+		_rtw_mutex_free(&pmlmepriv->connect_sctx_mutex);
 	}
 exit:
 	return;
@@ -1559,6 +1562,8 @@ void rtw_indicate_connect(_adapter *padapter)
 	if (!check_fwstate(&padapter->mlmepriv, WIFI_AP_STATE))
 		rtw_mi_set_scan_deny(padapter, 3000);
 
+	if (pmlmepriv->connect_sctx)
+		rtw_sctx_done(&pmlmepriv->connect_sctx);
 
 }
 

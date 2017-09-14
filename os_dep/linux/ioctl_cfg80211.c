@@ -761,8 +761,8 @@ check_bss:
 		#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 11, 0) || defined(COMPAT_KERNEL_RELEASE)
 		RTW_INFO("pwdev->sme_state(a)=%d\n", pwdev->sme_state);
 		#endif
-	}
-}
+			}
+		}
 
 void rtw_cfg80211_indicate_disconnect(_adapter *padapter, u16 reason, u8 locally_generated)
 {
@@ -3073,6 +3073,7 @@ static int cfg80211_rtw_connect(struct wiphy *wiphy, struct net_device *ndev,
 	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
 	struct security_priv *psecuritypriv = &padapter->securitypriv;
 	_queue *queue = &pmlmepriv->scanned_queue;
+	struct submit_ctx sctx;
 
 #ifdef SUPPLICANT_RTK_VERSION_LOWER_THAN_JB42
 	padapter->mlmepriv.not_indic_disco = _TRUE;
@@ -3276,6 +3277,9 @@ static int cfg80211_rtw_connect(struct wiphy *wiphy, struct net_device *ndev,
 	rtw_set_802_11_authentication_mode(padapter, authmode);
 
 	/* rtw_set_802_11_encryption_mode(padapter, padapter->securitypriv.ndisencryptstatus); */
+	rtw_sctx_init(&sctx, 3000);
+	pmlmepriv->connect_sctx = &sctx;
+	RTW_INFO("%s: init connect_sctx(%p)\n", __func__, pmlmepriv->connect_sctx);
 
 	if (rtw_set_802_11_connect(padapter, (u8 *)sme->bssid, &ndis_ssid) == _FALSE) {
 		ret = -1;
@@ -3284,6 +3288,13 @@ static int cfg80211_rtw_connect(struct wiphy *wiphy, struct net_device *ndev,
 
 	RTW_INFO("set ssid:dot11AuthAlgrthm=%d, dot11PrivacyAlgrthm=%d, dot118021XGrpPrivacy=%d\n", psecuritypriv->dot11AuthAlgrthm, psecuritypriv->dot11PrivacyAlgrthm,
 		psecuritypriv->dot118021XGrpPrivacy);
+
+	RTW_INFO("%s: rtw_sctx_wait\n", __func__);
+	rtw_sctx_wait(&sctx, __func__);
+	_enter_critical_mutex(&pmlmepriv->connect_sctx_mutex, NULL);
+	if (sctx.status == RTW_SCTX_SUBMITTED)
+		pmlmepriv->connect_sctx = NULL;
+	_exit_critical_mutex(&pmlmepriv->connect_sctx_mutex, NULL);
 
 cancel_ps_deny:
 	rtw_ps_deny_cancel(padapter, PS_DENY_JOIN);

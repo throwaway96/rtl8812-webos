@@ -851,6 +851,8 @@ struct mlme_priv {
 	u8 vendor_ie[WLAN_MAX_VENDOR_IE_NUM][WLAN_MAX_VENDOR_IE_LEN];
 	u32 vendor_ielen[WLAN_MAX_VENDOR_IE_NUM];
 #endif
+	struct submit_ctx *connect_sctx;
+	_mutex connect_sctx_mutex;
 };
 
 #define mlme_set_scan_to_timer(mlme, ms) \
