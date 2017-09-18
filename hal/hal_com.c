@@ -10016,6 +10016,9 @@ void rtw_dump_rx_dframe_info2(_adapter *padapter, void *sel)
 	char *BW;
 	u8 bc_addr[6] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 	u8 null_addr[6] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+	s16 current_noise = 0;
+
+	current_noise = rtw_noise_measure_curchan(padapter);
 
 	if (precvpriv->store_law_data_flag) {
 
@@ -10078,6 +10081,7 @@ void rtw_dump_rx_dframe_info2(_adapter *padapter, void *sel)
 								 "\t\tMIMO\t: %s\n"
 								 "\t\tRate\t: %d mbps\n"
 								 "\t\tRSSI\t: %d dBm\n"
+								 "\t\tNoise\t: %d dBm\n"
 								 "\t\tTxpwr\t: %u qdBm\n"
 								 "\t\tNss\t: %u\n"
 								 "\t\tBW\t: %s\n",
@@ -10085,6 +10089,7 @@ void rtw_dump_rx_dframe_info2(_adapter *padapter, void *sel)
 								 (phyrate_tbl[psta_dframe_info->sta_data_rate].mimo == 0) ? "None" : "SDM",
 								 phy_rate,
 								 padapter->recvpriv.rssi,
+								 current_noise,
 								 current_txpwr,
 								 phyrate_tbl[psta_dframe_info->sta_data_rate].nss,
 								 BW

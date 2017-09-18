@@ -934,25 +934,20 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 			struct recv_priv *precvpriv = &(padapter->recvpriv);
 			char buf1[256] = { 0 };
 			char buf2[256] = { 0 };
-			s16 current_noise = 0;
 
 			RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s]\n"CLR_NONE, command);
 			precvpriv->store_law_data_flag = _TRUE;
-
-			current_noise = rtw_noise_measure_curchan(padapter);
 
 			snprintf(buf1, 256,
 					 "\nGET_CS_INFO\n"
 					 "\t\tVerstion\t: %s\n"
 					 "\t\tCcode\t: R%s\n"
 					 "\t\tCcodeRev\t: %u\n"
-					 "\t\tChannel\t: %u\n"
-					 "\t\tNoise\t: %d dBm\n",
+					 "\t\tChannel\t: %u\n",
 					 DRIVERVERSION,
 					 adapter_wdev_data(padapter)->country,
 					 adapter_wdev_data(padapter)->ccode_version,
-					 pmlmeext->cur_channel,
-					 current_noise
+					 pmlmeext->cur_channel
 					);
 
 			rtw_hal_set_odm_var(padapter, HAL_ODM_RX_Dframe_INFO, buf2, _TRUE);
