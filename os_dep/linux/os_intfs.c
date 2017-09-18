@@ -892,6 +892,8 @@ uint loadparam(_adapter *padapter)
 	registry_par->beamformer_rf_num = (u8)rtw_bfer_rf_number;
 	registry_par->beamformee_rf_num = (u8)rtw_bfee_rf_number;
 	rtw_regsty_init_rx_ampdu_sz_limit(registry_par);
+
+	if (rtw_wifi_spec == 1) registry_par->short_gi = 0xf;
 #endif
 
 #ifdef CONFIG_80211AC_VHT
