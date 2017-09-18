@@ -166,10 +166,6 @@
 	/*
 	 * Beamforming related definition
 	 */
-	#if defined(CONFIG_CONCURRENT_MODE) && defined(CONFIG_BEAMFORMING)
-		#undef CONFIG_BEAMFORMING
-		#warning "Not support Beamforming in concurrent mode yet!!"
-	#endif /* CONFIG_CONCURRENT_MODE && CONFIG_BEAMFORMING */
 	/* Beamforming mechanism is on driver not phydm, always disable it */
 	#define BEAMFORMING_SUPPORT				0
 	/* Only support new beamforming mechanism */
