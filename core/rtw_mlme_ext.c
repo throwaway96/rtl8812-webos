@@ -1673,6 +1673,33 @@ unsigned int OnProbeReq(_adapter *padapter, union recv_frame *precv_frame)
 	struct rx_pkt_attrib	*pattrib = &precv_frame->u.hdr.attrib;
 	u8 wifi_test_chk_rate = 1;
 
+	if (!rtw_p2p_chk_state(pwdinfo, P2P_STATE_NONE) &&
+	    !rtw_p2p_chk_state(pwdinfo, P2P_STATE_IDLE) &&
+	    !rtw_p2p_chk_role(pwdinfo, P2P_ROLE_CLIENT) &&
+	    !rtw_p2p_chk_state(pwdinfo, P2P_STATE_FIND_PHASE_SEARCH) &&
+	    !rtw_p2p_chk_state(pwdinfo, P2P_STATE_SCAN)
+	   ) {
+		/*	Commented by Albert 2011/03/17 */
+		/*	mcs_rate = 0->CCK 1M rate */
+		/*	mcs_rate = 1->CCK 2M rate */
+		/*	mcs_rate = 2->CCK 5.5M rate */
+		/*	mcs_rate = 3->CCK 11M rate */
+		/*	In the P2P mode, the driver should not support the CCK rate */
+
+		/*	Commented by Kurt 2012/10/16 */
+		/*	IOT issue: Google Nexus7 use 1M rate to send p2p_probe_req after GO nego completed and Nexus7 is client */
+		if (padapter->registrypriv.wifi_spec == 1) {
+			if (pattrib->data_rate <= 3)
+				wifi_test_chk_rate = 0;
+		}
+
+		if (wifi_test_chk_rate == 1) {
+			is_valid_p2p_probereq = process_probe_req_p2p_ie(pwdinfo, pframe, len);
+			if (is_valid_p2p_probereq == _FALSE)
+				return _SUCCESS;
+		}
+	}
+
 #ifdef CONFIG_IOCTL_CFG80211
 #ifdef PURE_SUPPLICANT
 	if ((pwdinfo->driver_interface == DRIVER_CFG80211)
@@ -1700,42 +1727,20 @@ unsigned int OnProbeReq(_adapter *padapter, union recv_frame *precv_frame)
 #endif /* PURE_SUPPLICANT */
 #endif /* CONFIG_IOCTL_CFG80211 */
 
-	if (!rtw_p2p_chk_state(pwdinfo, P2P_STATE_NONE) &&
-	    !rtw_p2p_chk_state(pwdinfo, P2P_STATE_IDLE) &&
-	    !rtw_p2p_chk_role(pwdinfo, P2P_ROLE_CLIENT) &&
-	    !rtw_p2p_chk_state(pwdinfo, P2P_STATE_FIND_PHASE_SEARCH) &&
-	    !rtw_p2p_chk_state(pwdinfo, P2P_STATE_SCAN)
-	   ) {
-		/*	Commented by Albert 2011/03/17 */
-		/*	mcs_rate = 0->CCK 1M rate */
-		/*	mcs_rate = 1->CCK 2M rate */
-		/*	mcs_rate = 2->CCK 5.5M rate */
-		/*	mcs_rate = 3->CCK 11M rate */
-		/*	In the P2P mode, the driver should not support the CCK rate */
-
-		/*	Commented by Kurt 2012/10/16 */
-		/*	IOT issue: Google Nexus7 use 1M rate to send p2p_probe_req after GO nego completed and Nexus7 is client */
-		if (padapter->registrypriv.wifi_spec == 1) {
-			if (pattrib->data_rate <= 3)
-				wifi_test_chk_rate = 0;
-		}
-
-		if (wifi_test_chk_rate == 1) {
-			is_valid_p2p_probereq = process_probe_req_p2p_ie(pwdinfo, pframe, len);
-			if (is_valid_p2p_probereq == _TRUE) {
-				if (rtw_p2p_chk_role(pwdinfo, P2P_ROLE_DEVICE)) {
-					/* FIXME */
-					if (padapter->wdinfo.driver_interface == DRIVER_WEXT)
-						report_survey_event(padapter, precv_frame);
-
+	if (wifi_test_chk_rate == 1) {
+		if (is_valid_p2p_probereq == _TRUE) {
+			if (rtw_p2p_chk_role(pwdinfo, P2P_ROLE_DEVICE)) {
+				/* FIXME */
+				if (padapter->wdinfo.driver_interface == DRIVER_WEXT)
+					report_survey_event(padapter, precv_frame);
+				
 					p2p_listen_state_process(padapter,  get_sa(pframe));
 
 					return _SUCCESS;
-				}
-
-				if (rtw_p2p_chk_role(pwdinfo, P2P_ROLE_GO))
-					goto _continue;
 			}
+
+			if (rtw_p2p_chk_role(pwdinfo, P2P_ROLE_GO))
+				goto _continue;
 		}
 	}
 
