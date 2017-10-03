@@ -6875,6 +6875,12 @@ static void rtw_cfg80211_preinit_wiphy(_adapter *adapter, struct wiphy *wiphy)
 #endif /* LGE_PRIVATE */
 #endif
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 2, 0))
+#ifdef LGE_PRIVATE
+	wiphy->flags |= WIPHY_FLAG_AP_UAPSD;
+#endif /* LGE_PRIVATE */
+#endif
+
 #if defined(CONFIG_PM) && (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 0, 0))
 	wiphy->flags |= WIPHY_FLAG_SUPPORTS_SCHED_SCAN;
 #ifdef CONFIG_PNO_SUPPORT
