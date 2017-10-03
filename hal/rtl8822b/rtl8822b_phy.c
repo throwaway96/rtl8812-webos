@@ -567,6 +567,10 @@ void rtl8822b_phy_init_dm_priv(PADAPTER adapter)
 
 	init_phydm_cominfo(adapter);
 	odm_init_all_timers(podmpriv);
+	/*PHYDM API - thermal trim*/
+	phydm_get_thermal_trim_offset(podmpriv);
+	/*PHYDM API - power trim*/
+	phydm_get_power_trim_offset(podmpriv);
 }
 
 void rtl8822b_phy_deinit_dm_priv(PADAPTER adapter)
@@ -1289,6 +1293,8 @@ void rtl8822b_switch_chnl_and_set_bw(PADAPTER adapter)
 #else
 	rtl8822b_switch_chnl_and_set_bw_by_drv(adapter);
 #endif /* RTW_CHANNEL_SWITCH_OFFLOAD */
+
+	phydm_config_kfree(p_dm_odm, hal->current_channel);
 
 	/* TX Power Setting */
 	odm_clear_txpowertracking_state(p_dm_odm);

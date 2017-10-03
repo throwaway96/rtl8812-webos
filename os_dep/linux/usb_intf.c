@@ -1042,7 +1042,13 @@ static int rtw_resume(struct usb_interface *pusb_intf)
 	RTW_INFO("==> %s (%s:%d), MAC_81=%x\n", __FUNCTION__, current->comm, current->pid, rtw_read8(padapter, REG_MCUFW_CTRL+1));
 
 	if(!(rtw_read8(padapter, REG_MCUFW_CTRL+1) & BIT7) && (pwrpriv->wowlan_mode || pwrpriv->wowlan_ap_mode)) {
-		rtl8822bu_reset_halmac(padapter);
+		ret = rtl8822bu_reset_halmac(padapter);
+		if (ret < 0) {
+			mac_reg_dump(0, padapter);
+			rtw_set_surprise_removed(padapter);
+			rtw_init_pwrctrl_priv_reset(padapter);
+			goto exit;
+		}
 		rtw_hal_power_off(padapter);
 		padapter->bup = _FALSE ;
 		rtw_init_pwrctrl_priv_reset(padapter);
@@ -1073,7 +1079,7 @@ static int rtw_resume(struct usb_interface *pusb_intf)
 #endif
 		}
 	}
-
+exit:
 	pmlmeext->last_scan_time = rtw_get_current_time();
 	RTW_INFO("<========  %s return %d\n", __FUNCTION__, ret);
 

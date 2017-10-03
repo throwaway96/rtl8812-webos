@@ -248,7 +248,7 @@ odm_txpowertracking_callback_thermal_meter(
 	thermal_value_temp = thermal_value + phydm_get_thermal_offset(p_dm_odm);
 
 	ODM_RT_TRACE(p_dm_odm, ODM_COMP_TX_PWR_TRACK, ODM_DBG_LOUD,
-		("thermal_value_temp(%d) thermal_value(%d) power_time_thermal(%d)\n", thermal_value_temp, thermal_value, phydm_get_thermal_offset(p_dm_odm)));
+		("thermal_value_temp(%d) = thermal_value(%d) + power_trim_thermal(%d)\n", thermal_value_temp, thermal_value, phydm_get_thermal_offset(p_dm_odm)));
 
 	if (thermal_value_temp > 63)
 		thermal_value = 63;
