@@ -1042,7 +1042,17 @@ static int rtw_resume(struct usb_interface *pusb_intf)
 	RTW_INFO("==> %s (%s:%d), MAC_81=%x\n", __FUNCTION__, current->comm, current->pid, rtw_read8(padapter, REG_MCUFW_CTRL+1));
 
 	if(!(rtw_read8(padapter, REG_MCUFW_CTRL+1) & BIT7) && (pwrpriv->wowlan_mode || pwrpriv->wowlan_ap_mode)) {
+		u8 retry_cnt = 0;
+
 		ret = rtl8822bu_reset_halmac(padapter);
+		#ifdef LGE_PRIVATE
+		while (ret < 0 && retry_cnt < 5) {
+			mac_reg_dump(0, padapter);
+			rtw_msleep_os(50);
+			ret = rtl8822bu_reset_halmac(padapter);
+			retry_cnt ++;
+		}
+		#endif
 		if (ret < 0) {
 			mac_reg_dump(0, padapter);
 			rtw_set_surprise_removed(padapter);

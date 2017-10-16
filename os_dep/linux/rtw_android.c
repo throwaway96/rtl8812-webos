@@ -987,16 +987,20 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 	case LGE_PRIVATE_CMD_WOWL_ACTIVATE:
 		{
 			u8 val = 0;
-			struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+			u8 in_suspend = adapter_to_pwrctl(padapter)->bInSuspend;
+			if (in_suspend == _FALSE) {
+				struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+				
+				RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s]\n"CLR_NONE, command);
 
-			RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s]\n"CLR_NONE, command);
+				sscanf(command, "WOWL_ACTIVATE %u", (unsigned int *)&val);
+				adapter_wdev_data(padapter)->wowl_activate = 1;
 
-			sscanf(command, "WOWL_ACTIVATE %u", (unsigned int *)&val);
-			adapter_wdev_data(padapter)->wowl_activate = 1;
+				if (check_fwstate(pmlmepriv, _FW_UNDER_SURVEY)) rtw_scan_abort(padapter);
 
-			if (check_fwstate(pmlmepriv, _FW_UNDER_SURVEY)) rtw_scan_abort(padapter);
-
-			if (adapter_wdev_data(padapter)->wowl) rtw_suspend_common(padapter);
+				if (adapter_wdev_data(padapter)->wowl) rtw_suspend_common(padapter);
+			} else
+				RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s], in_suspend=_TRUE\n"CLR_NONE, command);
 
 			snprintf(command, 3, "OK");
 			bytes_written = strlen("OK");
@@ -1005,16 +1009,20 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 	case LGE_PRIVATE_CMD_IDLE_MODE:
 		{
 			u8 val = 0;
-			struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+			u8 in_suspend = adapter_to_pwrctl(padapter)->bInSuspend;
+			if (in_suspend == _FALSE) {
+				struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
 
-			RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s]\n"CLR_NONE, command);
+				RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s]\n"CLR_NONE, command);
 
-			sscanf(command, "WOWL_ACTIVATE %u", (unsigned int *)&val);
-			adapter_wdev_data(padapter)->idle_mode = _TRUE;
+				sscanf(command, "WOWL_ACTIVATE %u", (unsigned int *)&val);
+				adapter_wdev_data(padapter)->idle_mode = _TRUE;
 
-			if (check_fwstate(pmlmepriv, _FW_UNDER_SURVEY)) rtw_scan_abort(padapter);
+				if (check_fwstate(pmlmepriv, _FW_UNDER_SURVEY)) rtw_scan_abort(padapter);
 
-			rtw_suspend_common(padapter);
+				rtw_suspend_common(padapter);
+			} else
+				RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s], in_suspend=_TRUE\n"CLR_NONE, command);
 
 			snprintf(command, 3, "OK");
 			bytes_written = strlen("OK");
