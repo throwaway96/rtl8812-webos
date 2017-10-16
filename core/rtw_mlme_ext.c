@@ -8870,6 +8870,10 @@ void issue_asocrsp(_adapter *padapter, unsigned short status, struct sta_info *p
 				len = pmlmepriv->p2p_assoc_resp_ie_len;
 				_rtw_memcpy(pframe, pmlmepriv->p2p_assoc_resp_ie, len);
 			}
+			else if (pmlmepriv->assoc_rsp && pmlmepriv->assoc_rsp_len > 0) {
+				len = pmlmepriv->assoc_rsp_len;
+				_rtw_memcpy(pframe, pmlmepriv->assoc_rsp, len);
+			}
 		} else
 			len = build_assoc_resp_p2p_ie(pwdinfo, pframe, pstat->p2p_status_code);
 		pframe += len;
