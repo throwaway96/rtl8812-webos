@@ -4611,6 +4611,16 @@ int rtw_resume_common(_adapter *padapter)
 	}
 
 #ifdef LGE_PRIVATE
+	if (adapter_wdev_data(padapter)->idle_mode) {
+		struct mlme_ext_priv *pmlmeext;
+		u8 channel;
+
+		pmlmeext = &padapter->mlmeextpriv;
+		channel = pmlmeext->cur_channel;
+
+		if (channel >= 36) set_channel_bwmode(padapter, 11, 0, 0);
+		else set_channel_bwmode(padapter, 36, 0, 0);
+	}
 	adapter_wdev_data(padapter)->wowl = _FALSE;
 	adapter_wdev_data(padapter)->wowl_activate = _FALSE;
 	adapter_wdev_data(padapter)->idle_mode = _FALSE;
