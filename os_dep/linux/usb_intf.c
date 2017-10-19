@@ -1046,8 +1046,7 @@ static int rtw_resume(struct usb_interface *pusb_intf)
 
 		ret = rtl8822bu_reset_halmac(padapter);
 		#ifdef LGE_PRIVATE
-		while (ret < 0 && retry_cnt < 5) {
-			mac_reg_dump(0, padapter);
+		while (ret < 0 && retry_cnt < 3) {
 			rtw_msleep_os(50);
 			ret = rtl8822bu_reset_halmac(padapter);
 			retry_cnt ++;
