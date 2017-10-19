@@ -403,9 +403,11 @@ void rtl8822bu_interface_configure(PADAPTER padapter)
 #ifdef CONFIG_USB_RX_AGGREGATION
 	/* according to value defined by halmac */
 	pHalData->rxagg_mode = RX_AGG_USB;
+#ifdef LGE_PRIVATE
+	pHalData->rxagg_usb_size = 1;
+	pHalData->rxagg_usb_timeout = 0x10;
+#endif /* LGE_PRIVATE */
 #if 0
-	pHalData->rxagg_usb_size = 8;
-	pHalData->rxagg_usb_timeout = 0x6;
 	pHalData->rxagg_dma_size = 16;
 	pHalData->rxagg_dma_timeout = 0x6;
 #endif
