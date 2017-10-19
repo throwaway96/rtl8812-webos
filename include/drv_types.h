@@ -333,10 +333,10 @@ struct registry_priv {
 	u8 pll_ref_clk_sel;
 
 	/* define for tx power adjust */
+#ifdef CONFIG_TXPWR_LIMIT
 	u8	RegEnableTxPowerLimit;
+#endif
 	u8	RegEnableTxPowerByRate;
-	u8	RegPowerBase;
-	u8	RegPwrTblSel;
 
 	u8 target_tx_pwr_valid;
 	s8 target_tx_pwr_2g[RF_PATH_MAX][RATE_SECTION_NUM];
@@ -794,7 +794,16 @@ struct macid_ctl_t {
 #define RATE_BMP_GET_VHT_2SS(_bmp_vht)		((_bmp_vht & RATE_BMP_VHT_2SS) >> 10)
 #define RATE_BMP_GET_VHT_3SS(_bmp_vht)		((_bmp_vht & RATE_BMP_VHT_3SS) >> 20)
 
+#define TXPWR_LMT_REF_VHT_FROM_HT	BIT0
+#define TXPWR_LMT_REF_HT_FROM_VHT	BIT1
+
 struct rf_ctl_t {
+	const struct country_chplan *country_ent;
+	u8 ChannelPlan;
+	u8 max_chan_nums;
+	RT_CHANNEL_INFO channel_set[MAX_CHANNEL_NUM];
+	struct p2p_channels channel_list;
+
 	/* used for debug or by tx power limit */
 	u16 rate_bmp_cck_ofdm;		/* 20MHz */
 	u32 rate_bmp_ht_by_bw[2];	/* 20MHz, 40MHz. 4SS supported */
@@ -803,6 +812,18 @@ struct rf_ctl_t {
 	/* used by tx power limit */
 	u8 highest_ht_rate_bw_bmp;
 	u8 highest_vht_rate_bw_bmp;
+
+#ifdef CONFIG_TXPWR_LIMIT
+	_mutex txpwr_lmt_mutex;
+	_list reg_exc_list;
+	u8 regd_exc_num;
+	_list txpwr_lmt_list;
+	u8 txpwr_regd_num;
+	const char *regd_name;
+	#ifdef CONFIG_IEEE80211_BAND_5GHZ
+	u8 txpwr_lmt_5g_20_40_ref;
+	#endif
+#endif
 
 #ifdef CONFIG_DFS_MASTER
 	bool radar_detect_by_others;
@@ -1505,6 +1526,7 @@ struct _ADAPTER {
 #define adapter_to_rfctl(adapter) dvobj_to_rfctl(adapter_to_dvobj((adapter)))
 
 #define adapter_mac_addr(adapter) (adapter->mac_addr)
+#define adapter_to_chset(adapter) (adapter_to_rfctl((adapter))->channel_set)
 
 #define mlme_to_adapter(mlme) container_of((mlme), struct _ADAPTER, mlmepriv)
 #define tdls_info_to_adapter(tdls) container_of((tdls), struct _ADAPTER, tdlsinfo)

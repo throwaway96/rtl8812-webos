@@ -131,6 +131,7 @@ typedef enum _RT_CHANNEL_DOMAIN {
 	RTW_CHPLAN_WORLD_KCC1 = 0x28,
 	RTW_CHPLAN_WORLD_FCC2 = 0x29,
 	RTW_CHPLAN_FCC2_NULL = 0x2A,
+	RTW_CHPLAN_IC1_IC2 = 0x2B,
 	RTW_CHPLAN_WORLD_FCC3 = 0x30,
 	RTW_CHPLAN_WORLD_FCC4 = 0x31,
 	RTW_CHPLAN_WORLD_FCC5 = 0x32,
@@ -180,6 +181,10 @@ typedef enum _RT_CHANNEL_DOMAIN {
 	RTW_CHPLAN_NULL_ETSI18 = 0x70,
 	RTW_CHPLAN_NULL_ETSI17 = 0x71,
 	RTW_CHPLAN_NULL_ETSI19 = 0x72,
+	RTW_CHPLAN_WORLD_FCC7 = 0x73,
+	RTW_CHPLAN_FCC2_FCC17 = 0x74,
+	RTW_CHPLAN_WORLD_ETSI20 = 0x75,
+	RTW_CHPLAN_FCC2_FCC11 = 0x76,
 #else
 	RTW_CHPLAN_ETSI1_NULL = 0x20,
 	RTW_CHPLAN_ETSI1_ETSI4 = 0x21,
@@ -224,7 +229,8 @@ typedef enum _RT_CHANNEL_DOMAIN_2G {
 	RTW_RD_2G_GLOBAL = 6,	/* Global domain */
 	RTW_RD_2G_MKK2 = 7,		/* Japan */
 	RTW_RD_2G_FCC2 = 8,		/* US */
-	RTW_RD_2G_ETSI3 = 9,	/* EU */
+	RTW_RD_2G_IC1 = 9,		/* Canada */
+	RTW_RD_2G_ETSI3 = 10,	/* EU */
 
 	RTW_RD_2G_MAX,
 } RT_CHANNEL_DOMAIN_2G, *PRT_CHANNEL_DOMAIN_2G;
@@ -282,6 +288,9 @@ typedef enum _RT_CHANNEL_DOMAIN_5G {
 	RTW_RD_5G_ETSI23 = 49,	/* LGE */
 	RTW_RD_5G_FCC17 = 50,	/* LGE */
 	RTW_RD_5G_FCC18 = 51,	/* LGE */
+
+	RTW_RD_5G_IC1 = 52,		/* Canada(w/o Weather radar) */
+	RTW_RD_5G_IC2 = 53,		/* Canada(w/o Weather radar), include ch144 */
 
 	/* === Below are driver defined for legacy channel plan compatible, DON'T assign index ==== */
 	RTW_RD_5G_OLD_FCC1,
@@ -576,7 +585,11 @@ typedef struct _RT_CHANNEL_INFO {
 #define CAC_TIME_CE_MS (10*60*1000)
 #define NON_OCP_TIME_MS (30*60*1000)
 
+#ifdef CONFIG_TXPWR_LIMIT
+void rtw_txpwr_init_regd(struct rf_ctl_t *rfctl);
+#endif
 void rtw_rfctl_init(_adapter *adapter);
+void rtw_rfctl_deinit(_adapter *adapter);
 
 #ifdef CONFIG_DFS_MASTER
 struct rf_ctl_t;
@@ -681,9 +694,6 @@ struct mlme_ext_priv {
 	unsigned char	cur_ch_offset;/* PRIME_CHNL_OFFSET */
 	unsigned char	cur_wireless_mode;	/* NETWORK_TYPE */
 
-	unsigned char	max_chan_nums;
-	RT_CHANNEL_INFO		channel_set[MAX_CHANNEL_NUM];
-	struct p2p_channels channel_list;
 	unsigned char	basicrate[NumRates];
 	unsigned char	datarate[NumRates];
 #ifdef CONFIG_80211N_HT
@@ -981,6 +991,7 @@ s32 dump_mgntframe_and_wait_ack(_adapter *padapter, struct xmit_frame *pmgntfram
 s32 dump_mgntframe_and_wait_ack_timeout(_adapter *padapter, struct xmit_frame *pmgntframe, int timeout_ms);
 void rtw_process_bar_frame(_adapter *padapter, union recv_frame *precv_frame);
 #ifdef CONFIG_P2P
+int get_reg_classes_full_count(struct p2p_channels *channel_list);
 void issue_probersp_p2p(_adapter *padapter, unsigned char *da);
 void issue_p2p_provision_request(_adapter *padapter, u8 *pssid, u8 ussidlen, u8 *pdev_raddr);
 void issue_p2p_GO_request(_adapter *padapter, u8 *raddr);

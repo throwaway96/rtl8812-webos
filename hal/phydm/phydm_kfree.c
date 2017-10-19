@@ -378,31 +378,53 @@ phydm_set_pa_bias_to_rf_8822b(
 {
 	struct PHY_DM_STRUCT		*p_dm_odm = (struct PHY_DM_STRUCT *)p_dm_void;
 	struct odm_rf_calibration_structure	*p_rf_calibrate_info = &(p_dm_odm->rf_calibrate_info);
+	u32	rf_reg_51 = 0, rf_reg_52 = 0, rf_reg_3f = 0;
 
-	tx_pa_bias = tx_pa_bias + (u8)odm_get_rf_reg(p_dm_odm, e_rf_path, 0x51, (BIT(6) | BIT(5) | BIT(4) | BIT(3)));
+	rf_reg_51 = odm_get_rf_reg(p_dm_odm, e_rf_path, 0x51, RFREGOFFSETMASK);
+	rf_reg_52 = odm_get_rf_reg(p_dm_odm, e_rf_path, 0x52, RFREGOFFSETMASK);
+
+	ODM_RT_TRACE(p_dm_odm, ODM_COMP_MP, ODM_DBG_LOUD, ("[kfree] 8822b 2g rf(0x51)=0x%X rf(0x52)=0x%X path=%d\n",
+ 		rf_reg_51, rf_reg_52, e_rf_path));
+
+	/*rf3f => rf52[19:17] = rf3f[2:0] rf52[16:15] = rf3f[4:3] rf52[3:0] = rf3f[8:5]*/
+	/*rf3f => rf51[6:3] = rf3f[12:9] rf52[13] = rf3f[13]*/
+	rf_reg_3f = ((rf_reg_52 & 0xe0000) >> 17) |
+					(((rf_reg_52 & 0x18000) >> 15) << 3) |
+					((rf_reg_52 & 0xf) << 5) |
+					(((rf_reg_51 & 0x78) >> 3) << 9) |
+					(((rf_reg_52 & 0x2000) >> 13) << 13);
+
+	ODM_RT_TRACE(p_dm_odm, ODM_COMP_MP, ODM_DBG_LOUD,
+			("[kfree] 8822b 2g original tx_pa_bias=%d rf_reg_3f=0x%X path=%d\n",
+			tx_pa_bias, rf_reg_3f, e_rf_path));
+
+	tx_pa_bias = (s8)((rf_reg_3f & (BIT(12) | BIT(11) | BIT(10) | BIT(9))) >> 9) + tx_pa_bias;
 
 	if (tx_pa_bias < 0)
 		tx_pa_bias = 0;
 	else if (tx_pa_bias > 7)
 		tx_pa_bias = 7;
 
-	ODM_RT_TRACE(p_dm_odm, ODM_COMP_MP, ODM_DBG_LOUD, ("[kfree] 8822b 2g tx pa bias=0x%X rf 0x51=0x%X path=%d\n", tx_pa_bias,
-		odm_get_rf_reg(p_dm_odm, e_rf_path, 0x51, (BIT(6) | BIT(5) | BIT(4) | BIT(3))), e_rf_path));
+	rf_reg_3f = ((rf_reg_3f & 0xfe1ff) | (tx_pa_bias << 9));
+
+	ODM_RT_TRACE(p_dm_odm, ODM_COMP_MP, ODM_DBG_LOUD,
+			("[kfree] 8822b 2g offset efuse 0x3d5 0x3d6 tx_pa_bias=%d rf_reg_3f=0x%X path=%d\n",
+			tx_pa_bias, rf_reg_3f, e_rf_path));
 
 	odm_set_rf_reg(p_dm_odm, e_rf_path, 0xef, BIT(10), 0x1);
 	odm_set_rf_reg(p_dm_odm, e_rf_path, 0x33, RFREGOFFSETMASK, 0x0);
-	odm_set_rf_reg(p_dm_odm, e_rf_path, 0x3f, (BIT(12) | BIT(11) | BIT(10) | BIT(9)), tx_pa_bias);
+	odm_set_rf_reg(p_dm_odm, e_rf_path, 0x3f, RFREGOFFSETMASK, rf_reg_3f);
 	odm_set_rf_reg(p_dm_odm, e_rf_path, 0x33, BIT(0), 0x1);
-	odm_set_rf_reg(p_dm_odm, e_rf_path, 0x3f, (BIT(12) | BIT(11) | BIT(10) | BIT(9)), tx_pa_bias);
+	odm_set_rf_reg(p_dm_odm, e_rf_path, 0x3f, RFREGOFFSETMASK, rf_reg_3f);
 	odm_set_rf_reg(p_dm_odm, e_rf_path, 0x33, BIT(1), 0x1);
-	odm_set_rf_reg(p_dm_odm, e_rf_path, 0x3f, (BIT(12) | BIT(11) | BIT(10) | BIT(9)), tx_pa_bias);
+	odm_set_rf_reg(p_dm_odm, e_rf_path, 0x3f, RFREGOFFSETMASK, rf_reg_3f);
 	odm_set_rf_reg(p_dm_odm, e_rf_path, 0x33, (BIT(1) | BIT(0)), 0x3);
-	odm_set_rf_reg(p_dm_odm, e_rf_path, 0x3f, (BIT(12) | BIT(11) | BIT(10) | BIT(9)), tx_pa_bias);
+	odm_set_rf_reg(p_dm_odm, e_rf_path, 0x3f, RFREGOFFSETMASK, rf_reg_3f);
 	odm_set_rf_reg(p_dm_odm, e_rf_path, 0xef, BIT(10), 0x0);
 
-	ODM_RT_TRACE(p_dm_odm, ODM_COMP_MP, ODM_DBG_LOUD, ("[kfree] 8822b 2g tx pa bias rf_0x3f(0x%X) path=%d\n",
+	ODM_RT_TRACE(p_dm_odm, ODM_COMP_MP, ODM_DBG_LOUD,
+		("[kfree] 8822b 2g tx pa bias rf_0x3f(0x%X) path=%d\n",
 		odm_get_rf_reg(p_dm_odm, e_rf_path, 0x3f, (BIT(12) | BIT(11) | BIT(10) | BIT(9))), e_rf_path));
-
 }
 
 

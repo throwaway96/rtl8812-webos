@@ -222,6 +222,46 @@ struct country_chplan {
 
 const struct country_chplan *rtw_get_chplan_from_country(const char *country_code, const u8 version);
 
+struct rf_ctl_t;
+
+typedef enum _REGULATION_TXPWR_LMT {
+	TXPWR_LMT_NONE = 0, /* no limit */
+	TXPWR_LMT_FCC = 1,
+	TXPWR_LMT_MKK = 2,
+	TXPWR_LMT_ETSI = 3,
+	TXPWR_LMT_IC = 4,
+	TXPWR_LMT_KCC = 5,
+	TXPWR_LMT_WW = 6, /* smallest of all available limit, keep last */
+} REGULATION_TXPWR_LMT;
+
+extern const char *const _regd_str[];
+#define regd_str(regd) (((regd) > TXPWR_LMT_WW) ? _regd_str[TXPWR_LMT_WW] : _regd_str[(regd)])
+
+#ifdef CONFIG_TXPWR_LIMIT
+struct regd_exc_ent {
+	_list list;
+	char country[2];
+	u8 domain;
+	char regd_name[0];
+};
+
+void dump_regd_exc_list(void *sel, struct rf_ctl_t *rfctl);
+void rtw_regd_exc_add_with_nlen(struct rf_ctl_t *rfctl, const char *country, u8 domain, const char *regd_name, u32 nlen);
+void rtw_regd_exc_add(struct rf_ctl_t *rfctl, const char *country, u8 domain, const char *regd_name);
+struct regd_exc_ent *_rtw_regd_exc_search(struct rf_ctl_t *rfctl, const char *country, u8 domain);
+struct regd_exc_ent *rtw_regd_exc_search(struct rf_ctl_t *rfctl, const char *country, u8 domain);
+void rtw_regd_exc_list_free(struct rf_ctl_t *rfctl);
+
+void dump_txpwr_lmt(void *sel, _adapter *adapter);
+void rtw_txpwr_lmt_add_with_nlen(struct rf_ctl_t *rfctl, const char *regd_name, u32 nlen
+	, u8 band, u8 bw, u8 rs, u8 ch_idx, u8 rfpath, s8 lmt);
+void rtw_txpwr_lmt_add(struct rf_ctl_t *rfctl, const char *regd_name
+	, u8 band, u8 bw, u8 rs, u8 ch_idx, u8 rfpath, s8 lmt);
+struct txpwr_lmt_ent *_rtw_txpwr_lmt_get_by_name(struct rf_ctl_t *rfctl, const char *regd_name);
+struct txpwr_lmt_ent *rtw_txpwr_lmt_get_by_name(struct rf_ctl_t *rfctl, const char *regd_name);
+void rtw_txpwr_lmt_list_free(struct rf_ctl_t *rfctl);
+#endif /* CONFIG_TXPWR_LIMIT */
+
 #define BB_GAIN_2G 0
 #ifdef CONFIG_IEEE80211_BAND_5GHZ
 #define BB_GAIN_5GLB1 1

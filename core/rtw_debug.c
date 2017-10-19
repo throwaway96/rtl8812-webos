@@ -3391,48 +3391,49 @@ int proc_get_best_channel(struct seq_file *m, void *v)
 {
 	struct net_device *dev = m->private;
 	_adapter *padapter = (_adapter *)rtw_netdev_priv(dev);
+	struct rf_ctl_t *rfctl = adapter_to_rfctl(padapter);
 	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
 	u32 i, best_channel_24G = 1, best_channel_5G = 36, index_24G = 0, index_5G = 0;
 
-	for (i = 0; i < pmlmeext->max_chan_nums && pmlmeext->channel_set[i].ChannelNum != 0; i++) {
-		if (pmlmeext->channel_set[i].ChannelNum == 1)
+	for (i = 0; i < rfctl->max_chan_nums && rfctl->channel_set[i].ChannelNum != 0; i++) {
+		if (rfctl->channel_set[i].ChannelNum == 1)
 			index_24G = i;
-		if (pmlmeext->channel_set[i].ChannelNum == 36)
+		if (rfctl->channel_set[i].ChannelNum == 36)
 			index_5G = i;
 	}
 
-	for (i = 0; i < pmlmeext->max_chan_nums && pmlmeext->channel_set[i].ChannelNum != 0; i++) {
+	for (i = 0; i < rfctl->max_chan_nums && rfctl->channel_set[i].ChannelNum != 0; i++) {
 		/* 2.4G */
-		if (pmlmeext->channel_set[i].ChannelNum == 6) {
-			if (pmlmeext->channel_set[i].rx_count < pmlmeext->channel_set[index_24G].rx_count) {
+		if (rfctl->channel_set[i].ChannelNum == 6) {
+			if (rfctl->channel_set[i].rx_count < rfctl->channel_set[index_24G].rx_count) {
 				index_24G = i;
-				best_channel_24G = pmlmeext->channel_set[i].ChannelNum;
+				best_channel_24G = rfctl->channel_set[i].ChannelNum;
 			}
 		}
 
 		/* 5G */
-		if (pmlmeext->channel_set[i].ChannelNum >= 36
-		    && pmlmeext->channel_set[i].ChannelNum < 140) {
+		if (rfctl->channel_set[i].ChannelNum >= 36
+		    && rfctl->channel_set[i].ChannelNum < 140) {
 			/* Find primary channel */
-			if (((pmlmeext->channel_set[i].ChannelNum - 36) % 8 == 0)
-			    && (pmlmeext->channel_set[i].rx_count < pmlmeext->channel_set[index_5G].rx_count)) {
+			if (((rfctl->channel_set[i].ChannelNum - 36) % 8 == 0)
+			    && (rfctl->channel_set[i].rx_count < rfctl->channel_set[index_5G].rx_count)) {
 				index_5G = i;
-				best_channel_5G = pmlmeext->channel_set[i].ChannelNum;
+				best_channel_5G = rfctl->channel_set[i].ChannelNum;
 			}
 		}
 
-		if (pmlmeext->channel_set[i].ChannelNum >= 149
-		    && pmlmeext->channel_set[i].ChannelNum < 165) {
+		if (rfctl->channel_set[i].ChannelNum >= 149
+		    && rfctl->channel_set[i].ChannelNum < 165) {
 			/* find primary channel */
-			if (((pmlmeext->channel_set[i].ChannelNum - 149) % 8 == 0)
-			    && (pmlmeext->channel_set[i].rx_count < pmlmeext->channel_set[index_5G].rx_count)) {
+			if (((rfctl->channel_set[i].ChannelNum - 149) % 8 == 0)
+			    && (rfctl->channel_set[i].rx_count < rfctl->channel_set[index_5G].rx_count)) {
 				index_5G = i;
-				best_channel_5G = pmlmeext->channel_set[i].ChannelNum;
+				best_channel_5G = rfctl->channel_set[i].ChannelNum;
 			}
 		}
 #if 1 /* debug */
 		RTW_PRINT_SEL(m, "The rx cnt of channel %3d = %d\n",
-			pmlmeext->channel_set[i].ChannelNum, pmlmeext->channel_set[i].rx_count);
+			rfctl->channel_set[i].ChannelNum, rfctl->channel_set[i].rx_count);
 #endif
 	}
 
@@ -3446,6 +3447,7 @@ ssize_t proc_set_best_channel(struct file *file, const char __user *buffer, size
 {
 	struct net_device *dev = data;
 	_adapter *padapter = (_adapter *)rtw_netdev_priv(dev);
+	struct rf_ctl_t *rfctl = adapter_to_rfctl(padapter);
 	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
 	char tmp[32];
 
@@ -3459,8 +3461,8 @@ ssize_t proc_set_best_channel(struct file *file, const char __user *buffer, size
 
 	if (buffer && !copy_from_user(tmp, buffer, count)) {
 		int i;
-		for (i = 0; i < pmlmeext->max_chan_nums && pmlmeext->channel_set[i].ChannelNum != 0; i++)
-			pmlmeext->channel_set[i].rx_count = 0;
+		for (i = 0; i < rfctl->max_chan_nums && rfctl->channel_set[i].ChannelNum != 0; i++)
+			rfctl->channel_set[i].rx_count = 0;
 
 		RTW_INFO("set %s\n", "Clean Best Channel Count");
 	}

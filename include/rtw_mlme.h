@@ -691,8 +691,6 @@ struct mlme_priv {
 	RT_LINK_DETECT_T	LinkDetectInfo;
 
 	u8	acm_mask; /* for wmm acm mask */
-	const struct country_chplan *country_ent;
-	u8	ChannelPlan;
 	RT_SCAN_TYPE	scan_mode; /* active: 1, passive: 0 */
 
 	u8 *wps_probe_req_ie;

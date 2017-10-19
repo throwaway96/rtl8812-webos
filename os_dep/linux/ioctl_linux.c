@@ -1736,7 +1736,7 @@ static int rtw_wx_set_freq(struct net_device *dev,
 
 	if (wrqu->freq.m <= 1000) {
 		if (wrqu->freq.flags == IW_FREQ_AUTO) {
-			if (rtw_chset_search_ch(padapter->mlmeextpriv.channel_set, wrqu->freq.m) > 0) {
+			if (rtw_chset_search_ch(adapter_to_chset(padapter), wrqu->freq.m) > 0) {
 				padapter->mlmeextpriv.cur_channel = wrqu->freq.m;
 				RTW_INFO("%s: channel is auto, set to channel %d\n", __func__, wrqu->freq.m);
 			} else {
@@ -2044,6 +2044,7 @@ static int rtw_wx_get_range(struct net_device *dev,
 {
 	struct iw_range *range = (struct iw_range *)extra;
 	_adapter *padapter = (_adapter *)rtw_netdev_priv(dev);
+	struct rf_ctl_t *rfctl = adapter_to_rfctl(padapter);
 	struct mlme_ext_priv	*pmlmeext = &padapter->mlmeextpriv;
 
 	u16 val;
@@ -2145,12 +2146,12 @@ static int rtw_wx_get_range(struct net_device *dev,
 	 *	range->min_r_time;	 Minimal retry lifetime
 	 *	range->max_r_time;	 Maximal retry lifetime  */
 
-	for (i = 0, val = 0; i < pmlmeext->max_chan_nums; i++) {
+	for (i = 0, val = 0; i < rfctl->max_chan_nums; i++) {
 
 		/* Include only legal frequencies for some countries */
-		if (pmlmeext->channel_set[i].ChannelNum != 0) {
-			range->freq[val].i = pmlmeext->channel_set[i].ChannelNum;
-			range->freq[val].m = rtw_ch2freq(pmlmeext->channel_set[i].ChannelNum) * 100000;
+		if (rfctl->channel_set[i].ChannelNum != 0) {
+			range->freq[val].i = rfctl->channel_set[i].ChannelNum;
+			range->freq[val].m = rtw_ch2freq(rfctl->channel_set[i].ChannelNum) * 100000;
 			range->freq[val].e = 1;
 			val++;
 		}
@@ -2672,7 +2673,7 @@ static int rtw_wx_get_scan(struct net_device *dev, struct iw_request_info *a,
 		pnetwork = LIST_CONTAINOR(plist, struct wlan_network, list);
 
 		/* report network only if the current channel set contains the channel to which this network belongs */
-		if (rtw_chset_search_ch(padapter->mlmeextpriv.channel_set, pnetwork->network.Configuration.DSConfig) >= 0
+		if (rtw_chset_search_ch(adapter_to_chset(padapter), pnetwork->network.Configuration.DSConfig) >= 0
 		    && rtw_mlme_band_check(padapter, pnetwork->network.Configuration.DSConfig) == _TRUE
 		    && _TRUE == rtw_validate_ssid(&(pnetwork->network.Ssid))
 		   )
@@ -11669,49 +11670,50 @@ static int rtw_tdls_get_best_ch(struct net_device *dev,
 {
 #ifdef CONFIG_FIND_BEST_CHANNEL
 	_adapter *padapter = (_adapter *)rtw_netdev_priv(dev);
+	struct rf_ctl_t *rfctl = adapter_to_rfctl(padapter);
 	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
 	u32 i, best_channel_24G = 1, best_channel_5G = 36, index_24G = 0, index_5G = 0;
 
-	for (i = 0; i < pmlmeext->max_chan_nums && pmlmeext->channel_set[i].ChannelNum != 0; i++) {
-		if (pmlmeext->channel_set[i].ChannelNum == 1)
+	for (i = 0; i < rfctl->max_chan_nums && rfctl->channel_set[i].ChannelNum != 0; i++) {
+		if (rfctl->channel_set[i].ChannelNum == 1)
 			index_24G = i;
-		if (pmlmeext->channel_set[i].ChannelNum == 36)
+		if (rfctl->channel_set[i].ChannelNum == 36)
 			index_5G = i;
 	}
 
-	for (i = 0; i < pmlmeext->max_chan_nums && pmlmeext->channel_set[i].ChannelNum != 0; i++) {
+	for (i = 0; i < rfctl->max_chan_nums && rfctl->channel_set[i].ChannelNum != 0; i++) {
 		/* 2.4G */
-		if (pmlmeext->channel_set[i].ChannelNum == 6 || pmlmeext->channel_set[i].ChannelNum == 11) {
-			if (pmlmeext->channel_set[i].rx_count < pmlmeext->channel_set[index_24G].rx_count) {
+		if (rfctl->channel_set[i].ChannelNum == 6 || rfctl->channel_set[i].ChannelNum == 11) {
+			if (rfctl->channel_set[i].rx_count < rfctl->channel_set[index_24G].rx_count) {
 				index_24G = i;
-				best_channel_24G = pmlmeext->channel_set[i].ChannelNum;
+				best_channel_24G = rfctl->channel_set[i].ChannelNum;
 			}
 		}
 
 		/* 5G */
-		if (pmlmeext->channel_set[i].ChannelNum >= 36
-		    && pmlmeext->channel_set[i].ChannelNum < 140) {
+		if (rfctl->channel_set[i].ChannelNum >= 36
+		    && rfctl->channel_set[i].ChannelNum < 140) {
 			/* Find primary channel */
-			if (((pmlmeext->channel_set[i].ChannelNum - 36) % 8 == 0)
-			    && (pmlmeext->channel_set[i].rx_count < pmlmeext->channel_set[index_5G].rx_count)) {
+			if (((rfctl->channel_set[i].ChannelNum - 36) % 8 == 0)
+			    && (rfctl->channel_set[i].rx_count < rfctl->channel_set[index_5G].rx_count)) {
 				index_5G = i;
-				best_channel_5G = pmlmeext->channel_set[i].ChannelNum;
+				best_channel_5G = rfctl->channel_set[i].ChannelNum;
 			}
 		}
 
-		if (pmlmeext->channel_set[i].ChannelNum >= 149
-		    && pmlmeext->channel_set[i].ChannelNum < 165) {
+		if (rfctl->channel_set[i].ChannelNum >= 149
+		    && rfctl->channel_set[i].ChannelNum < 165) {
 			/* Find primary channel */
-			if (((pmlmeext->channel_set[i].ChannelNum - 149) % 8 == 0)
-			    && (pmlmeext->channel_set[i].rx_count < pmlmeext->channel_set[index_5G].rx_count)) {
+			if (((rfctl->channel_set[i].ChannelNum - 149) % 8 == 0)
+			    && (rfctl->channel_set[i].rx_count < rfctl->channel_set[index_5G].rx_count)) {
 				index_5G = i;
-				best_channel_5G = pmlmeext->channel_set[i].ChannelNum;
+				best_channel_5G = rfctl->channel_set[i].ChannelNum;
 			}
 		}
 #if 1 /* debug */
 		RTW_INFO("The rx cnt of channel %3d = %d\n",
-			 pmlmeext->channel_set[i].ChannelNum,
-			 pmlmeext->channel_set[i].rx_count);
+			 rfctl->channel_set[i].ChannelNum,
+			 rfctl->channel_set[i].rx_count);
 #endif
 	}
 

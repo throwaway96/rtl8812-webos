@@ -37,8 +37,8 @@ static const struct country_chplan CUSTOMIZED_country_chplan_map[] = {
 	COUNTRY_CHPLAN_ENT("ID", 0x2c, 0, 0x1F3), /* Indonesia */
 	COUNTRY_CHPLAN_ENT("IR", 0x2d, 1, 0x1F3), /* Iran */
 	COUNTRY_CHPLAN_ENT("JP", 0x2e, 1, 0x1FF), /* Japan- Telec */
-	COUNTRY_CHPLAN_ENT("KR", 0x2f, 1, 0x1FB), /* South Korea */
-	COUNTRY_CHPLAN_ENT("KR", 0x2f, 1, 0x1FB), /* South Korea v1 */
+	COUNTRY_CHPLAN_ENT("KR", 0x3a, 1, 0x1FB), /* South Korea */
+	COUNTRY_CHPLAN_ENT("KR", 0x3a, 1, 0x1FB), /* South Korea v1 */
 	COUNTRY_CHPLAN_ENT("KZ", 0x21, 1, 0x100), /* Kazakhstan */
 	COUNTRY_CHPLAN_ENT("MM", 0x20, 1, 0x000), /* Burma (Myanmar) */
 	COUNTRY_CHPLAN_ENT("MR", 0x31, 1, 0x1F1), /* Morocco */

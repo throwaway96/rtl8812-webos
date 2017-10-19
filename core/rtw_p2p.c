@@ -2587,14 +2587,15 @@ u8 rtw_p2p_get_peer_ch_list(struct wifidirect_info *pwdinfo, u8 *ch_content, u8 
 	return ch_no;
 }
 
-u8 rtw_p2p_ch_inclusion(struct mlme_ext_priv *pmlmeext, u8 *peer_ch_list, u8 peer_ch_num, u8 *ch_list_inclusioned)
+u8 rtw_p2p_ch_inclusion(_adapter *adapter, u8 *peer_ch_list, u8 peer_ch_num, u8 *ch_list_inclusioned)
 {
+	struct rf_ctl_t *rfctl = adapter_to_rfctl(adapter);
 	int	i = 0, j = 0, temp = 0;
 	u8 ch_no = 0;
 
 	for (i = 0; i < peer_ch_num; i++) {
-		for (j = temp; j < pmlmeext->max_chan_nums; j++) {
-			if (*(peer_ch_list + i) == pmlmeext->channel_set[j].ChannelNum) {
+		for (j = temp; j < rfctl->max_chan_nums; j++) {
+			if (*(peer_ch_list + i) == rfctl->channel_set[j].ChannelNum) {
 				ch_list_inclusioned[ch_no++] = *(peer_ch_list + i);
 				temp = j;
 				break;
@@ -2719,7 +2720,7 @@ u8 process_p2p_group_negotation_req(struct wifidirect_info *pwdinfo, u8 *pframe,
 
 		if (rtw_get_p2p_attr_content(p2p_ie, p2p_ielen, P2P_ATTR_CH_LIST, ch_content, &ch_cnt)) {
 			peer_ch_num = rtw_p2p_get_peer_ch_list(pwdinfo, ch_content, ch_cnt, peer_ch_list);
-			ch_num_inclusioned = rtw_p2p_ch_inclusion(&padapter->mlmeextpriv, peer_ch_list, peer_ch_num, ch_list_inclusioned);
+			ch_num_inclusioned = rtw_p2p_ch_inclusion(padapter, peer_ch_list, peer_ch_num, ch_list_inclusioned);
 
 			if (ch_num_inclusioned == 0) {
 				RTW_INFO("[%s] No common channel in channel list!\n", __FUNCTION__);
@@ -2914,7 +2915,7 @@ u8 process_p2p_group_negotation_resp(struct wifidirect_info *pwdinfo, u8 *pframe
 				RTW_INFO("[%s] channel list attribute found, len = %d\n", __FUNCTION__,  pwdinfo->channel_list_attr_len);
 
 				peer_ch_num = rtw_p2p_get_peer_ch_list(pwdinfo, pwdinfo->channel_list_attr, pwdinfo->channel_list_attr_len, peer_ch_list);
-				ch_num_inclusioned = rtw_p2p_ch_inclusion(&padapter->mlmeextpriv, peer_ch_list, peer_ch_num, ch_list_inclusioned);
+				ch_num_inclusioned = rtw_p2p_ch_inclusion(padapter, peer_ch_list, peer_ch_num, ch_list_inclusioned);
 
 				if (ch_num_inclusioned == 0) {
 					RTW_INFO("[%s] No common channel in channel list!\n", __FUNCTION__);

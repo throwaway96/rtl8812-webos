@@ -853,9 +853,10 @@ static int proc_get_country_code(struct seq_file *m, void *v)
 {
 	struct net_device *dev = m->private;
 	_adapter *adapter = (_adapter *)rtw_netdev_priv(dev);
+	struct rf_ctl_t *rfctl = adapter_to_rfctl(adapter);
 
-	if (adapter->mlmepriv.country_ent)
-		dump_country_chplan(m, adapter->mlmepriv.country_ent);
+	if (rfctl->country_ent)
+		dump_country_chplan(m, rfctl->country_ent);
 	else
 		RTW_PRINT_SEL(m, "unspecified\n");
 
@@ -1065,8 +1066,7 @@ ssize_t proc_set_update_non_ocp(struct file *file, const char __user *buffer, si
 {
 	struct net_device *dev = data;
 	_adapter *adapter = (_adapter *)rtw_netdev_priv(dev);
-	struct mlme_priv *mlme = &adapter->mlmepriv;
-	struct mlme_ext_priv *mlmeext = &adapter->mlmeextpriv;
+	struct rf_ctl_t *rfctl = adapter_to_rfctl(adapter);
 	char tmp[32];
 	u8 ch, bw = CHANNEL_WIDTH_20, offset = HAL_PRIME_CHNL_OFFSET_DONT_CARE;
 	int ms = -1;
@@ -1087,10 +1087,10 @@ ssize_t proc_set_update_non_ocp(struct file *file, const char __user *buffer, si
 			goto exit;
 
 		if (bw == CHANNEL_WIDTH_20)
-			rtw_chset_update_non_ocp_ms(mlmeext->channel_set
+			rtw_chset_update_non_ocp_ms(rfctl->channel_set
 				, ch, bw, HAL_PRIME_CHNL_OFFSET_DONT_CARE, ms);
 		else
-			rtw_chset_update_non_ocp_ms(mlmeext->channel_set
+			rtw_chset_update_non_ocp_ms(rfctl->channel_set
 				, ch, bw, offset, ms);
 	}
 
@@ -1555,15 +1555,17 @@ static int proc_get_tx_power_by_rate(struct seq_file *m, void *v)
 	return 0;
 }
 
+#ifdef CONFIG_TXPWR_LIMIT
 static int proc_get_tx_power_limit(struct seq_file *m, void *v)
 {
 	struct net_device *dev = m->private;
 	_adapter *adapter = (_adapter *)rtw_netdev_priv(dev);
 
-	dump_tx_power_limit(m, adapter);
+	dump_txpwr_lmt(m, adapter);
 
 	return 0;
 }
+#endif /* CONFIG_TXPWR_LIMIT */
 
 static int proc_get_tx_power_ext_info(struct seq_file *m, void *v)
 {
@@ -2607,7 +2609,9 @@ const struct rtw_proc_hdl adapter_proc_hdls[] = {
 	RTW_PROC_HDL_SSEQ("hal_txpwr_info", proc_get_hal_txpwr_info, NULL),
 	RTW_PROC_HDL_SSEQ("target_tx_power", proc_get_target_tx_power, NULL),
 	RTW_PROC_HDL_SSEQ("tx_power_by_rate", proc_get_tx_power_by_rate, NULL),
+#ifdef CONFIG_TXPWR_LIMIT
 	RTW_PROC_HDL_SSEQ("tx_power_limit", proc_get_tx_power_limit, NULL),
+#endif
 	RTW_PROC_HDL_SSEQ("tx_power_ext_info", proc_get_tx_power_ext_info, proc_set_tx_power_ext_info),
 	RTW_PROC_HDL_SEQ("tx_power_idx", &seq_ops_tx_power_idx, NULL),
 #ifdef CONFIG_RF_POWER_TRIM

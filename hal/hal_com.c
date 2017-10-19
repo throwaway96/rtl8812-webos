@@ -233,11 +233,8 @@ void rtw_hal_config_rftype(PADAPTER  padapter)
  *	def_chplan		channel plan used when HW/SW both invalid
  *	AutoLoadFail		efuse autoload fail or not
  *
- * Return:
- *	Final channel plan decision
- *
  */
-u8 hal_com_config_channel_plan(
+void hal_com_config_channel_plan(
 	IN	PADAPTER padapter,
 	IN	char *hw_alpha2,
 	IN	u8 hw_chplan,
@@ -247,6 +244,7 @@ u8 hal_com_config_channel_plan(
 	IN	BOOLEAN AutoLoadFail
 )
 {
+	struct rf_ctl_t *rfctl = adapter_to_rfctl(padapter);
 	PHAL_DATA_TYPE	pHalData;
 	u8 force_hw_chplan = _FALSE;
 	int chplan = -1;
@@ -320,10 +318,9 @@ done:
 	} else
 		RTW_PRINT("%s chplan:0x%02X\n", __func__, chplan);
 
-	padapter->mlmepriv.country_ent = country_ent;
+	rfctl->country_ent = country_ent;
+	rfctl->ChannelPlan = chplan;
 	pHalData->bDisableSWChannelPlan = force_hw_chplan;
-
-	return chplan;
 }
 
 BOOLEAN
@@ -4932,17 +4929,6 @@ _issue_bcn:
 #endif
 }
 
-static int get_reg_classes_full_count(struct p2p_channels channel_list)
-{
-	int cnt = 0;
-	int i;
-
-	for (i = 0; i < channel_list.reg_classes; i++)
-		cnt += channel_list.reg_class[i].channels;
-
-	return cnt;
-}
-
 static void rtw_hal_construct_P2PProbeRsp(_adapter *padapter, u8 *pframe, u32 *pLength)
 {
 	/* struct xmit_frame			*pmgntframe; */
@@ -5266,6 +5252,7 @@ static void rtw_hal_construct_P2PProbeRsp(_adapter *padapter, u8 *pframe, u32 *p
 }
 static void rtw_hal_construct_P2PNegoRsp(_adapter *padapter, u8 *pframe, u32 *pLength)
 {
+	struct p2p_channels *ch_list = &(adapter_to_rfctl(padapter)->channel_list);
 	unsigned char category = RTW_WLAN_CATEGORY_PUBLIC;
 	u8			action = P2P_PUB_ACTION_ACTION;
 	u32			p2poui = cpu_to_be32(P2POUI);
@@ -5510,8 +5497,8 @@ static void rtw_hal_construct_P2PNegoRsp(_adapter *padapter, u8 *pframe, u32 *pL
 	/* + ( Operating Class (1) + Number of Channels(1) ) * Operation Classes (?) */
 	/* + number of channels in all classes */
 	len_channellist_attr = 3
-		       + (1 + 1) * (u16)pmlmeext->channel_list.reg_classes
-		       + get_reg_classes_full_count(pmlmeext->channel_list);
+		       + (1 + 1) * (u16)ch_list->reg_classes
+		       + get_reg_classes_full_count(ch_list);
 
 #ifdef CONFIG_CONCURRENT_MODE
 	if (rtw_mi_buddy_check_fwstate(padapter, _FW_LINKED))
@@ -5557,37 +5544,22 @@ static void rtw_hal_construct_P2PNegoRsp(_adapter *padapter, u8 *pframe, u32 *pL
 
 		/*	Channel List */
 		p2pie[p2pielen++] = union_ch;
-	} else {
-		int i, j;
-		for (j = 0; j < pmlmeext->channel_list.reg_classes; j++) {
-			/*	Operating Class */
-			p2pie[p2pielen++] = pmlmeext->channel_list.reg_class[j].reg_class;
-
-			/*	Number of Channels */
-			p2pie[p2pielen++] = pmlmeext->channel_list.reg_class[j].channels;
-
-			/*	Channel List */
-			for (i = 0; i < pmlmeext->channel_list.reg_class[j].channels; i++)
-				p2pie[p2pielen++] = pmlmeext->channel_list.reg_class[j].channel[i];
-		}
-	}
-#else /* CONFIG_CONCURRENT_MODE */
+	} else
+#endif /* CONFIG_CONCURRENT_MODE */
 	{
 		int i, j;
-		for (j = 0; j < pmlmeext->channel_list.reg_classes; j++) {
+		for (j = 0; j < ch_list->reg_classes; j++) {
 			/*	Operating Class */
-			p2pie[p2pielen++] = pmlmeext->channel_list.reg_class[j].reg_class;
+			p2pie[p2pielen++] = ch_list->reg_class[j].reg_class;
 
 			/*	Number of Channels */
-			p2pie[p2pielen++] = pmlmeext->channel_list.reg_class[j].channels;
+			p2pie[p2pielen++] = ch_list->reg_class[j].channels;
 
 			/*	Channel List */
-			for (i = 0; i < pmlmeext->channel_list.reg_class[j].channels; i++)
-				p2pie[p2pielen++] = pmlmeext->channel_list.reg_class[j].channel[i];
+			for (i = 0; i < ch_list->reg_class[j].channels; i++)
+				p2pie[p2pielen++] = ch_list->reg_class[j].channel[i];
 		}
 	}
-#endif /* CONFIG_CONCURRENT_MODE */
-
 
 	/*	Device Info */
 	/*	Type: */
@@ -5783,6 +5755,8 @@ static void rtw_hal_construct_P2PInviteRsp(_adapter *padapter, u8 *pframe, u32 *
 	/* due to defult value is FAIL INFO UNAVAILABLE, so the following IE is not needed */
 #if 0
 	if (status_code == P2P_STATUS_SUCCESS) {
+		struct p2p_channels *ch_list = &(adapter_to_rfctl(padapter)->channel_list);
+
 		if (rtw_p2p_chk_role(pwdinfo, P2P_ROLE_GO)) {
 			/*	The P2P Invitation request frame asks this Wi-Fi device to be the P2P GO */
 			/*	In this case, the P2P Invitation response frame should carry the two more P2P attributes. */
@@ -5837,8 +5811,8 @@ static void rtw_hal_construct_P2PInviteRsp(_adapter *padapter, u8 *pframe, u32 *
 		/* + ( Operating Class (1) + Number of Channels(1) ) * Operation Classes (?) */
 		/* + number of channels in all classes */
 		len_channellist_attr = 3
-			+ (1 + 1) * (u16)pmlmeext->channel_list.reg_classes
-			+ get_reg_classes_full_count(pmlmeext->channel_list);
+			+ (1 + 1) * (u16)ch_list->reg_classes
+			+ get_reg_classes_full_count(ch_list);
 
 #ifdef CONFIG_CONCURRENT_MODE
 		if (rtw_mi_check_status(padapter, MI_LINKED))
@@ -5884,36 +5858,22 @@ static void rtw_hal_construct_P2PInviteRsp(_adapter *padapter, u8 *pframe, u32 *
 
 			/*	Channel List */
 			p2pie[p2pielen++] = union_ch;
-		} else {
-			int i, j;
-			for (j = 0; j < pmlmeext->channel_list.reg_classes; j++) {
-				/*	Operating Class */
-				p2pie[p2pielen++] = pmlmeext->channel_list.reg_class[j].reg_class;
-
-				/*	Number of Channels */
-				p2pie[p2pielen++] = pmlmeext->channel_list.reg_class[j].channels;
-
-				/*	Channel List */
-				for (i = 0; i < pmlmeext->channel_list.reg_class[j].channels; i++)
-					p2pie[p2pielen++] = pmlmeext->channel_list.reg_class[j].channel[i];
-			}
-		}
-#else /* CONFIG_CONCURRENT_MODE */
+		} else
+#endif /* CONFIG_CONCURRENT_MODE */
 		{
 			int i, j;
-			for (j = 0; j < pmlmeext->channel_list.reg_classes; j++) {
+			for (j = 0; j < ch_list->reg_classes; j++) {
 				/*	Operating Class */
-				p2pie[p2pielen++] = pmlmeext->channel_list.reg_class[j].reg_class;
+				p2pie[p2pielen++] = ch_list->reg_class[j].reg_class;
 
 				/*	Number of Channels */
-				p2pie[p2pielen++] = pmlmeext->channel_list.reg_class[j].channels;
+				p2pie[p2pielen++] = ch_list->reg_class[j].channels;
 
 				/*	Channel List */
-				for (i = 0; i < pmlmeext->channel_list.reg_class[j].channels; i++)
-					p2pie[p2pielen++] = pmlmeext->channel_list.reg_class[j].channel[i];
+				for (i = 0; i < ch_list->reg_class[j].channels; i++)
+					p2pie[p2pielen++] = ch_list->reg_class[j].channel[i];
 			}
 		}
-#endif /* CONFIG_CONCURRENT_MODE */
 	}
 #endif
 
@@ -9220,8 +9180,9 @@ void SetHalODMVar(
 		odm_cmn_info_update(podmpriv, ODM_CMNINFO_WIFI_DISPLAY, bSet);
 		break;
 	case HAL_ODM_REGULATION:
-		odm_cmn_info_init(podmpriv, ODM_CMNINFO_DOMAIN_CODE_2G, pHalData->Regulation2_4G);
-		odm_cmn_info_init(podmpriv, ODM_CMNINFO_DOMAIN_CODE_5G, pHalData->Regulation5G);
+		/* used to auto enable/disable adaptivity by SD7 */
+		odm_cmn_info_init(podmpriv, ODM_CMNINFO_DOMAIN_CODE_2G, 0);
+		odm_cmn_info_init(podmpriv, ODM_CMNINFO_DOMAIN_CODE_5G, 0);
 		break;
 	case HAL_ODM_INITIAL_GAIN: {
 		u8 rx_gain = *((u8 *)(pValue1));
@@ -9610,8 +9571,13 @@ ParseQualifiedString(
 		return _FALSE;
 
 	i = (*Start);
-	while ((c = In[(*Start)++]) != RightQualifier)
-		; /* find ']' */
+	c = In[(*Start)++];
+	while (c != RightQualifier && c != '\0')
+		c = In[(*Start)++];
+
+	if (c == '\0')
+		return _FALSE;
+
 	j = (*Start) - 2;
 	strncpy((char *)Out, (const char *)(In + i), j - i + 1);
 
@@ -11284,6 +11250,7 @@ void rtw_dump_rx_counters(_adapter *padapter)
 #ifdef CONFIG_BACKGROUND_NOISE_MONITOR
 void rtw_noise_measure(_adapter *adapter, u8 chan, u8 is_pause_dig, u8 igi_value, u32 max_time)
 {
+	struct rf_ctl_t *rfctl = adapter_to_rfctl(adapter);
 	HAL_DATA_TYPE *hal_data = GET_HAL_DATA(adapter);
 	struct PHY_DM_STRUCT *phydm = &hal_data->odmpriv;
 	int chan_idx = -1;
@@ -11294,7 +11261,7 @@ void rtw_noise_measure(_adapter *adapter, u8 chan, u8 is_pause_dig, u8 igi_value
 		chan, (is_pause_dig) ? "Y" : "N", igi_value, max_time);
 	#endif
 
-	chan_idx = rtw_chset_search_ch(adapter->mlmeextpriv.channel_set, chan);
+	chan_idx = rtw_chset_search_ch(rfctl->channel_set, chan);
 	if (chan_idx == -1) {
 		RTW_ERR("[NM] Get noise fail, can't get chan_idx(CH:%d)\n", chan);
 		chan_idx = 0;
@@ -11315,11 +11282,12 @@ void rtw_noise_measure(_adapter *adapter, u8 chan, u8 is_pause_dig, u8 igi_value
 
 s16 rtw_noise_query_by_chan(_adapter *adapter, u8 chan)
 {
+	struct rf_ctl_t *rfctl = adapter_to_rfctl(adapter);
 	HAL_DATA_TYPE *hal_data = GET_HAL_DATA(adapter);
 	s16 noise = 0;
 	int chan_idx = -1;
 
-	chan_idx = rtw_chset_search_ch(adapter->mlmeextpriv.channel_set, chan);
+	chan_idx = rtw_chset_search_ch(rfctl->channel_set, chan);
 	if (chan_idx == -1)	 {
 		RTW_ERR("[NM] Get noise fail, can't get chan_idx(CH:%d)\n", chan);
 		return noise;

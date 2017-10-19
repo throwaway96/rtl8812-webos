@@ -293,7 +293,7 @@ exit:
 
 static void Hal_EfuseParseChnlPlan(PADAPTER adapter, u8 *map, u8 autoloadfail)
 {
-	adapter->mlmepriv.ChannelPlan = hal_com_config_channel_plan(
+	hal_com_config_channel_plan(
 		adapter,
 		map ? &map[EEPROM_COUNTRY_CODE_8822B] : NULL,
 		map ? map[EEPROM_ChannelPlan_8822B] : 0xFF,
@@ -302,8 +302,6 @@ static void Hal_EfuseParseChnlPlan(PADAPTER adapter, u8 *map, u8 autoloadfail)
 		RTW_CHPLAN_REALTEK_DEFINE,
 		autoloadfail
 	);
-
-	RTW_INFO("EEPROM ChannelPlan=0x%02x\n", adapter->mlmepriv.ChannelPlan);
 }
 
 static void Hal_EfuseParseXtal(PADAPTER adapter, u8 *map, u8 mapvalid)

@@ -323,6 +323,24 @@ typedef struct hal_p2p_ps_para {
 	u32 noa_count_para;
 } HAL_P2P_PS_PARA, *PHAL_P2P_PS_PARA;
 
+struct txpwr_lmt_ent {
+	_list list;
+
+	s8 lmt_2g[MAX_2_4G_BANDWIDTH_NUM]
+		[MAX_RATE_SECTION_NUM]
+		[CENTER_CH_2G_NUM]
+		[MAX_RF_PATH];
+
+#ifdef CONFIG_IEEE80211_BAND_5GHZ
+	s8 lmt_5g[MAX_5G_BANDWIDTH_NUM]
+		[MAX_RATE_SECTION_NUM]
+		[CENTER_CH_5G_ALL_NUM]
+		[MAX_RF_PATH];
+#endif
+
+	char regd_name[0];
+};
+
 struct  self_dect {
 	u64 self_dect_tx_cnt;
 	u64 self_dect_fw_cnt;
@@ -478,9 +496,6 @@ typedef struct hal_com_data {
 	s8	BW80_5G_Diff[MAX_RF_PATH][MAX_TX_COUNT];
 #endif
 
-	u8	Regulation2_4G;
-	u8	Regulation5G;
-
 	/********************************
 	*	TX power by rate table at most 4RF path.
 	*	The register is
@@ -498,47 +513,6 @@ typedef struct hal_com_data {
 		[TX_PWR_BY_RATE_NUM_RF]
 		[TX_PWR_BY_RATE_NUM_RF]
 		[TX_PWR_BY_RATE_NUM_RATE];
-
-#ifdef CONFIG_PHYDM_POWERTRACK_BY_TSSI
-	s8	TxPwrByRate[TX_PWR_BY_RATE_NUM_BAND]
-		[TX_PWR_BY_RATE_NUM_RF]
-		[TX_PWR_BY_RATE_NUM_RF]
-		[TX_PWR_BY_RATE_NUM_RATE];
-#endif
-	/* --------------------------------------------------------------------------------- */
-
-	u8 tx_pwr_lmt_5g_20_40_ref;
-
-	/* Power Limit Table for 2.4G */
-	s8	TxPwrLimit_2_4G[MAX_REGULATION_NUM]
-		[MAX_2_4G_BANDWIDTH_NUM]
-		[MAX_RATE_SECTION_NUM]
-		[CENTER_CH_2G_NUM]
-		[MAX_RF_PATH];
-
-	/* Power Limit Table for 5G */
-	s8	TxPwrLimit_5G[MAX_REGULATION_NUM]
-		[MAX_5G_BANDWIDTH_NUM]
-		[MAX_RATE_SECTION_NUM]
-		[CENTER_CH_5G_ALL_NUM]
-		[MAX_RF_PATH];
-
-
-#ifdef CONFIG_PHYDM_POWERTRACK_BY_TSSI
-	s8	TxPwrLimit_2_4G_Original[MAX_REGULATION_NUM]
-		[MAX_2_4G_BANDWIDTH_NUM]
-		[MAX_RATE_SECTION_NUM]
-		[CENTER_CH_2G_NUM]
-		[MAX_RF_PATH];
-
-
-	s8	TxPwrLimit_5G_Original[MAX_REGULATION_NUM]
-		[MAX_5G_BANDWIDTH_NUM]
-		[MAX_RATE_SECTION_NUM]
-		[CENTER_CH_5G_ALL_NUM]
-		[MAX_RF_PATH];
-
-#endif
 
 	/* Store the original power by rate value of the base of each rate section of rf path A & B */
 	u8	TxPwrByRateBase2_4G[TX_PWR_BY_RATE_NUM_RF]
