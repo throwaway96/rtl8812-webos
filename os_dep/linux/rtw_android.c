@@ -963,9 +963,6 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 	case LGE_PRIVATE_CMD_SET_WOWL:
 		{
 			u8 val = 0;
-			struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
-			struct mlme_ext_info	*pmlmeinfo = &(pmlmeext->mlmext_info);
-			struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
 
 			RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s]\n"CLR_NONE, command);
 
@@ -974,13 +971,6 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 
 			snprintf(command, 3, "OK");
 			bytes_written = strlen("OK");
-			
-			if ((check_fwstate(pmlmepriv, WIFI_STATION_STATE) 
-				&& check_fwstate(pmlmepriv, _FW_LINKED)) && val == 0) {
-				issue_deauth(padapter, (&(pmlmeinfo->network))->MacAddress, WLAN_REASON_DEAUTH_LEAVING);
-				receive_disconnect(padapter, pmlmeinfo->network.MacAddress , 0, _FALSE);
-				RTW_INFO("deauth macaddr =" MAC_FMT "\n", MAC_ARG(pmlmeinfo->network.MacAddress));
-			}
 			
 		}
 		break;

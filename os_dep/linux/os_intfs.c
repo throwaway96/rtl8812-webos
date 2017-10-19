@@ -4613,13 +4613,17 @@ int rtw_resume_common(_adapter *padapter)
 #ifdef LGE_PRIVATE
 	if (adapter_wdev_data(padapter)->idle_mode) {
 		struct mlme_ext_priv *pmlmeext;
+		struct mlme_ext_info *pmlmeinfo;
 		u8 channel;
 
 		pmlmeext = &padapter->mlmeextpriv;
+		pmlmeinfo = &pmlmeext->mlmext_info;
 		channel = pmlmeext->cur_channel;
 
 		if (channel >= 36) set_channel_bwmode(padapter, 11, 0, 0);
 		else set_channel_bwmode(padapter, 36, 0, 0);
+
+		receive_disconnect(padapter, pmlmeinfo->network.MacAddress , 0, _FALSE);
 	}
 	adapter_wdev_data(padapter)->wowl = _FALSE;
 	adapter_wdev_data(padapter)->wowl_activate = _FALSE;

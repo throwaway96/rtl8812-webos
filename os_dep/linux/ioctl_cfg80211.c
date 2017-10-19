@@ -3317,7 +3317,8 @@ static int cfg80211_rtw_disconnect(struct wiphy *wiphy, struct net_device *ndev,
 	RTW_INFO(FUNC_NDEV_FMT" - Start to Disconnect\n", FUNC_NDEV_ARG(ndev));
 
 #ifdef LGE_PRIVATE
-	if (adapter_wdev_data(padapter)->wowl == 1) {
+	if (adapter_wdev_data(padapter)->wowl == 1 || 
+		adapter_to_pwrctl(padapter)->bInSuspend == _TRUE) {
 		RTW_INFO(FUNC_NDEV_FMT" In suspend mode, ignore it.\n", FUNC_NDEV_ARG(ndev));
 		return 0;
 	}
