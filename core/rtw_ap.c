@@ -676,8 +676,8 @@ void add_RATid(_adapter *padapter, struct sta_info *psta, u8 rssi_level, u8 is_u
 	psta->raid = rtw_hal_networktype_to_raid(padapter, psta);
 
 	if (psta->aid < NUM_STA) {
-		RTW_INFO("%s=> mac_id:%d , raid:%d, tx_ra_bitmap:0x%016llx, networkType:0x%02x\n",
-			__FUNCTION__, psta->mac_id, psta->raid, tx_ra_bitmap, psta->wireless_mode);
+		//RTW_INFO("%s=> mac_id:%d , raid:%d, tx_ra_bitmap:0x%016llx, networkType:0x%02x\n",
+			//__FUNCTION__, psta->mac_id, psta->raid, tx_ra_bitmap, psta->wireless_mode);
 
 		rtw_update_ramask(padapter, psta, psta->mac_id, rssi_level, is_update_bw);
 	} else

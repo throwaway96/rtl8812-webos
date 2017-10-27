@@ -2506,11 +2506,11 @@ u8 traffic_status_watchdog(_adapter *padapter, u8 from_timer)
 		if (link_detect->NumTxOkInPeriod > TX_ACTIVE_TH
 		    || link_detect->NumRxUnicastOkInPeriod > RX_ACTIVE_TH) {
 
-			RTW_INFO(FUNC_ADPT_FMT" acqiure wake_lock for %u ms(tx:%d,rx_unicast:%d)\n",
+			/*RTW_INFO(FUNC_ADPT_FMT" acqiure wake_lock for %u ms(tx:%d,rx_unicast:%d)\n",
 				 FUNC_ADPT_ARG(padapter),
 				 TRAFFIC_PROTECT_PERIOD_MS,
 				 link_detect->NumTxOkInPeriod,
-				 link_detect->NumRxUnicastOkInPeriod);
+				 link_detect->NumRxUnicastOkInPeriod);*/
 
 			rtw_lock_traffic_suspend_timeout(TRAFFIC_PROTECT_PERIOD_MS);
 		}

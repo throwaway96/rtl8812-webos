@@ -2593,8 +2593,8 @@ u32	rtw_ht_mcs_set_to_bitmap(u8 *mcs_set, u8 nss)
 	for (i = 0; i < nss; i++)
 		bitmap |= mcs_set[i] << (i * 8);
 
-	RTW_INFO("ht_mcs_set=%02x %02x %02x %02x, nss=%u, bitmap=%08x\n"
-		, mcs_set[0], mcs_set[1], mcs_set[2], mcs_set[3], nss, bitmap);
+	//RTW_INFO("ht_mcs_set=%02x %02x %02x %02x, nss=%u, bitmap=%08x\n"
+		//, mcs_set[0], mcs_set[1], mcs_set[2], mcs_set[3], nss, bitmap);
 
 	return bitmap;
 }

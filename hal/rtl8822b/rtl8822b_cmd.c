@@ -292,8 +292,8 @@ void rtl8822b_set_FwMacIdConfig_cmd(PADAPTER adapter, u64 mask, u8 *arg, u8 bw)
 		return;
 	}
 
-	RTW_INFO(FUNC_ADPT_FMT ": mac_id=%d raid=0x%x bw=%d mask=0x%016llx\n",
-		 FUNC_ADPT_ARG(adapter), mac_id, raid, bw, mask);
+	//RTW_INFO(FUNC_ADPT_FMT ": mac_id=%d raid=0x%x bw=%d mask=0x%016llx\n",
+		// FUNC_ADPT_ARG(adapter), mac_id, raid, bw, mask);
 
 
 	MACID_CFG_SET_CMD_ID(h2c, CMD_ID_MACID_CFG);
@@ -327,8 +327,8 @@ void rtl8822b_set_FwMacIdConfig_cmd(PADAPTER adapter, u64 mask, u8 *arg, u8 bw)
 	MACID_CFG_SET_RATE_MASK23_16(h2c, (u8)((mask & 0x00ff0000) >> 16));
 	MACID_CFG_SET_RATE_MASK31_24(h2c, (u8)((mask & 0xff000000) >> 24));
 
-	RTW_INFO("%s, mask=0x%016llx, mac_id=0x%x, raid=0x%x, shortGIrate=%x, power training=%02x\n"
-		 , __FUNCTION__, mask, mac_id, raid, sgi, h2c[2] & BIT(6));
+	//RTW_INFO("%s, mask=0x%016llx, mac_id=0x%x, raid=0x%x, shortGIrate=%x, power training=%02x\n"
+		// , __FUNCTION__, mask, mac_id, raid, sgi, h2c[2] & BIT(6));
 
 	RTW_DBG_DUMP("H2C-MACIDConfig Parm:", h2c, RTW_HALMAC_H2C_MAX_SIZE);
 	rtw_halmac_send_h2c(adapter_to_dvobj(adapter), h2c);
