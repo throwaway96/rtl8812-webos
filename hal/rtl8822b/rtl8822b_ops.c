@@ -3755,6 +3755,10 @@ void rtl8822b_cal_txdesc_chksum(PADAPTER adapter, u8 *ptxdesc)
 
 
 	halmac = adapter_to_halmac(adapter);
+
+	if (!halmac)
+		return;
+	
 	api = HALMAC_GET_API(halmac);
 
 	api->halmac_fill_txdesc_checksum(halmac, ptxdesc);

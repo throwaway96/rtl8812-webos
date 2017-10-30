@@ -145,6 +145,9 @@ static u8 usb_write_data_not_xmitframe(void *d, u8 *pBuf, u32 size, u8 qsel)
 
 
 	halmac = dvobj_to_halmac((struct dvobj_priv *)d);
+	if (!halmac)
+		return _FALSE;
+	
 	api = HALMAC_GET_API(halmac);
 
 	desclen = HALMAC_TX_DESC_SIZE_8822B;
@@ -213,9 +216,12 @@ static u8 usb_write_data_rsvd_page_normal(void *d, u8 *pBuf, u32 size)
 	struct xmit_priv	*pxmitpriv = &padapter->xmitpriv;
 	struct xmit_frame	*pcmdframe = NULL;
 	struct pkt_attrib	*pattrib = NULL;
-	PHALMAC_API api = HALMAC_GET_API(halmac);
+	PHALMAC_API api;
 	u8 txdesoffset = 0;
 	u8 *buf = NULL;
+
+	if (!halmac)
+		return _FALSE;
 
 	if (size + TXDESC_OFFSET > MAX_CMDBUF_SZ) {
 		RTW_INFO("%s: total buffer size(%d) > MAX_CMDSZE(%d)\n"
@@ -229,6 +235,8 @@ static u8 usb_write_data_rsvd_page_normal(void *d, u8 *pBuf, u32 size)
 		RTW_INFO("%s: alloc cmd frame fail!\n", __func__);
 		return _FALSE;
 	}
+
+	api = HALMAC_GET_API(halmac);
 
 	txdesoffset = TXDESC_OFFSET;
 	buf = pcmdframe->buf_addr;
@@ -255,9 +263,12 @@ static u8 usb_write_data_h2c_normal(void *d, u8 *pBuf, u32 size)
 	struct xmit_priv	*pxmitpriv = &padapter->xmitpriv;
 	struct xmit_frame	*pcmdframe = NULL;
 	struct pkt_attrib	*pattrib = NULL;
-	PHALMAC_API api = HALMAC_GET_API(halmac);
+	PHALMAC_API api;
 	u8 txdesoffset = 0;
 	u8 *buf = NULL;
+
+	if (!halmac)
+		return _FALSE;
 
 	if (size + TXDESC_OFFSET > MAX_XMIT_EXTBUF_SZ) {
 		RTW_INFO("%s: total buffer size(%d) > MAX_XMIT_EXTBUF_SZ(%d)\n"
@@ -271,6 +282,8 @@ static u8 usb_write_data_h2c_normal(void *d, u8 *pBuf, u32 size)
 		RTW_INFO("%s: alloc cmd frame fail!\n", __func__);
 		return _FALSE;
 	}
+
+	api = HALMAC_GET_API(halmac);
 
 	txdesoffset = TXDESC_SIZE;
 	buf = pcmdframe->buf_addr;

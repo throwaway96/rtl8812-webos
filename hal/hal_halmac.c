@@ -580,6 +580,9 @@ static int wait_halmac_event(struct dvobj_priv *d, HALMAC_FEATURE_ID id)
 	RTW_ERR("%s: Wait id(%d, %s) TIMEOUT! Reset HALMAC state!\n",
 		__FUNCTION__, id, RTW_HALMAC_FEATURE_NAME[id]);
 	mac = dvobj_to_halmac(d);
+	if (!mac)
+		return -1;
+	
 	api = HALMAC_GET_API(mac);
 	api->halmac_reset_feature(mac, id);
 
@@ -699,6 +702,9 @@ u8 rtw_halmac_read8(struct intf_hdl *pintfhdl, u32 addr)
 
 	/* WARNING: pintf_dev should not be null! */
 	mac = dvobj_to_halmac(pintfhdl->pintf_dev);
+	if (!mac)
+		return 0xea;
+
 	api = HALMAC_GET_API(mac);
 
 	return api->halmac_reg_read_8(mac, addr);
@@ -712,6 +718,9 @@ u16 rtw_halmac_read16(struct intf_hdl *pintfhdl, u32 addr)
 
 	/* WARNING: pintf_dev should not be null! */
 	mac = dvobj_to_halmac(pintfhdl->pintf_dev);
+	if (!mac)
+		return 0xeaea;
+	
 	api = HALMAC_GET_API(mac);
 
 	return api->halmac_reg_read_16(mac, addr);
@@ -725,6 +734,9 @@ u32 rtw_halmac_read32(struct intf_hdl *pintfhdl, u32 addr)
 
 	/* WARNING: pintf_dev should not be null! */
 	mac = dvobj_to_halmac(pintfhdl->pintf_dev);
+	if (!mac)
+		return 0xeaeaeaea;
+
 	api = HALMAC_GET_API(mac);
 
 	return api->halmac_reg_read_32(mac, addr);
@@ -799,6 +811,9 @@ int rtw_halmac_write8(struct intf_hdl *pintfhdl, u32 addr, u8 value)
 
 	/* WARNING: pintf_dev should not be null! */
 	mac = dvobj_to_halmac(pintfhdl->pintf_dev);
+	if (!mac)
+		return -1;
+
 	api = HALMAC_GET_API(mac);
 
 	status = api->halmac_reg_write_8(mac, addr, value);
@@ -818,6 +833,9 @@ int rtw_halmac_write16(struct intf_hdl *pintfhdl, u32 addr, u16 value)
 
 	/* WARNING: pintf_dev should not be null! */
 	mac = dvobj_to_halmac(pintfhdl->pintf_dev);
+	if (!mac)
+		return -1;
+
 	api = HALMAC_GET_API(mac);
 
 	status = api->halmac_reg_write_16(mac, addr, value);
@@ -837,6 +855,9 @@ int rtw_halmac_write32(struct intf_hdl *pintfhdl, u32 addr, u32 value)
 
 	/* WARNING: pintf_dev should not be null! */
 	mac = dvobj_to_halmac(pintfhdl->pintf_dev);
+	if (!mac)
+		return -1;
+	
 	api = HALMAC_GET_API(mac);
 
 	status = api->halmac_reg_write_32(mac, addr, value);
@@ -1096,7 +1117,7 @@ int rtw_halmac_config_rx_info(struct dvobj_priv *d, HALMAC_DRV_INFO info)
 
 	halmac = dvobj_to_halmac(d);
 	if (!halmac)
-		return -1;
+		goto out;
 	
 	api = HALMAC_GET_API(halmac);
 
@@ -1610,7 +1631,7 @@ int rtw_halmac_self_verify(struct dvobj_priv *d)
 
 	mac = dvobj_to_halmac(d);
 	if (!mac)
-		return -1;
+		goto out;
 	
 	api = HALMAC_GET_API(mac);
 
@@ -2507,7 +2528,7 @@ int rtw_halmac_rx_agg_switch(struct dvobj_priv *d, u8 enable)
 	halmac = dvobj_to_halmac(d);
 
 	if (!halmac)
-		return -1;
+		goto out;
 	
 	api = HALMAC_GET_API(halmac);
 	_rtw_memset((void *)&rxaggcfg, 0, sizeof(rxaggcfg));
@@ -2582,11 +2603,13 @@ int rtw_halmac_get_drv_info_sz(struct dvobj_priv *d, u8 *sz)
 {
 	HALMAC_RET_STATUS status;
 	PHALMAC_ADAPTER halmac = dvobj_to_halmac(d);
-	PHALMAC_API api = HALMAC_GET_API(halmac);
+	PHALMAC_API api;
 	u8 dw = 0;
 
 	if (!halmac)
 		return -1;
+
+	api = HALMAC_GET_API(halmac);
 
 	status = api->halmac_get_hw_value(halmac, HALMAC_HW_DRV_INFO_SIZE, &dw);
 	if (status != HALMAC_RET_SUCCESS)
@@ -2599,10 +2622,12 @@ int rtw_halmac_get_rsvd_drv_pg_bndy(struct dvobj_priv *dvobj, u16 *drv_pg)
 {
 	HALMAC_RET_STATUS status;
 	PHALMAC_ADAPTER halmac = dvobj_to_halmac(dvobj);
-	PHALMAC_API api = HALMAC_GET_API(halmac);
+	PHALMAC_API api;
 
 	if (!halmac)
 		return -1;
+
+	api = HALMAC_GET_API(halmac);
 
 	status = api->halmac_get_hw_value(halmac, HALMAC_HW_RSVD_PG_BNDY, drv_pg);
 	if (status != HALMAC_RET_SUCCESS)
@@ -2615,10 +2640,12 @@ int rtw_halmac_download_rsvd_page(struct dvobj_priv *dvobj, u8 pg_offset, u8 *pb
 {
 	HALMAC_RET_STATUS status = HALMAC_RET_SUCCESS;
 	PHALMAC_ADAPTER halmac = dvobj_to_halmac(dvobj);
-	PHALMAC_API api = HALMAC_GET_API(halmac);
+	PHALMAC_API api;
 
 	if (!halmac)
 		return -1;
+
+	api = HALMAC_GET_API(halmac);
 
 	status = api->halmac_dl_drv_rsvd_page(halmac, pg_offset, pbuf, size);
 	if (status != HALMAC_RET_SUCCESS)
@@ -2666,11 +2693,13 @@ int rtw_halmac_p2pps(struct dvobj_priv *dvobj, PHAL_P2P_PS_PARA pp2p_ps_para)
 {
 	HALMAC_RET_STATUS status = HALMAC_RET_SUCCESS;
 	PHALMAC_ADAPTER halmac = dvobj_to_halmac(dvobj);
-	PHALMAC_API api = HALMAC_GET_API(halmac);
+	PHALMAC_API api;
 	HALMAC_P2PPS halmac_p2p_ps;
 
 	if (!halmac)
 		return -1;
+
+	api = HALMAC_GET_API(halmac);
 
 	(&halmac_p2p_ps)->offload_en = pp2p_ps_para->offload_en;
 	(&halmac_p2p_ps)->role = pp2p_ps_para->role;
@@ -2932,6 +2961,10 @@ u8 rtw_halmac_usb_get_bulkout_id(struct dvobj_priv *d, u8 *buf, u32 size)
 
 
 	mac = dvobj_to_halmac(d);
+
+	if (!mac)
+		return 0;
+
 	api = HALMAC_GET_API(mac);
 
 	status = api->halmac_get_usb_bulkout_id(mac, buf, size, &bulkout_id);
@@ -2970,6 +3003,10 @@ u8 rtw_halmac_switch_usb_mode(struct dvobj_priv *d, enum RTW_USB_SPEED usb_mode)
 
 	adapter = dvobj_get_primary_adapter(d);
 	mac = dvobj_to_halmac(d);
+
+	if (!mac)
+		return _FAIL;
+	
 	api = HALMAC_GET_API(mac);
 	halmac_usb_mode = _usb_mode_drv2halmac(usb_mode);
 	status = api->halmac_set_hw_value(mac, HALMAC_HW_USB_MODE, (void *)&halmac_usb_mode);
