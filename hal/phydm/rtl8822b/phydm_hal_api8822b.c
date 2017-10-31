@@ -270,7 +270,7 @@ phydm_rfe_8822b(
 			}
 		}
 	} 
-	else if ((p_dm_odm->rfe_type == 0) || (p_dm_odm->rfe_type == 3) || (p_dm_odm->rfe_type == 5) || (p_dm_odm->rfe_type == 6) || (p_dm_odm->rfe_type == 8) || (p_dm_odm->rfe_type == 10)) {
+	else if ((p_dm_odm->rfe_type == 0) || (p_dm_odm->rfe_type == 3) || (p_dm_odm->rfe_type == 5) || (p_dm_odm->rfe_type == 6) || (p_dm_odm->rfe_type == 8) || (p_dm_odm->rfe_type == 10) || (p_dm_odm->rfe_type == 17)) {
 		/* iFEM */
 		if (channel <= 14) {
 			/* signal source */
@@ -407,7 +407,7 @@ phydm_ccapar_by_rfe_8822b(
 		odm_move_memory(p_dm_odm, cca_efem, cca_efem_ccut, 48 * 4);
 	if (p_dm_odm->rfe_type == 5)
 		odm_move_memory(p_dm_odm, cca_ifem, cca_ifem_ccut_rfetype5, 48 * 4);
-	else if (p_dm_odm->rfe_type == 3)
+	else if ((p_dm_odm->rfe_type == 3) || (p_dm_odm->rfe_type == 17))
 		odm_move_memory(p_dm_odm, cca_ifem, cca_ifem_ccut_rfetype3, 48 * 4);
 	else
 		odm_move_memory(p_dm_odm, cca_ifem, cca_ifem_ccut, 48 * 4);
@@ -454,7 +454,7 @@ phydm_ccapar_by_rfe_8822b(
 			reg83c = (cca_efem[row + 3][col] != 0) ? cca_efem[row + 3][col] : reg83c_8822b;
 		}
 	} else {
-		/* iFEM =>RFEtype 3 & RFE type 5 & RFE type 0 & RFE type 8 & RFE type 10 */
+		/* iFEM =>RFEtype 3 & RFE type 5 & RFE type 0 & RFE type 8 & RFE type 10 & RFE type 17 */
 		reg82c = (cca_ifem[row][col] != 0) ? cca_ifem[row][col] : reg82c_8822b;
 		reg830 = (cca_ifem[row + 1][col] != 0) ? cca_ifem[row + 1][col] : reg830_8822b;
 		reg838 = (cca_ifem[row + 2][col] != 0) ? cca_ifem[row + 2][col] : reg838_8822b;
@@ -953,7 +953,7 @@ config_phydm_switch_band_8822b(
 		reg_8 = odm_get_bb_reg(p_dm_odm, 0x19a8, BIT(31));
 			
 		/* SoML on */
-		if ((reg_8 == 0x1) && (!((p_dm_odm->rfe_type == 3) || (p_dm_odm->rfe_type == 5)))) {
+		if ((reg_8 == 0x1) && (!((p_dm_odm->rfe_type == 3) || (p_dm_odm->rfe_type == 5) || (p_dm_odm->rfe_type == 17)))) {
 			odm_set_bb_reg(p_dm_odm, 0x8cc, MASKDWORD, 0x08108000);
 			odm_set_bb_reg(p_dm_odm, 0x8d8, BIT(27), 0x0);
 			odm_set_bb_reg(p_dm_odm, 0xc04, (BIT(18)|BIT(21)), 0x0);
@@ -1144,7 +1144,7 @@ config_phydm_switch_channel_8822b(
 	}
 
 	/* Modify IGI for MP driver to aviod PCIE interference */
-	if ((p_dm_odm->mp_mode == true) && ((p_dm_odm->rfe_type == 3) || (p_dm_odm->rfe_type == 5))) {
+	if ((p_dm_odm->mp_mode == true) && ((p_dm_odm->rfe_type == 3) || (p_dm_odm->rfe_type == 5) || (p_dm_odm->rfe_type == 17))) {
 		if (central_ch == 14)
 			odm_write_dig(p_dm_odm, 0x26);
 		else

@@ -120,6 +120,16 @@ odm_read_and_config_mp_8822b_txpowertrack_type14(/* tc: Test Chip, mp: mp Chip*/
 u32	odm_get_version_mp_8822b_txpowertrack_type14(void);
 
 /******************************************************************************
+*                           txpowertrack_type17.TXT
+******************************************************************************/
+
+void
+odm_read_and_config_mp_8822b_txpowertrack_type17(/* tc: Test Chip, mp: mp Chip*/
+	struct	PHY_DM_STRUCT *p_dm_odm
+);
+u32	odm_get_version_mp_8822b_txpowertrack_type17(void);
+
+/******************************************************************************
 *                           txpowertrack_type2.TXT
 ******************************************************************************/
 
@@ -198,6 +208,26 @@ odm_read_and_config_mp_8822b_txpwr_lmt(/* tc: Test Chip, mp: mp Chip*/
 	struct	PHY_DM_STRUCT *p_dm_odm
 );
 u32	odm_get_version_mp_8822b_txpwr_lmt(void);
+
+/******************************************************************************
+*                           txpwr_lmt_type17.TXT
+******************************************************************************/
+
+void
+odm_read_and_config_mp_8822b_txpwr_lmt_type17(/* tc: Test Chip, mp: mp Chip*/
+	struct	PHY_DM_STRUCT *p_dm_odm
+);
+u32	odm_get_version_mp_8822b_txpwr_lmt_type17(void);
+
+/******************************************************************************
+*                           txpwr_lmt_type3.TXT
+******************************************************************************/
+
+void
+odm_read_and_config_mp_8822b_txpwr_lmt_type3(/* tc: Test Chip, mp: mp Chip*/
+	struct	PHY_DM_STRUCT *p_dm_odm
+);
+u32	odm_get_version_mp_8822b_txpwr_lmt_type3(void);
 
 /******************************************************************************
 *                           txpwr_lmt_type5.TXT

@@ -1328,7 +1328,10 @@ void dump_txpwr_lmt(void *sel, _adapter *adapter)
 							sprintf(fmt, "%%%zus ", strlen(ent->regd_name) >= 5 ? strlen(ent->regd_name) + 1 : 5);
 							_RTW_PRINT_SEL(sel, fmt, "NA");
 						} else {
-							if ((lmt_offset + base) % 2) {
+							if ((lmt_offset + base) == -1) { /* case -0.5 */
+								sprintf(fmt, "%%%zus ", strlen(ent->regd_name) >= 5 ? strlen(ent->regd_name) - 1 : 5);
+								_RTW_PRINT_SEL(sel, fmt, "-0.5");
+							} else if ((lmt_offset + base) % 2) {
 								sprintf(fmt, "%%%zud.5 ", strlen(ent->regd_name) >= 5 ? strlen(ent->regd_name) - 1 : 3);
 								_RTW_PRINT_SEL(sel, fmt, (lmt_offset + base) / 2);
 							} else {
@@ -1342,7 +1345,10 @@ void dump_txpwr_lmt(void *sel, _adapter *adapter)
 						sprintf(fmt, "%%%zus ", strlen(regd_str(TXPWR_LMT_WW)) >= 5 ? strlen(regd_str(TXPWR_LMT_WW)) + 1 : 5);
 						_RTW_PRINT_SEL(sel, fmt, "NA");
 					} else {
-						if ((lmt_offset + base) % 2) {
+						if ((lmt_offset + base) == -1) { /* case -0.5 */
+								sprintf(fmt, "%%%zus ", strlen(ent->regd_name) >= 5 ? strlen(ent->regd_name) - 1 : 5);
+								_RTW_PRINT_SEL(sel, fmt, "-0.5");
+						} else if ((lmt_offset + base) % 2) {
 							sprintf(fmt, "%%%zud.5 ", strlen(regd_str(TXPWR_LMT_WW)) >= 5 ? strlen(regd_str(TXPWR_LMT_WW)) - 1 : 3);
 							_RTW_PRINT_SEL(sel, fmt, (lmt_offset + base) / 2);
 						} else {

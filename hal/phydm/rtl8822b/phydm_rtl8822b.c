@@ -256,7 +256,7 @@ phydm_somlrxhp_setting(
 	}
 		
 	if (*p_dm_odm->p_channel <= 14) {
-		if ((switch_soml == true) && (!((p_dm_odm->rfe_type == 3) || (p_dm_odm->rfe_type == 5)))) {
+		if ((switch_soml == true) && (!((p_dm_odm->rfe_type == 3) || (p_dm_odm->rfe_type == 5) || (p_dm_odm->rfe_type == 17)))) {
 			odm_set_bb_reg(p_dm_odm, 0x8cc, MASKDWORD, 0x08108000);
 			odm_set_bb_reg(p_dm_odm, 0x8d8, BIT(27), 0x0);
 		}
@@ -314,7 +314,7 @@ phydm_dynamic_ant_weighting_8822b(
 		set_result_nbi = phydm_nbi_setting(p_dm_odm, NBI_DISABLE, *p_dm_odm->p_channel, 20, 2440, PHYDM_DONT_CARE);
 	}
 	
-	if ((*p_dm_odm->p_band_width == ODM_BW20M) && (*p_dm_odm->p_channel == 11) && (p_dm_odm->rfe_type == 3) && (p_dm_odm->RSSI_A < 40)) {
+	if ((*p_dm_odm->p_band_width == ODM_BW20M) && (*p_dm_odm->p_channel == 11) && ((p_dm_odm->rfe_type == 3) || (p_dm_odm->rfe_type == 17)) && (p_dm_odm->RSSI_A < 40)) {
 		odm_set_bb_reg(p_dm_odm, 0x830, BIT(13)|BIT(14)|BIT(15)|BIT(16), 0xa);
 		odm_set_bb_reg(p_dm_odm, 0x838, BIT(4)|BIT(5)|BIT(6)|BIT(7), 0x6);
 	} else {
