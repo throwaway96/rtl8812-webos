@@ -3860,7 +3860,7 @@ static void rtw_hal_update_gtk_offload_info(_adapter *adapter)
 	struct cam_ctl_t *cam_ctl = &dvobj->cam_ctl;
 	_irqL irqL;
 	u8 get_key[16];
-	u8 gtk_id = 0, offset = 0;
+	u8 gtk_id = 0, offset = 0, i = 0, sz = 0;
 	u64 replay_count = 0;
 
 	if (check_fwstate(pmlmepriv, WIFI_AP_STATE) == _TRUE)
@@ -3913,6 +3913,13 @@ static void rtw_hal_update_gtk_offload_info(_adapter *adapter)
 				&psecuritypriv->dot118021XGrprxmickey[gtk_id],
 				&(paoac_rpt->group_key[offset]),
 				RTW_TKIP_MIC_LEN);
+		}
+
+		/* Update broadcast RX IV */
+		if (psecuritypriv->dot118021XGrpPrivacy == _AES_) {
+			sz = sizeof(psecuritypriv->iv_seq[0]);
+			for (i = 0 ; i < 4 ; i++)
+				_rtw_memset(psecuritypriv->iv_seq[i], 0, sz);
 		}
 
 		RTW_PRINT("GTK (%d) "KEY_FMT"\n", gtk_id,
