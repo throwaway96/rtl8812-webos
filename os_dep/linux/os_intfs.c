@@ -657,7 +657,7 @@ MODULE_PARM_DESC(rtw_trx_share_mode, "TRx FIFO Shared");
 #endif
 
 #ifdef LGE_PRIVATE
-char *rtw_lge_file_path = "/var/lib/connman/settings";
+char *rtw_lge_file_path = "/mnt/lg/cmn_data/network/factory_settings";
 module_param(rtw_lge_file_path, charp, 0644);
 MODULE_PARM_DESC(rtw_lge_file_path, "LGE Network Setting");
 #endif
