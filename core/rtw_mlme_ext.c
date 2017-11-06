@@ -601,6 +601,17 @@ static u8 init_channel_set(_adapter *padapter, u8 ChannelPlan, RT_CHANNEL_INFO *
 
 			channel_set[chanset_size].ChannelNum = CH_LIST_CH(RTW_ChannelPlan5G[Index5G], index);
 
+#ifdef LGE_PRIVATE
+			/* LGE DC(Default Country-Code)
+			   2.4GHz active scan
+			   5GHz passive scan */
+			if ((ChannelPlan == RTW_CHPLAN_LGE_DC0)
+				|| (ChannelPlan == RTW_CHPLAN_LGE_DC1)
+				|| (rtw_is_dfs_ch(channel_set[chanset_size].ChannelNum))
+			   /* DFS channel(band2, 3) passive */
+			   ) channel_set[chanset_size].ScanType = SCAN_PASSIVE;
+			else channel_set[chanset_size].ScanType = SCAN_ACTIVE;
+#else
 			if ((ChannelPlan == RTW_CHPLAN_WORLD_WIDE_5G) /* all channels passive */
 				|| (rtw_is_5g_band1(channel_set[chanset_size].ChannelNum)
 					&& rtw_rd_5g_band1_passive(Index5G)) /* band1 passive */
@@ -611,6 +622,7 @@ static u8 init_channel_set(_adapter *padapter, u8 ChannelPlan, RT_CHANNEL_INFO *
 				channel_set[chanset_size].ScanType = SCAN_PASSIVE;
 			else
 				channel_set[chanset_size].ScanType = SCAN_ACTIVE;
+#endif /* LGE_PRIVATE */
 
 			chanset_size++;
 		}
