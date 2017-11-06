@@ -959,7 +959,7 @@ static const struct country_chplan country_chplan_map[] = {
 */
 const struct country_chplan *rtw_get_chplan_from_country(const char *country_code, const u8 version)
 {
-	const struct country_chplan *ent = NULL;
+	struct country_chplan *ent = NULL;
 	const struct country_chplan *map = NULL;
 	u16 map_sz = 0;
 	char code[2];
@@ -999,6 +999,10 @@ exit:
 	if (ent && !(COUNTRY_CHPLAN_DEF_MODULE_FALGS(ent) & RTW_DEF_MODULE_REGULATORY_CERT))
 		ent = NULL;
 	#endif
+
+	if (ent != NULL) {
+		ent->version = version;
+	}
 
 	return ent;
 }

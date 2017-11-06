@@ -1176,10 +1176,19 @@ bool rtw_choose_shortest_waiting_ch(_adapter *adapter, u8 req_bw, u8 *dec_ch, u8
 
 void dump_country_chplan(void *sel, const struct country_chplan *ent)
 {
+#ifdef LGE_PRIVATE
+	_RTW_PRINT_SEL(sel, "\"%c%c/%d\", 0x%02X%s\n"
+		, ent->alpha2[0], ent->alpha2[1]
+		, ent->version
+		, ent->chplan
+		, COUNTRY_CHPLAN_EN_11AC(ent) ? " ac" : ""
+	);
+#else
 	_RTW_PRINT_SEL(sel, "\"%c%c\", 0x%02X%s\n"
 		, ent->alpha2[0], ent->alpha2[1], ent->chplan
 		, COUNTRY_CHPLAN_EN_11AC(ent) ? " ac" : ""
 	);
+#endif /* LGE_PRIVATE */
 }
 
 void dump_country_chplan_map(void *sel)

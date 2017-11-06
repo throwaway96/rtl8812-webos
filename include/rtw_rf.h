@@ -206,6 +206,7 @@ struct country_chplan {
 #if RTW_DEF_MODULE_REGULATORY_CERT
 	u16 def_module_flags; /* RTW_MODULE_RTLXXX */
 #endif
+	u8 version;
 };
 
 #ifdef CONFIG_80211AC_VHT

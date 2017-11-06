@@ -4719,11 +4719,6 @@ int rtw_lge_parse_country(_adapter *padapter, u8 *list_str)
 
 		if (rtw_set_country(padapter, country, rtw_atoi(ccode_ver)) == _FAIL) {
 			rtw_set_country(padapter, "DC", 0);
-			strncpy(adapter_wdev_data(padapter)->country, "DC", 3);
-			adapter_wdev_data(padapter)->ccode_version = 0;
-		} else {
-			strncpy(adapter_wdev_data(padapter)->country, country, 2);
-			adapter_wdev_data(padapter)->ccode_version = rtw_atoi(ccode_ver);
 		}
 	}
 

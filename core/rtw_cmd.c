@@ -2285,6 +2285,10 @@ inline u8 rtw_set_country_cmd(_adapter *adapter, int flags, const char *country_
 		return _FAIL;
 	}
 
+	adapter_wdev_data(adapter)->ccode_version = ent->version;
+	strncpy(adapter_wdev_data(adapter)->country, country_code, 3);
+	adapter_wdev_data(adapter)->country[2] = '\0';
+
 	RTW_PRINT("%s country_code:\"%c%c\" mapping to chplan:0x%02x\n", __func__, country_code[0], country_code[1], ent->chplan);
 
 	return _rtw_set_chplan_cmd(adapter, flags, RTW_CHPLAN_MAX, ent, swconfig);

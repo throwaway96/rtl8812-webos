@@ -869,7 +869,7 @@ static ssize_t proc_set_country_code(struct file *file, const char __user *buffe
 	_adapter *padapter = (_adapter *)rtw_netdev_priv(dev);
 	char tmp[32];
 	char alpha2[2];
-	int num;
+	int num, version = 0;
 
 	if (count < 1)
 		return -EFAULT;
@@ -882,11 +882,17 @@ static ssize_t proc_set_country_code(struct file *file, const char __user *buffe
 	if (!buffer || copy_from_user(tmp, buffer, count))
 		goto exit;
 
+#ifdef LGE_PRIVATE
+	num = sscanf(tmp, "%c%c %d", &alpha2[0], &alpha2[1], &version);
+	if (num !=	3)
+		return count;
+#else
 	num = sscanf(tmp, "%c%c", &alpha2[0], &alpha2[1]);
 	if (num !=	2)
 		return count;
+#endif
 
-	rtw_set_country(padapter, alpha2, 0);
+	rtw_set_country(padapter, alpha2, version);
 
 exit:
 	return count;
