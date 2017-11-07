@@ -1423,6 +1423,7 @@ phy_iq_calibrate_8822b(
 			phydm_get_read_counter(p_dm_odm);
 			p_dm_odm->rf_calibrate_info.iqk_total_progressing_time = odm_get_progressing_time(p_dm_odm, p_dm_odm->rf_calibrate_info.iqk_start_time);
 			ODM_RT_TRACE(p_dm_odm, ODM_COMP_CALIBRATION, ODM_DBG_LOUD, ("[IQK]IQK progressing_time = %lld ms\n", p_dm_odm->rf_calibrate_info.iqk_total_progressing_time));
+			RTW_PRINT("FW [IQK] %lld ms\n", p_dm_odm->rf_calibrate_info.iqk_total_progressing_time);
 
 			odm_acquire_spin_lock(p_dm_odm, RT_IQK_SPINLOCK);
 			p_dm_odm->rf_calibrate_info.is_iqk_in_progress = false;
@@ -1441,7 +1442,7 @@ phy_iq_calibrate_8822b(
 				p_dm_odm->rf_calibrate_info.iqk_start_time = odm_get_current_time(p_dm_odm);
 #if (DM_ODM_SUPPORT_TYPE & (ODM_CE))
 			_phy_iq_calibrate_8822b(p_dm_odm, clear);
-			/*DBG_871X("%s,%d, do IQK %u ms\n", __func__, __LINE__, rtw_get_passing_time_ms(time_iqk));*/
+			RTW_PRINT("[IQK] %lld ms\n", odm_get_progressing_time(p_dm_odm, p_dm_odm->rf_calibrate_info.iqk_start_time));
 #else
 			_phy_iq_calibrate_8822b(p_dm_odm, clear);
 #endif

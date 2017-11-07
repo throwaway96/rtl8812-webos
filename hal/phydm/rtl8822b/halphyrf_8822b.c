@@ -426,6 +426,7 @@ phy_lc_calibrate_8822b(
 	_phy_lc_calibrate_8822b(p_dm_odm);
 	progressing_time = odm_get_progressing_time(p_dm_odm, start_time);
 	ODM_RT_TRACE(p_dm_odm, ODM_COMP_CALIBRATION, ODM_DBG_LOUD, ("[LCK]LCK progressing_time = %lld\n", progressing_time));
+	RTW_PRINT("[LCK] %lld ms\n", progressing_time);
 }
 
 
