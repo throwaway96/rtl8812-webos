@@ -192,7 +192,9 @@ u32 rtl8822bu_init(PADAPTER padapter)
 		goto exit;
 #endif
 
-	rtl8822b_init(padapter);
+	if (rtl8822b_init(padapter) == _FAIL) {
+		status = _FAIL;
+	}
 
 exit:
 	RTW_INFO("%s in %dms\n", __func__, rtw_get_passing_time_ms(init_start_time));

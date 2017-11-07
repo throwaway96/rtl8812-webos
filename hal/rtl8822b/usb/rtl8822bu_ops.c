@@ -210,7 +210,9 @@ static u8 read_adapter_info(PADAPTER padapter)
 	/*
 	 * 1. Read Efuse/EEPROM to initialize
 	 */
-	rtl8822b_read_efuse(padapter);
+	if (rtl8822b_read_efuse(padapter) != _SUCCESS) {
+		return _FAIL;
+	}
 
 	/*
 	 * 2. Read registers to initialize

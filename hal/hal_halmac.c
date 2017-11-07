@@ -1055,6 +1055,11 @@ int rtw_halmac_poweron(struct dvobj_priv *d)
 		status = api->halmac_mac_power_switch(halmac, HALMAC_MAC_POWER_ON);
 		RTW_WARN("%s: Power state abnormal, try to recover...%s\n",
 			 __FUNCTION__, (HALMAC_RET_SUCCESS == status)?"OK":"FAIL!");
+
+		if (dev_is_surprise_removed(d)) {
+			RTW_INFO(CLR_LT_RED "%s: surprise removed\n" CLR_NONE, __FUNCTION__);
+			err = -1;
+		}
 	}
 	if (HALMAC_RET_SUCCESS != status) {
 		if (HALMAC_RET_PWR_UNCHANGE == status)
