@@ -580,6 +580,16 @@ const u8 _rf_type_to_rf_rx_cnt[] = {
 #define COUNTRY_CHPLAN_ASSIGN_DEF_MODULE_FLAGS(_val)
 #endif
 
+#ifdef LGE_PRIVATE
+/* has def_module_flags specified, used by common map and HAL dfference map */
+#define COUNTRY_CHPLAN_ENT2(_alpha2, _chplan, _en_11ac, _def_module_flags, _ver) \
+	{.alpha2 = (_alpha2), .chplan = (_chplan) \
+		COUNTRY_CHPLAN_ASSIGN_EN_11AC(_en_11ac) \
+		COUNTRY_CHPLAN_ASSIGN_DEF_MODULE_FLAGS(_def_module_flags) \
+		, .version = (_ver) \
+	}
+#endif /* LGE_PRIVATE */
+
 /* has def_module_flags specified, used by common map and HAL dfference map */
 #define COUNTRY_CHPLAN_ENT(_alpha2, _chplan, _en_11ac, _def_module_flags) \
 	{.alpha2 = (_alpha2), .chplan = (_chplan) \
@@ -959,7 +969,7 @@ static const struct country_chplan country_chplan_map[] = {
 */
 const struct country_chplan *rtw_get_chplan_from_country(const char *country_code, const u8 version)
 {
-	struct country_chplan *ent = NULL;
+	const struct country_chplan *ent = NULL;
 	const struct country_chplan *map = NULL;
 	u16 map_sz = 0;
 	char code[2];
@@ -999,10 +1009,6 @@ exit:
 	if (ent && !(COUNTRY_CHPLAN_DEF_MODULE_FALGS(ent) & RTW_DEF_MODULE_REGULATORY_CERT))
 		ent = NULL;
 	#endif
-
-	if (ent != NULL) {
-		ent->version = version;
-	}
 
 	return ent;
 }
