@@ -1306,7 +1306,7 @@ void rtl8822b_switch_chnl_and_set_bw(PADAPTER adapter)
 	/* IQK */
 	if ((hal->bNeedIQK == _TRUE)
 	    || (adapter->registrypriv.mp_mode == 1)) {
-		phy_iq_calibrate_8822b(p_dm_odm, _FALSE);
+		phy_iq_calibrate_8822b(p_dm_odm, _TRUE);
 		hal->bNeedIQK = _FALSE;
 	}
 }

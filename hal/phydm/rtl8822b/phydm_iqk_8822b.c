@@ -1438,8 +1438,8 @@ phy_iq_calibrate_8822b(
 			p_dm_odm->rf_calibrate_info.is_iqk_in_progress = true;
 			odm_release_spin_lock(p_dm_odm, RT_IQK_SPINLOCK);
 
-			if (p_dm_odm->mp_mode)
-				p_dm_odm->rf_calibrate_info.iqk_start_time = odm_get_current_time(p_dm_odm);
+			//if (p_dm_odm->mp_mode)
+			p_dm_odm->rf_calibrate_info.iqk_start_time = odm_get_current_time(p_dm_odm);
 #if (DM_ODM_SUPPORT_TYPE & (ODM_CE))
 			_phy_iq_calibrate_8822b(p_dm_odm, clear);
 			RTW_PRINT("[IQK] %lld ms\n", odm_get_progressing_time(p_dm_odm, p_dm_odm->rf_calibrate_info.iqk_start_time));

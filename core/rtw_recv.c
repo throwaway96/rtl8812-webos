@@ -3267,7 +3267,7 @@ int recv_indicatepkt_reorder(_adapter *padapter, union recv_frame *prframe)
 #ifdef DBG_RX_DROP_FRAME
 		RTW_INFO("DBG_RX_DROP_FRAME %s check_indicate_seq fail\n", __FUNCTION__);
 #endif
-#if 0
+#if 1
 		rtw_recv_indicatepkt(padapter, prframe);
 
 		_exit_critical_bh(&ppending_recvframe_queue->lock, &irql);
