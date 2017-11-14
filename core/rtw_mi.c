@@ -604,6 +604,11 @@ static u8 _rtw_mi_issue_nulldata(_adapter *padapter, void *data)
 	struct nulldata_param *pnulldata_param = (struct nulldata_param *)data;
 
 	if (is_client_associated_to_ap(padapter) == _TRUE) {
+		u8 backup_ch = rtw_get_oper_ch(padapter);
+		u8 backup_bw = rtw_get_oper_bw(padapter);
+		u8 backup_offset = rtw_get_oper_choffset(padapter);
+		u8 current_ch = 0;
+		
 		/* TODO: TDLS peers */
 		#ifdef CONFIG_MCC_MODE
 		if (MCC_EN(padapter)) {
@@ -616,7 +621,22 @@ static u8 _rtw_mi_issue_nulldata(_adapter *padapter, void *data)
 			}
 		}
 		#endif
+
+		current_ch = rtw_get_oper_ch(padapter);
+		if (padapter->mlmeextpriv.cur_channel != current_ch) {
+			u8 ch = padapter->mlmeextpriv.cur_channel;
+			u8 offset = padapter->mlmeextpriv.cur_ch_offset;
+			u8 bw = padapter->mlmeextpriv.cur_bwmode;
+
+			set_channel_bwmode(padapter, ch, offset, bw);
+		}
+		
 		issue_nulldata(padapter, pnulldata_param->da, pnulldata_param->power_mode, pnulldata_param->try_cnt, pnulldata_param->wait_ms);
+
+		current_ch = rtw_get_oper_ch(padapter);
+		if (backup_ch != current_ch)
+			set_channel_bwmode(padapter, backup_ch, backup_offset, backup_bw);
+
 		return _TRUE;
 	}
 	return _FALSE;
