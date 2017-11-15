@@ -10687,6 +10687,10 @@ void dm_DynamicUsbTxAgg(_adapter *padapter, u8 from_timer)
 	u8 cur_wireless_mode = WIRELESS_INVALID;
 
 #ifdef CONFIG_USB_RX_AGGREGATION
+#ifdef RTW_HALMAC
+	if (IS_HARDWARE_TYPE_8822BU(padapter))
+		rtw_hal_set_hwreg(padapter, HW_VAR_RXDMA_AGG_PG_TH, NULL);
+#else /* !RTW_HALMAC */
 	if (IS_HARDWARE_TYPE_8821U(padapter)) { /* || IS_HARDWARE_TYPE_8192EU(padapter)) */
 		/* This AGG_PH_TH only for UsbRxAggMode == USB_RX_AGG_USB */
 		if ((pHalData->rxagg_mode == RX_AGG_USB) && (check_fwstate(pmlmepriv, _FW_LINKED) == _TRUE)) {
@@ -10723,6 +10727,7 @@ void dm_DynamicUsbTxAgg(_adapter *padapter, u8 from_timer)
 		rtw_set_usb_agg_by_mode(padapter, cur_wireless_mode);
 #endif /* CONFIG_PLATFORM_NOVATEK_NT72668 */
 	}
+#endif /* RTW_HALMAC */
 #endif
 }
 

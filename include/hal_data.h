@@ -364,6 +364,9 @@ struct  self_dect {
 	u8 self_dect_case;
 };
 
+#define RXAGG_DEFAULT	0
+#define RXAGG_RX_HIGH	1
+
 typedef struct hal_com_data {
 	HAL_VERSION			version_id;
 	RT_MULTI_FUNC		MultiFunc; /* For multi-function consideration. */
@@ -700,6 +703,7 @@ typedef struct hal_com_data {
 	/* For RX Aggregation USB Mode */
 	u8			rxagg_usb_size;
 	u8			rxagg_usb_timeout;
+	u8			rxagg_usb_stage;
 #endif/* CONFIG_USB_RX_AGGREGATION */
 #endif /* CONFIG_USB_HCI */
 

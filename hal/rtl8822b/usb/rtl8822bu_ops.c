@@ -41,14 +41,43 @@ void rtl8822bu_set_hw_type(struct dvobj_priv *pdvobj)
 static void sethwreg(PADAPTER padapter, u8 variable, u8 *val)
 {
 	HAL_DATA_TYPE *pHalData = GET_HAL_DATA(padapter);
+	struct dvobj_priv	*pdvobjpriv = adapter_to_dvobj(padapter);
 	struct pwrctrl_priv *pwrctl = adapter_to_pwrctl(padapter);
 	struct registry_priv *registry_par = &padapter->registrypriv;
 	int status = 0;
+	u8 change = _FALSE;
 
 	switch (variable) {
 	case HW_VAR_RXDMA_AGG_PG_TH:
 #ifdef CONFIG_USB_RX_AGGREGATION
+#ifdef LGE_PRIVATE
+		if (pdvobjpriv->traffic_stat.cur_rx_tp > 50 && pHalData->rxagg_usb_stage == RXAGG_DEFAULT) {
+			pHalData->rxagg_usb_timeout = 0x10;
+			pHalData->rxagg_usb_size = 0x05;
+			pHalData->rxagg_usb_stage = RXAGG_RX_HIGH;
+			change = _TRUE;
+		} else if(pdvobjpriv->traffic_stat.cur_rx_tp < 40 && pHalData->rxagg_usb_stage != RXAGG_DEFAULT) {
+			/* default 8K */
+			pHalData->rxagg_usb_timeout = 0x10;
+			pHalData->rxagg_usb_size = 0x1;
+			pHalData->rxagg_usb_stage = RXAGG_DEFAULT;
+			change = _TRUE;
+		}
+#endif /* LGE_PRIVATE */
+		if(change)
+			rtw_halmac_rx_agg_switch(pdvobjpriv, _TRUE);
+#if 0
+		RTW_INFO("\n==========RAFFIC_STATISTIC==============\n");
+		RTW_INFO("cur_tx_bytes:%lld\n", pdvobjpriv->traffic_stat.cur_tx_bytes);
+		RTW_INFO("cur_rx_bytes:%lld\n", pdvobjpriv->traffic_stat.cur_rx_bytes);
 
+		RTW_INFO("last_tx_bytes:%lld\n", pdvobjpriv->traffic_stat.last_tx_bytes);
+		RTW_INFO("last_rx_bytes:%lld\n", pdvobjpriv->traffic_stat.last_rx_bytes);
+
+		RTW_INFO("cur_tx_tp:%d\n", pdvobjpriv->traffic_stat.cur_tx_tp);
+		RTW_INFO("cur_rx_tp:%d\n", pdvobjpriv->traffic_stat.cur_rx_tp);
+		RTW_INFO("\n========================\n");
+#endif
 #endif
 		break;
 	case HW_VAR_SET_RPWM:

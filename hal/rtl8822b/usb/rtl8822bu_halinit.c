@@ -408,6 +408,7 @@ void rtl8822bu_interface_configure(PADAPTER padapter)
 #ifdef LGE_PRIVATE
 	pHalData->rxagg_usb_size = 1;
 	pHalData->rxagg_usb_timeout = 0x10;
+	pHalData->rxagg_usb_stage = RXAGG_DEFAULT;
 #endif /* LGE_PRIVATE */
 #if 0
 	pHalData->rxagg_dma_size = 16;
