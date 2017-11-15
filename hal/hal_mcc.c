@@ -1032,6 +1032,70 @@ static void rtw_hal_construct_CTS(PADAPTER padapter, u8 *pframe, u32 *pLength)
 	*pLength = 22;
 }
 
+/* avoid wrong information for power limit */
+void rtw_hal_mcc_upadate_chnl_bw(_adapter *padapter, unsigned char channel, unsigned char channel_offset, unsigned short bwmode)
+{
+
+	u8 center_ch, chnl_offset80 = HAL_PRIME_CHNL_OFFSET_DONT_CARE;
+	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
+	PHAL_DATA_TYPE	hal = GET_HAL_DATA(padapter);
+	u8 cch_160, cch_80, cch_40, cch_20;
+
+	center_ch = rtw_get_center_ch(channel, bwmode, channel_offset);
+
+	if (bwmode == CHANNEL_WIDTH_80) {
+		if (center_ch > channel)
+			chnl_offset80 = HAL_PRIME_CHNL_OFFSET_LOWER;
+		else if (center_ch < channel)
+			chnl_offset80 = HAL_PRIME_CHNL_OFFSET_UPPER;
+		else
+			chnl_offset80 = HAL_PRIME_CHNL_OFFSET_DONT_CARE;
+	}
+
+	/* set Channel */
+	/* saved channel/bw info */
+	rtw_set_oper_ch(padapter, channel);
+	rtw_set_oper_bw(padapter, bwmode);
+	rtw_set_oper_choffset(padapter, channel_offset);
+
+	
+	cch_160 = bwmode == CHANNEL_WIDTH_160 ? center_ch : 0;
+	cch_80 = bwmode == CHANNEL_WIDTH_80 ? center_ch : 0;
+	cch_40 = bwmode == CHANNEL_WIDTH_40 ? center_ch : 0;
+	cch_20 = bwmode == CHANNEL_WIDTH_20 ? center_ch : 0;
+
+	/* MP mode channel don't use secondary channel */
+	if (rtw_mi_mp_mode_check(padapter) == _FALSE) {
+		#if 0
+		if (cch_160 != 0)
+			cch_80 = rtw_get_scch_by_cch_offset(cch_160, CHANNEL_WIDTH_160, Offset80);
+		#endif
+		if (cch_80 != 0)
+			cch_40 = rtw_get_scch_by_cch_offset(cch_80, CHANNEL_WIDTH_80, chnl_offset80);
+		if (cch_40 != 0)
+			cch_20 = rtw_get_scch_by_cch_offset(cch_40, CHANNEL_WIDTH_40, channel_offset);
+	}
+
+	hal->cch_80 = cch_80;
+	hal->cch_40 = cch_40;
+	hal->cch_20 = cch_20;
+	hal->current_channel = center_ch;
+	hal->CurrentCenterFrequencyIndex1 = center_ch;
+	hal->current_channel_bw = bwmode;
+	hal->nCur40MhzPrimeSC = channel_offset;
+	hal->nCur80MhzPrimeSC = chnl_offset80;
+	hal->current_band_type = channel > 14 ? BAND_ON_5G:BAND_ON_2_4G;
+
+	if (0) {
+		RTW_INFO("%s cch:%u, %s, offset40:%u, offset80:%u (%u, %u, %u)\n", __func__
+			, center_ch, ch_width_str(bwmode), channel_offset, chnl_offset80
+			, hal->cch_80, hal->cch_40, hal->cch_20);
+
+		RTW_INFO("%d,%d,%d,%d,%d,%d\n", hal->current_channel, hal->CurrentCenterFrequencyIndex1, hal->current_channel_bw
+			, hal->nCur40MhzPrimeSC, hal->nCur80MhzPrimeSC, hal->current_band_type);
+	}
+}
+
 u8 rtw_hal_dl_mcc_fw_rsvd_page(_adapter *adapter, u8 *pframe, u16 *index,
 	u8 tx_desc, u32 page_size, u8 *page_num, u32 *total_pkt_len,
 		RSVDPAGE_LOC *rsvd_page_loc)
@@ -1227,13 +1291,14 @@ u8 rtw_hal_dl_mcc_fw_rsvd_page(_adapter *adapter, u8 *pframe, u16 *index,
 			bw = pmlmeext->cur_bwmode;
 			bw_offset = pmlmeext->cur_ch_offset;
 			center_ch = rtw_get_center_ch(ch, bw, bw_offset);
+			rtw_hal_mcc_upadate_chnl_bw(iface, ch, bw_offset, bw);
 
 			start = &pframe[*index - tx_desc];
 			_rtw_memset(start, 0, page_size);
 			pmccobjpriv->mcc_pwr_idx_rsvd_page[i] = *page_num;
-			RTW_INFO(ADPT_FMT" order:%d, pwr_idx_rsvd_page location[%d]: %d\n",
+			RTW_INFO(ADPT_FMT" order:%d, pwr_idx_rsvd_page location[%d]: %d, ch=%d, bw=%d, bw_offset=%d\n",
 				ADPT_ARG(iface), iface->mcc_adapterpriv.order,
-				i, pmccobjpriv->mcc_pwr_idx_rsvd_page[i]);
+				i, pmccobjpriv->mcc_pwr_idx_rsvd_page[i], ch, bw, bw_offset);
 
 			total_rate_offset = start;
 			
