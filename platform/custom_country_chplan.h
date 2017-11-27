@@ -49,7 +49,7 @@ static const struct country_chplan CUSTOMIZED_country_chplan_map[] = {
 	COUNTRY_CHPLAN_ENT2("PK", 0x34, 1, 0x1F1, 0), /* Pakistan */
 	COUNTRY_CHPLAN_ENT2("RU", 0x35, 1, 0x1FB, 0), /* Russia(fac/gost), Kaliningrad */
 	COUNTRY_CHPLAN_ENT2("RU", 0x35, 1, 0x1FB, 1), /* Russia(fac/gost), Kaliningrad v1 */
-	COUNTRY_CHPLAN_ENT2("RU", 0x30, 1, 0x1FB, 2), /* Russia(fac/gost), Kaliningrad v2 */
+	COUNTRY_CHPLAN_ENT2("RU", 0x3b, 1, 0x1FB, 2), /* Russia(fac/gost), Kaliningrad v2 */
 	COUNTRY_CHPLAN_ENT2("SA", 0x02, 1, 0x1F1, 0), /* South Africa */
 	COUNTRY_CHPLAN_ENT2("SU", 0x36, 1, 0x1FB, 0), /* Saudi Arabia */
 	COUNTRY_CHPLAN_ENT2("TW", 0x37, 1, 0x1FF, 0), /* Taiwan */

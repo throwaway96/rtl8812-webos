@@ -212,7 +212,10 @@ typedef enum _RT_CHANNEL_DOMAIN {
 	RTW_CHPLAN_FCC1_FCC18 = 0x37,
 	RTW_CHPLAN_ETSI1_ETSI3 = 0x38,
 	RTW_CHPLAN_FCC1_FCC11 = 0x39,
-	RTW_CHPLAN_GLOBAL_NULL = 0x3a,
+	RTW_CHPLAN_ETSI1_ETSI2_KCC = 0x3a,
+	RTW_CHPLAN_ETSI1_ETSI24 = 0x3b,
+
+	RTW_CHPLAN_GLOBAL_NULL = 0x3c,
 #endif /* LGE_PRIVATE */
 
 	RTW_CHPLAN_MAX,
@@ -291,6 +294,8 @@ typedef enum _RT_CHANNEL_DOMAIN_5G {
 
 	RTW_RD_5G_IC1 = 52,		/* Canada(w/o Weather radar) */
 	RTW_RD_5G_IC2 = 53,		/* Canada(w/o Weather radar), include ch144 */
+
+	RTW_RD_5G_ETSI24 = 54,	/* LGE */
 
 	/* === Below are driver defined for legacy channel plan compatible, DON'T assign index ==== */
 	RTW_RD_5G_OLD_FCC1,
