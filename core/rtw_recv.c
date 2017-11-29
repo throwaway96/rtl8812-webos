@@ -808,12 +808,11 @@ sint recv_decache(union recv_frame *precv_frame, u8 bretry, struct stainfo_rxcac
 
 #define PN_LESS_CHK(a, b)	(((a-b) & 0x800000000000) != 0)
 #define PN_EQUAL_CHK(a, b)	(a == b)
-sint recv_ucast_pn_decache(union recv_frame *precv_frame);
-sint recv_ucast_pn_decache(union recv_frame *precv_frame) {
+sint recv_ucast_pn_decache(union recv_frame *precv_frame, struct stainfo_rxcache *prxcache);
+sint recv_ucast_pn_decache(union recv_frame *precv_frame, struct stainfo_rxcache *prxcache)
+{
 	_adapter *padapter = precv_frame->u.hdr.adapter;
 	struct rx_pkt_attrib *pattrib = &precv_frame->u.hdr.attrib;
-	struct sta_info *sta = precv_frame->u.hdr.psta;
-	struct stainfo_rxcache *prxcache = &sta->sta_recvpriv.rxcache;
 	u8 *pdata = precv_frame->u.hdr.rx_data;
 	u32 data_len = precv_frame->u.hdr.len;
 	sint tid = precv_frame->u.hdr.attrib.priority;
@@ -859,7 +858,8 @@ sint recv_bcast_pn_decache(union recv_frame *precv_frame) {
 	u64 curr_pn = 0, pkt_pn = 0;
 	u8 key_id;
 
-	if (pattrib->encrypt == _AES_) {
+	if ((pattrib->encrypt == _AES_) &&
+		(check_fwstate(pmlmepriv, WIFI_STATION_STATE) == _TRUE)) {
 		_rtw_memcpy(&tmp_iv_hdr, (pdata + pattrib->hdrlen), 8);
 		tmp_iv_hdr = le64_to_cpu(tmp_iv_hdr);
 		key_id = ((tmp_iv_hdr & 0x00000000c0000000) >> 30);
@@ -879,7 +879,10 @@ sint recv_bcast_pn_decache(union recv_frame *precv_frame) {
 
 		if (PN_LESS_CHK(pkt_pn, curr_pn) || PN_EQUAL_CHK(pkt_pn, curr_pn)) {
 			return _FAIL;
-		} else _rtw_memcpy(psecuritypriv->iv_seq[key_id], &pkt_pn, 8);
+		} else {
+			pkt_pn = cpu_to_le64(pkt_pn);
+			_rtw_memcpy(psecuritypriv->iv_seq[key_id], &pkt_pn, 8);
+		}
 	}
 
 exit:
@@ -1950,12 +1953,19 @@ sint validate_recv_data_frame(_adapter *adapter, union recv_frame *precv_frame)
 	if (pattrib->order) /* HT-CTRL 11n */
 		pattrib->hdrlen += 4;
 
-	if (!IS_MCAST(pattrib->ra)) {
-		precv_frame->u.hdr.preorder_ctrl = &psta->recvreorder_ctrl[pattrib->priority];
+	precv_frame->u.hdr.preorder_ctrl = &psta->recvreorder_ctrl[pattrib->priority];
 
-		/* decache, drop duplicate recv packets */
-		if ((recv_decache(precv_frame, bretry, &psta->sta_recvpriv.rxcache) == _FAIL) |
-			(recv_ucast_pn_decache(precv_frame) == _FAIL)) {
+	/* decache, drop duplicate recv packets */
+	if (recv_decache(precv_frame, bretry, &psta->sta_recvpriv.rxcache) == _FAIL) {
+#ifdef DBG_RX_DROP_FRAME
+		RTW_INFO("DBG_RX_DROP_FRAME %s recv_decache return _FAIL\n", __func__);
+#endif
+		ret = _FAIL;
+		goto exit;
+	}
+
+	if (!IS_MCAST(pattrib->ra)) {
+		if (recv_ucast_pn_decache(precv_frame, &psta->sta_recvpriv.rxcache) == _FAIL) {
 #ifdef DBG_RX_DROP_FRAME
 			RTW_INFO("DBG_RX_DROP_FRAME %s recv_decache return _FAIL\n", __func__);
 #endif
@@ -1971,8 +1981,6 @@ sint validate_recv_data_frame(_adapter *adapter, union recv_frame *precv_frame)
 			ret = _FAIL;
 			goto exit;
 		}
-
-		precv_frame->u.hdr.preorder_ctrl = NULL;
 	}
 
 	if (pattrib->privacy) {
