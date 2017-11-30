@@ -1925,6 +1925,7 @@ void rtw_sec_write_cam(_adapter *adapter, u8 addr, u32 wdata)
 	u32 start = 0, end = 0;
 	u8 timeout = 0;
 	u8 sr = 0;
+	u32 reg_val = 0;
 
 	_enter_critical_mutex(mutex, NULL);
 
@@ -1939,7 +1940,14 @@ void rtw_sec_write_cam(_adapter *adapter, u8 addr, u32 wdata)
 		}
 
 		cnt++;
-		if (0 == (rtw_read32(adapter, REG_CAMCMD) & CAM_POLLINIG))
+		reg_val = rtw_read32(adapter, REG_CAMCMD);
+
+		if (reg_val == 0xeaeaeaea) {
+			RTW_INFO("%s ==> addr:0x%02x , reg_val:0x%08x\n", __func__, REG_CAMCMD, reg_val);
+			break;
+		}
+		
+		if (0 == (reg_val & CAM_POLLINIG))
 			break;
 
 		if (rtw_get_passing_time_ms(start) > SEC_CAM_ACCESS_TIMEOUT_MS) {
@@ -3638,7 +3646,7 @@ static u8 rtw_hal_check_wow_ctrl(_adapter *adapter, u8 chk_type)
 	u32 fe1_imr = 0xFF, rxpkt_num = 0xFF;
 	u8 mstatus = 0;
 	u8 reason = 0xFF;
-	u8 trycnt = 25;
+	u8 trycnt = 10;
 	u8 res = _FALSE;
 
 	if (IS_HARDWARE_TYPE_JAGUAR2(adapter)) {
@@ -3651,7 +3659,7 @@ static u8 rtw_hal_check_wow_ctrl(_adapter *adapter, u8 chk_type)
 				RTW_PRINT("Loop index: %d :0x%02x\n",
 					  trycnt, reason);
 				trycnt--;
-				rtw_msleep_os(20);
+				rtw_msleep_os(5);
 			}
 			if (!reason)
 				res = _TRUE;
@@ -3669,7 +3677,7 @@ static u8 rtw_hal_check_wow_ctrl(_adapter *adapter, u8 chk_type)
 				RTW_PRINT("Loop index: %d :0x%x, 0x%x\n",
 					  trycnt, fe1_imr, rxpkt_num);
 				trycnt--;
-				rtw_msleep_os(20);
+				rtw_msleep_os(5);
 			}
 
 			if ((fe1_imr & BIT_FS_RXDONE_INT_EN) || (rxpkt_num & BIT_RW_RELEASE_EN))
@@ -3688,7 +3696,7 @@ static u8 rtw_hal_check_wow_ctrl(_adapter *adapter, u8 chk_type)
 				RTW_PRINT("Loop index: %d :0x%02x\n",
 					  trycnt, mstatus);
 				trycnt--;
-				rtw_msleep_os(20);
+				rtw_msleep_os(5);
 			}
 			if (mstatus & BIT1)
 				res = _TRUE;
@@ -3700,7 +3708,7 @@ static u8 rtw_hal_check_wow_ctrl(_adapter *adapter, u8 chk_type)
 				RTW_PRINT("Loop index: %d :0x%02x\n",
 					  trycnt, mstatus);
 				trycnt--;
-				rtw_msleep_os(20);
+				rtw_msleep_os(5);
 			}
 
 			if (mstatus & BIT1)
@@ -3711,7 +3719,7 @@ static u8 rtw_hal_check_wow_ctrl(_adapter *adapter, u8 chk_type)
 	}
 
 	RTW_PRINT("%s check_type: %d res: %d trycnt: %d\n",
-		  __func__, chk_type, res, (25 - trycnt));
+		  __func__, chk_type, res, (10 - trycnt));
 	return res;
 }
 
@@ -7659,6 +7667,7 @@ static void _rtw_wow_pattern_write_cam(_adapter *adapter, u8 addr, u32 wdata)
 	u32 cnt = 0;
 	u32 start = 0, end = 0;
 	u8 timeout = 0;
+	u32 reg_val = 0;
 
 	/*RTW_INFO("%s ==> addr:0x%02x , wdata:0x%08x\n", __func__, addr, wdata);*/
 	_enter_critical_mutex(mutex, NULL);
@@ -7672,7 +7681,14 @@ static void _rtw_wow_pattern_write_cam(_adapter *adapter, u8 addr, u32 wdata)
 			break;
 
 		cnt++;
-		if (0 == (rtw_read32(adapter, REG_WKFMCAM_CMD) & BIT_WKFCAM_POLLING_V1))
+		reg_val = rtw_read32(adapter, REG_WKFMCAM_CMD);
+
+		if (reg_val == 0xeaeaeaea) {
+			RTW_INFO("%s ==> addr:0x%02x , rdata:0x%08x\n", __func__, REG_WKFMCAM_CMD, reg_val);
+			break;
+		}
+		
+		if (0 == (reg_val & BIT_WKFCAM_POLLING_V1))
 			break;
 
 		if (rtw_get_passing_time_ms(start) > WOW_CAM_ACCESS_TIMEOUT_MS) {

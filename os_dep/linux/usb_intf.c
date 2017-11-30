@@ -1031,6 +1031,7 @@ static int rtw_resume(struct usb_interface *pusb_intf)
 	PADAPTER padapter;
 	struct mlme_ext_priv *pmlmeext;
 	int ret = 0;
+	u32 mac_80 = 0;
 
 
 	dvobj = usb_get_intfdata(pusb_intf);
@@ -1040,6 +1041,14 @@ static int rtw_resume(struct usb_interface *pusb_intf)
 	pmlmeext = &padapter->mlmeextpriv;
 
 	RTW_INFO("==> %s (%s:%d), MAC_81=%x\n", __FUNCTION__, current->comm, current->pid, rtw_read8(padapter, REG_MCUFW_CTRL+1));
+
+	mac_80 = rtw_read32(padapter, REG_MCUFW_CTRL);
+	if (mac_80 == 0) {
+		mac_reg_dump(0, padapter);
+		rtw_set_surprise_removed(padapter);
+		rtw_init_pwrctrl_priv_reset(padapter);
+		goto exit;
+	}
 
 	if(!(rtw_read8(padapter, REG_MCUFW_CTRL+1) & BIT7) && (pwrpriv->wowlan_mode || pwrpriv->wowlan_ap_mode)) {
 		u8 retry_cnt = 0;
