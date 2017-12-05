@@ -4131,6 +4131,11 @@ int rtw_suspend_common(_adapter *padapter)
 
 	rtw_ps_deny_cancel(padapter, PS_DENY_SUSPEND);
 
+#ifdef LGE_PRIVATE
+	/* LGE Request No Multicast wake up */
+	rtw_write32(padapter, REG_RCR, rtw_read32(padapter, REG_RCR) & (~(RCR_AM)));
+#endif /* LGE_PRIVATE */
+
 	if (rtw_mi_check_status(padapter, MI_AP_MODE) == _FALSE
 #ifdef CONFIG_RTW_ONE_PIN_GPIO
 		||WOWLAN_IS_STA_MIX_MODE(padapter)
@@ -4586,10 +4591,10 @@ int rtw_resume_common(_adapter *padapter)
 	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
 
 	if (pwrpriv == NULL)
-		return 0;
+		goto exit;
 
 	if (pwrpriv->bInSuspend == _FALSE)
-		return 0;
+		goto exit;
 
 	RTW_PRINT("resume start\n");
 	RTW_INFO("==> %s (%s:%d)\n", __FUNCTION__, current->comm, current->pid);
@@ -4617,6 +4622,11 @@ int rtw_resume_common(_adapter *padapter)
 #endif
 	}
 
+	RTW_PRINT("%s:%d in %d ms\n", __FUNCTION__ , ret,
+		  rtw_get_passing_time_ms(start_time));
+
+exit:
+
 #ifdef LGE_PRIVATE
 	if (adapter_wdev_data(padapter)->idle_mode) {
 		struct mlme_ext_priv *pmlmeext;
@@ -4640,10 +4650,6 @@ int rtw_resume_common(_adapter *padapter)
 	/* Recovery Receive Multicast */
 	rtw_write32(padapter, REG_RCR, rtw_read32(padapter, REG_RCR) | (RCR_AM));
 #endif /* LGE_PRIVATE */
-
-	RTW_PRINT("%s:%d in %d ms\n", __FUNCTION__ , ret,
-		  rtw_get_passing_time_ms(start_time));
-
 
 	return ret;
 }

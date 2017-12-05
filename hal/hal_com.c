@@ -7871,11 +7871,6 @@ static void rtw_hal_wow_enable(_adapter *adapter)
 
 	RTW_PRINT("%s, WOWLAN_ENABLE\n", __func__);
 
-#ifdef LGE_PRIVATE
-	/* LGE Request No Multicast wake up */
-	rtw_write32(adapter, REG_RCR, rtw_read32(adapter, REG_RCR) & (~(RCR_AM)));
-#endif /* LGE_PRIVATE */
-
 	rtw_hal_gate_bb(adapter, _TRUE);
 #ifdef CONFIG_GTK_OL
 	if (psecuritypriv->binstallKCK_KEK == _TRUE &&
