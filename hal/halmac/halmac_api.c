@@ -225,9 +225,6 @@ halmac_deinit_adapter(
 {
 	VOID *pDriver_adapter = NULL;
 
-	if (HALMAC_RET_SUCCESS != halmac_adapter_validate(pHalmac_adapter))
-		return HALMAC_RET_ADAPTER_INVALID;
-
 	pDriver_adapter = pHalmac_adapter->pDriver_adapter;
 
 	PLATFORM_MSG_PRINT(pDriver_adapter, HALMAC_MSG_INIT, HALMAC_DBG_TRACE, "[TRACE]halmac_deinit_adapter_88xx ==========>\n");

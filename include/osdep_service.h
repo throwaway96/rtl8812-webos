@@ -380,13 +380,14 @@ static __inline void thread_enter(char *name)
 }
 void thread_exit(_completion *comp);
 void _rtw_init_completion(_completion *comp);
-void _rtw_wait_for_comp_timeout(_completion *comp);
+unsigned long _rtw_wait_for_comp_timeout(_completion *comp);
 void _rtw_wait_for_comp(_completion *comp);
 #if 1
 #define rtw_wait_for_thread_stop(_comp)	_rtw_wait_for_comp_timeout(_comp)
 #else
 #define rtw_wait_for_thread_stop(_comp)	_rtw_wait_for_comp(_comp)
 #endif
+#define rtw_wait_for_thread_stoped(_comp) _rtw_wait_for_comp(_comp)
 
 bool rtw_thread_stop(_thread_hdl_ th);
 bool rtw_thread_should_stop(void);

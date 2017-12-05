@@ -1201,10 +1201,10 @@ inline void _rtw_init_completion(_completion *comp)
 	init_completion(comp);
 #endif
 }
-inline void _rtw_wait_for_comp_timeout(_completion *comp)
+inline unsigned long _rtw_wait_for_comp_timeout(_completion *comp)
 {
 #ifdef PLATFORM_LINUX
-	wait_for_completion_timeout(comp, msecs_to_jiffies(3000));
+	return wait_for_completion_timeout(comp, msecs_to_jiffies(3000));
 #endif
 }
 inline void _rtw_wait_for_comp(_completion *comp)

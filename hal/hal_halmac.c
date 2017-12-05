@@ -965,6 +965,7 @@ int rtw_halmac_init_adapter(struct dvobj_priv *d, PHALMAC_PLATFORM_API pf_api)
 	if (HALMAC_RET_SUCCESS != status) {
 		RTW_ERR("%s: halmac_init_adapter fail!(status=%d)\n", __FUNCTION__, status);
 		err = -1;
+		halmac_deinit_adapter(halmac);
 		goto out;
 	}
 
@@ -990,14 +991,13 @@ int rtw_halmac_deinit_adapter(struct dvobj_priv *d)
 	HALMAC_RET_STATUS status;
 	int err = 0;
 
+	deinit_priv(&d->hmpriv);
 
 	halmac = dvobj_to_halmac(d);
 	if (!halmac) {
 		err = 0;
 		goto out;
 	}
-
-	deinit_priv(&d->hmpriv);
 
 	status = halmac_deinit_adapter(halmac);
 	dvobj_set_halmac(d, NULL);
@@ -1929,6 +1929,9 @@ int rtw_halmac_send_h2c(struct dvobj_priv *d, u8 *h2c)
 		hal->self_detection.self_dect_fw = _TRUE;
 		hal->self_detection.self_dect_fw_cnt ++;
 #endif /* DBG_CONFIG_ERROR_DETECT */
+#ifdef LGE_PRIVATE
+		rtw_set_surprise_removed(adapter);
+#endif /* LGE_PRIVATE */
 		goto exit;
 	}
 

@@ -514,6 +514,7 @@ void rtw_cmd_clr_isr(struct	cmd_priv *pcmdpriv)
 void rtw_free_cmd_obj(struct cmd_obj *pcmd)
 {
 	struct drvextra_cmd_parm *extra_parm = NULL;
+	struct submit_ctx *sctx = pcmd->sctx;
 
 	if (pcmd->parmbuf != NULL) {
 		/* free parmbuf in cmd_obj */
@@ -529,18 +530,28 @@ void rtw_free_cmd_obj(struct cmd_obj *pcmd)
 	/* free cmd_obj */
 	rtw_mfree((unsigned char *)pcmd, sizeof(struct cmd_obj));
 
+	if (sctx != NULL) {
+		rtw_sctx_done_err(&sctx, RTW_SCTX_DONE_CMD_ERROR);
+	}
+
 }
 
 
 void rtw_stop_cmd_thread(_adapter *adapter)
 {
+	unsigned long thd_stop = 0;
+
 	if (adapter->cmdThread &&
-	    ATOMIC_READ(&(adapter->cmdpriv.cmdthd_running)) == _TRUE &&
-	    adapter->cmdpriv.stop_req == 0) {
+		adapter->cmdpriv.stop_req == 0) {
 		adapter->cmdpriv.stop_req = 1;
 		_rtw_up_sema(&adapter->cmdpriv.cmd_queue_sema);
 		/*_rtw_down_sema(&adapter->cmdpriv.terminate_cmdthread_sema);*/
-		rtw_wait_for_thread_stop(&adapter->cmdpriv.cmdthread_comp);
+		thd_stop = rtw_wait_for_thread_stop(&adapter->cmdpriv.cmdthread_comp);
+		if (thd_stop == 0) {
+			RTW_WARN(CLR_LT_RED "stop cmd thread timeout in 3 sec !!!!!" CLR_NONE "\n");
+			RTW_WARN(CLR_LT_RED "waits for completion !!!!!" CLR_NONE "\n");
+			rtw_wait_for_thread_stoped(&adapter->cmdpriv.cmdthread_comp);
+		}
 	}
 }
 

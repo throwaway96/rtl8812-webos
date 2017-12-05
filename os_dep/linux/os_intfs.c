@@ -2951,6 +2951,13 @@ int _netdev_open(struct net_device *pnetdev)
 
 	RTW_INFO(FUNC_NDEV_FMT" , bup=%d\n", FUNC_NDEV_ARG(pnetdev), padapter->bup);
 
+#ifdef LGE_PRIVATE
+	if (rtw_is_surprise_removed(padapter) == _TRUE) {
+		padapter->netif_up = _FALSE;
+		goto netdev_open_error;
+	}
+#endif
+
 	padapter->netif_up = _TRUE;
 
 #ifdef CONFIG_PLATFORM_INTEL_BYT

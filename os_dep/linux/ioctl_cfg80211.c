@@ -5217,6 +5217,14 @@ static s32 cfg80211_rtw_remain_on_channel(struct wiphy *wiphy,
 		, FUNC_ADPT_ARG(padapter), wdev == wiphy_to_pd_wdev(wiphy) ? " PD" : ""
 		, remain_ch, duration, *cookie);
 
+#ifdef LGE_PRIVATE
+	if (RTW_CANNOT_RUN(padapter)) {
+		dev_close((struct net_device *)padapter->pnetdev);
+		err = -EFAULT;
+		goto exit;
+	}
+#endif /* LGE_PRIVATE */
+
 	if (rtw_chset_search_ch(adapter_to_chset(padapter), remain_ch) < 0) {
 		RTW_WARN(FUNC_ADPT_FMT" invalid ch:%u\n", FUNC_ADPT_ARG(padapter), remain_ch);
 		err = -EFAULT;
