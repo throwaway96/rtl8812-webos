@@ -5821,6 +5821,7 @@ static int cfg80211_rtw_mgmt_tx(struct wiphy *wiphy,
 	_adapter *padapter;
 	struct dvobj_priv *dvobj;
 	struct rtw_wdev_priv *pwdev_priv;
+	u8 delay_time = 0;
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 6, 0))
 	#if defined(RTW_DEDICATED_P2P_DEVICE)
@@ -5979,6 +5980,14 @@ dump:
 	}
 
 	switch (type) {
+	case P2P_GO_NEGO_RESP:
+		#ifdef LGE_PRIVATE
+		if (pwdev_priv->nego_info.status == 1) {
+			delay_time = 50;
+			rtw_msleep_os(delay_time);
+		}
+		#endif
+		break;
 	case P2P_GO_NEGO_CONF:
 		if (0) {
 			RTW_INFO(FUNC_ADPT_FMT" Nego confirm. state=%u, status=%u, iaddr="MAC_FMT"\n"
@@ -6017,6 +6026,8 @@ dump:
 cancel_ps_deny:
 	rtw_ps_deny_cancel(padapter, PS_DENY_MGNT_TX);
 exit:
+	RTW_INFO(FUNC_ADPT_FMT" ret=%d, delay_time=%d\n",
+		FUNC_ADPT_ARG(padapter), ret, delay_time);
 	return ret;
 }
 
