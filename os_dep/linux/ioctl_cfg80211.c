@@ -5985,6 +5985,8 @@ dump:
 		if (pwdev_priv->nego_info.status == 1) {
 			delay_time = 50;
 			rtw_msleep_os(delay_time);
+			RTW_INFO(FUNC_ADPT_FMT" ret=%d, delay_time=%d\n",
+				FUNC_ADPT_ARG(padapter), ret, delay_time);
 		}
 		#endif
 		break;
@@ -6026,8 +6028,6 @@ dump:
 cancel_ps_deny:
 	rtw_ps_deny_cancel(padapter, PS_DENY_MGNT_TX);
 exit:
-	RTW_INFO(FUNC_ADPT_FMT" ret=%d, delay_time=%d\n",
-		FUNC_ADPT_ARG(padapter), ret, delay_time);
 	return ret;
 }
 
