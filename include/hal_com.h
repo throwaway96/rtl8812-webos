@@ -670,7 +670,16 @@ void rtw_wow_pattern_cam_dump(_adapter *adapter);
 void rtw_wow_pattern_read_cam_ent(_adapter *adapter, u8 id, struct  rtl_wow_pattern *context);
 void rtw_dump_wow_pattern(void *sel, struct rtl_wow_pattern *pwow_pattern, u8 idx);
 #endif
-#endif
+#define REMOTE_INFO_CTRL_SET_VALD_EN(target, _value) \
+	SET_BITS_TO_LE_4BYTE(target + 0, 0, 8, _value)
+#define REMOTE_INFO_CTRL_SET_PTK_EN(target, _value) \
+	SET_BITS_TO_LE_4BYTE(target + 1, 0, 1, _value)
+#define REMOTE_INFO_CTRL_SET_GTK_EN(target, _value) \
+	SET_BITS_TO_LE_4BYTE(target + 1, 1, 1, _value)
+#define REMOTE_INFO_CTRL_SET_GTK_IDX(target, _value) \
+	SET_BITS_TO_LE_4BYTE(target + 2, 0, 8, _value)
+#endif /*CONFIG_WOWLAN*/
+
 void rtw_dump_phy_cap(void *sel, _adapter *adapter);
 void rtw_dump_rsvd_page(void *sel, _adapter *adapter, u8 page_offset, u8 page_num);
 
