@@ -312,11 +312,6 @@ struct aoac_report {
 	u8 group_key[32];
 	u8 key_index;
 	u8 security_type;
-	u8 wow_pattern_idx;
-	u8 version_info;
-	u8 reserved[4];
-	u8 rxptk_iv[8];
-	u8 rxgtk_iv[4][8];
 };
 
 struct pwrctrl_priv {
