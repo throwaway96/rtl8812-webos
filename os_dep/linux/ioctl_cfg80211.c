@@ -5219,7 +5219,7 @@ static s32 cfg80211_rtw_remain_on_channel(struct wiphy *wiphy,
 
 #ifdef LGE_PRIVATE
 	if (RTW_CANNOT_RUN(padapter)) {
-		/* dev_close((struct net_device *)padapter->pnetdev); */
+		dev_close((struct net_device *)padapter->pnetdev);
 		err = -EFAULT;
 		goto exit;
 	}
