@@ -935,7 +935,6 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 			char buf1[256] = { 0 };
 			char buf2[256] = { 0 };
 			u8 in_suspend = adapter_to_pwrctl(padapter)->bInSuspend;
-			u8 surprise_removed = rtw_is_surprise_removed(padapter);
 
 			if (in_suspend == _FALSE) {
 				RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s]\n"CLR_NONE, command);
@@ -943,18 +942,17 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 
 				snprintf(buf1, 256,
 						 "\nGET_CS_INFO\n"
-						 "\t\tVersion\t: %s\n"
+						 "\t\tVerstion\t: %s\n"
 						 "\t\tCcode\t: R%s\n"
 						 "\t\tCcodeRev\t: %u\n"
 						 "\t\tChannel\t: %u\n",
-						 surprise_removed == _TRUE ? "N/A" : DRIVERVERSION,
+						 DRIVERVERSION,
 						 adapter_wdev_data(padapter)->country,
 						 adapter_wdev_data(padapter)->ccode_version,
 						 pmlmeext->cur_channel
 						);
 
-				if (!surprise_removed)
-					rtw_hal_set_odm_var(padapter, HAL_ODM_RX_Dframe_INFO, buf2, _TRUE);
+				rtw_hal_set_odm_var(padapter, HAL_ODM_RX_Dframe_INFO, buf2, _TRUE);
 
 				strcat(command, buf1);
 				strcat(command, buf2);
