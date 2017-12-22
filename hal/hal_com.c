@@ -4341,7 +4341,11 @@ void rtw_hal_set_fw_wow_related_cmd(_adapter *padapter, u8 enable)
 #ifdef CONFIG_RTW_ONE_PIN_GPIO
 			if(adapter_wdev_data(padapter)->wowl == _TRUE)
 #endif /* CONFIG_RTW_ONE_PIN_GPIO */
+#ifdef LGE_PRIVATE
+			rtw_hal_set_disconnect_decision_cmd(padapter, 0);
+#else
 			rtw_hal_set_disconnect_decision_cmd(padapter, enable);
+#endif /*LGE_PRIVATE*/
 #ifdef CONFIG_ARP_KEEP_ALIVE
 			if ((psecpriv->dot11PrivacyAlgrthm == _WEP40_) ||
 			    (psecpriv->dot11PrivacyAlgrthm == _WEP104_))
