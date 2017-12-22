@@ -4073,7 +4073,8 @@ static u8 rtw_hal_set_wowlan_ctrl_cmd(_adapter *adapter, u8 enable, u8 change_un
 	if(adapter_wdev_data(adapter)->wowl == _FALSE) {
 		magic_pkt = 0;
 		discont_wake = 0;
-	}
+	} else
+		discont_wake = 0;
 #endif/* CONFIG_RTW_ONE_PIN_GPIO */
 #if 0 /* magic key only */
 	if (!ppwrpriv->wowlan_pno_enable)
