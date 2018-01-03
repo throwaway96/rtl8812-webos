@@ -2567,9 +2567,13 @@ void rtw_stadel_event_callback(_adapter *adapter, u8 *pbuf)
 #endif
 		if (adapter->registrypriv.wifi_spec == 1)
 			roam = _FALSE;
-		else if (reason == WLAN_REASON_EXPIRATION_CHK && rtw_chk_roam_flags(adapter, RTW_ROAM_ON_EXPIRED))
+		else if (reason == WLAN_REASON_EXPIRATION_CHK && rtw_chk_roam_flags(adapter, RTW_ROAM_ON_EXPIRED)) {
+#ifdef LGE_PRIVATE
+			roam = _FALSE;
+#else
 			roam = _TRUE;
-		else if (reason == WLAN_REASON_ACTIVE_ROAM && rtw_chk_roam_flags(adapter, RTW_ROAM_ACTIVE)) {
+#endif /* LGE_PRIVATE */
+		} else if (reason == WLAN_REASON_ACTIVE_ROAM && rtw_chk_roam_flags(adapter, RTW_ROAM_ACTIVE)) {
 			roam = _TRUE;
 			roam_target = pmlmepriv->roam_network;
 		}
