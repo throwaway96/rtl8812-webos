@@ -3796,6 +3796,7 @@ static void rtw_dump_aoac_rpt(_adapter *adapter)
 {
 	struct pwrctrl_priv *pwrctl = adapter_to_pwrctl(adapter);
 	struct aoac_report *paoac_rpt = &pwrctl->wowlan_aoac_rpt;
+	int i = 0;
 
 	RTW_INFO_DUMP("[AOAC-RPT] IV -", paoac_rpt->iv, 8);
 	RTW_INFO_DUMP("[AOAC-RPT] Replay counter of EAPOL key - ",
@@ -3803,6 +3804,14 @@ static void rtw_dump_aoac_rpt(_adapter *adapter)
 	RTW_INFO_DUMP("[AOAC-RPT] Group key - ", paoac_rpt->group_key, 32);
 	RTW_INFO("[AOAC-RPT] Key Index - %d\n", paoac_rpt->key_index);
 	RTW_INFO("[AOAC-RPT] Security Type - %d\n", paoac_rpt->security_type);
+	RTW_INFO("[AOAC-RPT] wow_pattern_idx - %d\n",
+		 paoac_rpt->wow_pattern_idx);
+	RTW_INFO("[AOAC-RPT] version_info - %d\n", paoac_rpt->version_info);
+	RTW_INFO_DUMP("[AOAC-RPT] RX PTK IV-", paoac_rpt->rxptk_iv, 8);
+	RTW_INFO_DUMP("[AOAC-RPT] RX GTK[0] IV-", paoac_rpt->rxgtk_iv[0], 8);
+	RTW_INFO_DUMP("[AOAC-RPT] RX GTK[1] IV-", paoac_rpt->rxgtk_iv[1], 8);
+	RTW_INFO_DUMP("[AOAC-RPT] RX GTK[2] IV-", paoac_rpt->rxgtk_iv[2], 8);
+	RTW_INFO_DUMP("[AOAC-RPT] RX GTK[3] IV-", paoac_rpt->rxgtk_iv[3], 8);
 }
 
 static void rtw_hal_get_aoac_rpt(_adapter *adapter)
@@ -3869,7 +3878,7 @@ static void rtw_hal_update_gtk_offload_info(_adapter *adapter)
 	_irqL irqL;
 	u8 get_key[16];
 	u8 gtk_id = 0, offset = 0, i = 0, sz = 0;
-	u64 replay_count = 0;
+	u64 replay_count = 0, tmp_iv_hdr = 0, pkt_pn = 0;
 
 	if (check_fwstate(pmlmepriv, WIFI_AP_STATE) == _TRUE)
 		return;
@@ -3923,15 +3932,19 @@ static void rtw_hal_update_gtk_offload_info(_adapter *adapter)
 				RTW_TKIP_MIC_LEN);
 		}
 
-		/* Update broadcast RX IV */
-		if (psecuritypriv->dot118021XGrpPrivacy == _AES_) {
-			sz = sizeof(psecuritypriv->iv_seq[0]);
-			for (i = 0 ; i < 4 ; i++)
-				_rtw_memset(psecuritypriv->iv_seq[i], 0, sz);
-		}
-
 		RTW_PRINT("GTK (%d) "KEY_FMT"\n", gtk_id,
 			KEY_ARG(psecuritypriv->dot118021XGrpKey[gtk_id].skey));
+	}
+
+	/* Update broadcast RX IV */
+	if (psecuritypriv->dot118021XGrpPrivacy == _AES_) {
+		sz = sizeof(psecuritypriv->iv_seq[0]);
+		for (i = 0 ; i < 4 ; i++) {
+			_rtw_memcpy(&tmp_iv_hdr, paoac_rpt->rxgtk_iv[i], sz);
+			tmp_iv_hdr = le64_to_cpu(tmp_iv_hdr);
+			pkt_pn = CCMPH_2_PN(tmp_iv_hdr);
+			_rtw_memcpy(psecuritypriv->iv_seq[i], &pkt_pn, sz);
+		}
 	}
 
 	rtw_clean_dk_section(adapter);
@@ -6807,6 +6820,62 @@ static void rtw_hal_construct_GTKRsp(
 }
 #endif /* CONFIG_GTK_OL */
 
+static void rtw_hal_construct_remote_control_info(_adapter *adapter,
+						  u8 *pframe, u32 *pLength)
+{
+	struct mlme_priv   *pmlmepriv = &adapter->mlmepriv;
+	struct sta_priv *pstapriv = &adapter->stapriv;
+	struct security_priv *psecuritypriv = &adapter->securitypriv;
+	struct mlme_ext_priv *pmlmeext = &adapter->mlmeextpriv;
+	struct mlme_ext_info *pmlmeinfo = &pmlmeext->mlmext_info;
+	struct sta_info *psta;
+	struct stainfo_rxcache *prxcache;
+	u8 cur_dot11rxpn[8], id = 0, tid_id = 0;
+	size_t sz = 0;
+
+	psta = rtw_get_stainfo(pstapriv, get_bssid(pmlmepriv));
+
+	if (psta == NULL) {
+		rtw_warn_on(1);
+		return;
+	}
+
+	prxcache = &psta->sta_recvpriv.rxcache;
+	sz = sizeof(cur_dot11rxpn);
+
+	/* 3 SEC IV * 1 page */
+	rtw_get_sec_iv(adapter, cur_dot11rxpn,
+			get_my_bssid(&pmlmeinfo->network));
+
+	_rtw_memcpy(pframe, cur_dot11rxpn, sz);
+	*pLength += sz;
+	pframe += sz;
+
+	_rtw_memset(&cur_dot11rxpn, 0, sz);
+
+	if (psecuritypriv->ndisauthtype == Ndis802_11AuthModeWPA2PSK) {
+		id = psecuritypriv->dot118021XGrpKeyid;
+		tid_id = prxcache->last_tid;
+		REMOTE_INFO_CTRL_SET_VALD_EN(cur_dot11rxpn, 0xdd);
+		REMOTE_INFO_CTRL_SET_PTK_EN(cur_dot11rxpn, 1);
+		REMOTE_INFO_CTRL_SET_GTK_EN(cur_dot11rxpn, 1);
+		REMOTE_INFO_CTRL_SET_GTK_IDX(cur_dot11rxpn, id);
+		_rtw_memcpy(pframe, cur_dot11rxpn, sz);
+		*pLength += sz;
+		pframe += sz;
+
+		_rtw_memcpy(pframe, prxcache->iv[tid_id], sz);
+		*pLength += sz;
+		pframe += sz;
+
+		_rtw_memcpy(pframe, psecuritypriv->iv_seq, sz * 4);
+		*pLength += (sz * 4);
+		pframe += (sz * 4);
+	}
+}
+
+
+
 void rtw_hal_set_wow_fw_rsvd_page(_adapter *adapter, u8 *pframe, u16 index,
 		  u8 tx_desc, u32 page_size, u8 *page_num, u32 *total_pkt_len,
 				  RSVDPAGE_LOC *rsvd_page_loc)
@@ -6817,10 +6886,9 @@ void rtw_hal_set_wow_fw_rsvd_page(_adapter *adapter, u8 *pframe, u16 index,
 	struct mlme_ext_priv	*pmlmeext;
 	struct mlme_ext_info	*pmlmeinfo;
 	u32	ARPLength = 0, GTKLength = 0, PNOLength = 0, ScanInfoLength = 0;
-	u32	SSIDLegnth = 0, ProbeReqLength = 0;
+	u32	SSIDLegnth = 0, ProbeReqLength = 0, rc_len = 0;
 	u8 CurtPktPageNum = 0;
 	u8 currentip[4];
-	u8 cur_dot11txpn[8];
 
 #ifdef CONFIG_GTK_OL
 	struct sta_priv *pstapriv = &adapter->stapriv;
@@ -6858,21 +6926,17 @@ void rtw_hal_set_wow_fw_rsvd_page(_adapter *adapter, u8 *pframe, u16 index,
 
 		index += (CurtPktPageNum * page_size);
 
-		/* 3 SEC IV * 1 page */
-		rtw_get_sec_iv(adapter, cur_dot11txpn,
-			       get_my_bssid(&pmlmeinfo->network));
-
+		/* 3 Remote Control Info. * 1 page */
 		rsvd_page_loc->LocRemoteCtrlInfo = *page_num;
 
 		RTW_INFO("LocRemoteCtrlInfo: %d\n", rsvd_page_loc->LocRemoteCtrlInfo);
-
-		_rtw_memcpy(pframe + index - tx_desc, cur_dot11txpn, _AES_IV_LEN_);
-
-		CurtPktPageNum = (u8)PageNum(_AES_IV_LEN_, page_size);
+		rtw_hal_construct_remote_control_info(adapter,
+							&pframe[index - tx_desc],
+							&rc_len);
+		CurtPktPageNum = (u8)PageNum(rc_len, page_size);
 
 		*page_num += CurtPktPageNum;
-
-		*total_pkt_len = index + _AES_IV_LEN_;
+		*total_pkt_len = index + rc_len;
 #ifdef CONFIG_GTK_OL
 		index += (CurtPktPageNum * page_size);
 
@@ -8100,6 +8164,8 @@ static void rtw_hal_wow_disable(_adapter *adapter)
 		rtw_hal_get_aoac_rpt(adapter);
 		rtw_hal_update_sw_security_info(adapter);
 	}
+#else
+	_rtw_memset(psecuritypriv->iv_seq, 0, sizeof(psecuritypriv->iv_seq));
 #endif /*CONFIG_GTK_OL*/
 
 	rtw_hal_fw_dl(adapter, _FALSE);
