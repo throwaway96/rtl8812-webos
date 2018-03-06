@@ -42,6 +42,7 @@ unsigned char MARVELL_OUI[] = {0x00, 0x50, 0x43};
 unsigned char RALINK_OUI[] = {0x00, 0x0c, 0x43};
 unsigned char REALTEK_OUI[] = {0x00, 0xe0, 0x4c};
 unsigned char AIRGOCAP_OUI[] = {0x00, 0x0a, 0xf5};
+unsigned char VERIWAVE_OUI[] = {0x00, 0x13, 0xe9};
 
 unsigned char REALTEK_96B_IE[] = {0x00, 0xe0, 0x4c, 0x02, 0x01, 0x20};
 
@@ -3115,6 +3116,9 @@ unsigned char check_assoc_AP(u8 *pframe, uint len)
 			} else if (_rtw_memcmp(pIE->data, AIRGOCAP_OUI, 3)) {
 				RTW_INFO("link to Airgo Cap\n");
 				return HT_IOT_PEER_AIRGO;
+			} else if (_rtw_memcmp(pIE->data, VERIWAVE_OUI, 3)) {
+				RTW_INFO("link to VeriWave\n");
+				return HT_IOT_PEER_VERIWAVE;
 			} else
 				break;
 

@@ -1182,7 +1182,11 @@ int proc_get_rx_ampdu_size_limit(struct seq_file *m, void *v)
 	struct net_device *dev = m->private;
 	_adapter *adapter = (_adapter *)rtw_netdev_priv(dev);
 
+#ifdef LGE_PRIVATE
+	dump_mlme_rx_ampdu_size_limit(m, adapter);
+#else
 	dump_regsty_rx_ampdu_size_limit(m, adapter);
+#endif /* LGE_PRIVATE */
 
 	return 0;
 }
@@ -1192,6 +1196,9 @@ ssize_t proc_set_rx_ampdu_size_limit(struct file *file, const char __user *buffe
 	struct net_device *dev = data;
 	_adapter *adapter = (_adapter *)rtw_netdev_priv(dev);
 	struct registry_priv *regsty = adapter_to_regsty(adapter);
+#ifdef LGE_PRIVATE
+	struct mlme_priv *mlme = &adapter->mlmepriv;
+#endif /* LGE_PRIVATE */
 	char tmp[32];
 	u8 nss;
 	u8 limit_by_bw[4] = {0xFF};
@@ -1214,8 +1221,13 @@ ssize_t proc_set_rx_ampdu_size_limit(struct file *file, const char __user *buffe
 		if (nss == 0 || nss > 4)
 			goto exit;
 
-		for (i = 0; i < num - 1; i++)
+		for (i = 0; i < num - 1; i++) {
+#ifdef LGE_PRIVATE
+			mlme->rx_ampdu_sz_limit_by_nss_bw[nss - 1][i] = limit_by_bw[i];
+#else
 			regsty->rx_ampdu_sz_limit_by_nss_bw[nss - 1][i] = limit_by_bw[i];
+#endif /* LGE_PRIVATE */
+		}
 
 		rtw_rx_ampdu_apply(adapter);
 	}

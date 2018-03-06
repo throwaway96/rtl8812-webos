@@ -24,6 +24,30 @@
 extern void indicate_wx_scan_complete_event(_adapter *padapter);
 extern u8 rtw_do_join(_adapter *padapter);
 
+#ifdef LGE_PRIVATE
+static void _rtw_init_mlme_rx_ampdu_sz(_adapter *padapter, struct mlme_priv *pmlmepriv)
+{
+	/* Initial rx ampdu size from registry */
+	struct registry_priv *regsty = adapter_to_regsty(padapter);
+	int j, k;
+
+	for (j = 0; j < 4; j++) for (k = 0; k < 4; k++)
+		pmlmepriv->rx_ampdu_sz_limit_by_nss_bw[j][k] =
+				regsty->rx_ampdu_sz_limit_by_nss_bw[j][k];
+
+	if (!is_primary_adapter(padapter)) {
+		uint rx_ampdu_sz_limit_1ss[4] = CONFIG_RTW_P2P_RX_AMPDU_SZ_LIMIT_1SS;
+		uint rx_ampdu_sz_limit_2ss[4] = CONFIG_RTW_P2P_RX_AMPDU_SZ_LIMIT_2SS;
+
+		for (j = 0; j < 4; j++) {
+			pmlmepriv->rx_ampdu_sz_limit_by_nss_bw[0][j] =
+				rx_ampdu_sz_limit_1ss[j];
+			pmlmepriv->rx_ampdu_sz_limit_by_nss_bw[1][j] =
+				rx_ampdu_sz_limit_2ss[j];
+		}
+	}
+}
+#endif /* LGE_PRIVATE */
 
 sint	_rtw_init_mlme_priv(_adapter *padapter)
 {
@@ -44,6 +68,10 @@ sint	_rtw_init_mlme_priv(_adapter *padapter)
 	/*ht_priv*/
 #ifdef CONFIG_80211N_HT
 	pmlmepriv->htpriv.ampdu_enable = _FALSE;/*set to disabled*/
+
+#ifdef LGE_PRIVATE
+	_rtw_init_mlme_rx_ampdu_sz(padapter, pmlmepriv);
+#endif /* LGE_PRIVATE */
 #endif
 
 	pmlmepriv->nic_hdl = (u8 *)padapter;

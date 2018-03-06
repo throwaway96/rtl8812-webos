@@ -11455,8 +11455,39 @@ void update_IOT_info(_adapter *padapter)
 {
 	struct mlme_ext_priv	*pmlmeext = &padapter->mlmeextpriv;
 	struct mlme_ext_info	*pmlmeinfo = &(pmlmeext->mlmext_info);
+#ifdef LGE_PRIVATE
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	struct registry_priv *regsty = adapter_to_regsty(padapter);
+	static int need_reset = 0;
+
+	if (is_primary_adapter(padapter) && need_reset) {
+		/* STA Case */
+		pmlmepriv->rx_ampdu_sz_limit_by_nss_bw[0][0] =
+			regsty->rx_ampdu_sz_limit_by_nss_bw[0][0];
+		pmlmepriv->rx_ampdu_sz_limit_by_nss_bw[1][0] =
+			regsty->rx_ampdu_sz_limit_by_nss_bw[1][0];
+		rtw_rx_ampdu_apply(padapter);
+		need_reset = 0;
+	}
+#endif /* LGE_PRIVATE */
 
 	switch (pmlmeinfo->assoc_AP_vendor) {
+#ifdef LGE_PRIVATE
+	case HT_IOT_PEER_VERIWAVE:
+		{
+			struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+			pmlmeinfo->turboMode_cts2self = 0;
+			pmlmeinfo->turboMode_rtsen = 1;
+			need_reset = 1;
+
+			pmlmepriv->rx_ampdu_sz_limit_by_nss_bw[0][0] = 0x10;
+			pmlmepriv->rx_ampdu_sz_limit_by_nss_bw[0][1] = 0x20;
+			pmlmepriv->rx_ampdu_sz_limit_by_nss_bw[1][0] = 0x10;
+			pmlmepriv->rx_ampdu_sz_limit_by_nss_bw[1][1] = 0x20;
+			rtw_rx_ampdu_apply(padapter);
+			break;
+		}
+#endif /* LGE_PRIVATE */
 	case HT_IOT_PEER_MARVELL:
 		pmlmeinfo->turboMode_cts2self = 1;
 		pmlmeinfo->turboMode_rtsen = 0;

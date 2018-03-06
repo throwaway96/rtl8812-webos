@@ -2597,6 +2597,23 @@ void dump_regsty_rx_ampdu_size_limit(void *sel, _adapter *adapter)
 			, regsty->rx_ampdu_sz_limit_by_nss_bw[i][3]);
 }
 
+#ifdef LGE_PRIVATE
+void dump_mlme_rx_ampdu_size_limit(void *sel, _adapter *adapter)
+{
+	struct mlme_priv *mlme = &adapter->mlmepriv;
+	int i;
+
+	RTW_PRINT_SEL(sel, "%-3s %-3s %-3s %-3s %-4s\n"
+		, "", "20M", "40M", "80M", "160M");
+	for (i = 0; i < 4; i++)
+		RTW_PRINT_SEL(sel, "%dSS %3u %3u %3u %4u\n", i + 1
+			, mlme->rx_ampdu_sz_limit_by_nss_bw[i][0]
+			, mlme->rx_ampdu_sz_limit_by_nss_bw[i][1]
+			, mlme->rx_ampdu_sz_limit_by_nss_bw[i][2]
+			, mlme->rx_ampdu_sz_limit_by_nss_bw[i][3]);
+}
+#endif /* LGE_PRIVATE */
+
 int proc_get_rx_ampdu(struct seq_file *m, void *v)
 {
 	struct net_device *dev = m->private;

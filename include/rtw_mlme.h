@@ -664,6 +664,9 @@ struct mlme_priv {
 
 	struct ht_priv	htpriv;
 
+#ifdef LGE_PRIVATE
+	u8 rx_ampdu_sz_limit_by_nss_bw[4][4]; /* 1~4SS, BW20~BW160 */
+#endif /* LGE_PRIVATE */
 #endif
 
 #ifdef CONFIG_80211AC_VHT

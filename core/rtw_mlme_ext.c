@@ -4007,7 +4007,11 @@ u8 rx_ampdu_size_sta_limit(_adapter *adapter, struct sta_info *sta)
 	}
 
 	if (nss >= 1)
+#ifdef LGE_PRIVATE
+		sz_limit = mlme->rx_ampdu_sz_limit_by_nss_bw[nss - 1][bw];
+#else
 		sz_limit = regsty->rx_ampdu_sz_limit_by_nss_bw[nss - 1][bw];
+#endif /* LGE_PRIVATE */
 #endif /* CONFIG_80211N_HT */
 
 	return sz_limit;
