@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
+ * Copyright(c) 2007 - 2017 Realtek Corporation.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of version 2 of the GNU General Public License as
@@ -11,12 +11,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
  * more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
- *
- *
- ******************************************************************************/
+ *****************************************************************************/
 #define _HCI_INTF_C_
 
 #include <drv_types.h>
@@ -68,6 +63,12 @@ static void rtw_dev_shutdown(struct device *dev)
 				if (!rtw_is_surprise_removed(adapter)) {
 					struct pwrctrl_priv *pwrctl = adapter_to_pwrctl(adapter);
 					#ifdef CONFIG_WOWLAN
+					#ifdef CONFIG_GPIO_WAKEUP
+					/*default wake up pin change to BT*/
+					RTW_INFO("%s:default wake up pin change to BT\n", __FUNCTION__);
+					rtw_hal_switch_gpio_wl_ctrl(adapter, WAKEUP_GPIO_IDX, _FALSE);
+					#endif /* CONFIG_GPIO_WAKEUP */
+
 					if (pwrctl->wowlan_mode == _TRUE)
 						RTW_PRINT("%s wowlan_mode ==_TRUE do not run rtw_hal_deinit()\n", __FUNCTION__);
 					else
@@ -233,6 +234,8 @@ static struct usb_device_id rtw_usb_id_tbl[] = {
 	/*=== Realtek demoboard ===*/
 	{USB_DEVICE_AND_INTERFACE_INFO(USB_VENDER_ID_REALTEK, 0xB82C, 0xff, 0xff, 0xff), .driver_info = RTL8822B}, /* Default ID for USB multi-function */
 	{USB_DEVICE_AND_INTERFACE_INFO(USB_VENDER_ID_REALTEK, 0xB812, 0xff, 0xff, 0xff), .driver_info = RTL8822B}, /* Default ID for USB Single-function, WiFi only */
+	/*=== Customer ID ===*/
+	{USB_DEVICE_AND_INTERFACE_INFO(0x13b1, 0x0043, 0xff, 0xff, 0xff), .driver_info = RTL8822B}, /* Alpha - Alpha*/
 	{USB_DEVICE_AND_INTERFACE_INFO(0x043E, 0x3108, 0xff, 0xff, 0xff), .driver_info = RTL8822B}, /* for LGE */
 #endif /* CONFIG_RTL8822B */
 
@@ -249,6 +252,8 @@ static struct usb_device_id rtw_usb_id_tbl[] = {
 	{USB_DEVICE_AND_INTERFACE_INFO(USB_VENDER_ID_REALTEK, 0xC820, 0xff, 0xff, 0xff), .driver_info = RTL8821C}, /* 8821CU */
 	{USB_DEVICE_AND_INTERFACE_INFO(USB_VENDER_ID_REALTEK, 0xC82A, 0xff, 0xff, 0xff), .driver_info = RTL8821C}, /* 8821CU */
 	{USB_DEVICE_AND_INTERFACE_INFO(USB_VENDER_ID_REALTEK, 0xC82B, 0xff, 0xff, 0xff), .driver_info = RTL8821C}, /* 8821CU */
+	{USB_DEVICE_AND_INTERFACE_INFO(USB_VENDER_ID_REALTEK, 0xC811, 0xff, 0xff, 0xff), .driver_info = RTL8821C}, /* 8811CU */
+	{USB_DEVICE_AND_INTERFACE_INFO(USB_VENDER_ID_REALTEK, 0x8811, 0xff, 0xff, 0xff), .driver_info = RTL8821C}, /* 8811CU */	
 	/*=== Customer ID ===*/
 #endif
 
@@ -627,13 +632,6 @@ static void usb_dvobj_deinit(struct usb_interface *usb_intf)
 		/* Modify condition for 92DU DMDP 2010.11.18, by Thomas */
 		if ((dvobj->NumInterfaces != 2 && dvobj->NumInterfaces != 3)
 		    || (dvobj->InterfaceNumber == 1)) {
-#ifdef LGE_PRIVATE
-			RTW_INFO(CLR_LT_RED"%s: usbdev state (%d) "CLR_NONE"\n", __func__,
-					 interface_to_usbdev(usb_intf)->state);
-			if (interface_to_usbdev(usb_intf)->state == USB_STATE_CONFIGURED) {
-				/* Passthrought */
-			} else
-#endif /* LGE_PRIVATE */
 			if (interface_to_usbdev(usb_intf)->state != USB_STATE_NOTATTACHED) {
 				/* If we didn't unplug usb dongle and remove/insert modlue, driver fails on sitesurvey for the first time when device is up . */
 				/* Reset usb port for sitesurvey fail issue. 2009.8.13, by Thomas */
@@ -833,7 +831,7 @@ int rtw_hw_suspend(_adapter *padapter)
 	/* padapter->net_closed = _TRUE; */
 	/* s1. */
 	if (pnetdev) {
-		netif_carrier_off(pnetdev);
+		rtw_netif_carrier_off(pnetdev);
 		rtw_netif_stop_queue(pnetdev);
 	}
 
@@ -891,7 +889,7 @@ int rtw_hw_resume(_adapter *padapter)
 		_exit_pwrlock(&pwrpriv->lock);
 		goto error_exit;
 	}
-
+	rtw_netif_device_attach(pnetdev);
 	rtw_netif_carrier_on(pnetdev);
 
 	rtw_netif_wake_queue(pnetdev);
@@ -937,7 +935,7 @@ static int rtw_suspend(struct usb_interface *pusb_intf, pm_message_t message)
 
 #ifdef SUPPORT_HW_RFOFF_DETECTED
 			/* The FW command register update must after MAC and FW init ready. */
-			if ((padapter->bFWReady) && (pwrpriv->bHWPwrPindetect) && (padapter->registrypriv.usbss_enable)) {
+			if ((GET_HAL_DATA(padapter)->bFWReady) && (pwrpriv->bHWPwrPindetect) && (padapter->registrypriv.usbss_enable)) {
 				u8 bOpen = _TRUE;
 				rtw_interface_ps_func(padapter, HAL_USB_SELECT_SUSPEND, &bOpen);
 			}
@@ -999,7 +997,7 @@ int rtw_resume_process(_adapter *padapter)
 	if (pwrpriv->bInternalAutoSuspend) {
 #ifdef SUPPORT_HW_RFOFF_DETECTED
 		/* The FW command register update must after MAC and FW init ready. */
-		if ((padapter->bFWReady) && (pwrpriv->bHWPwrPindetect) && (padapter->registrypriv.usbss_enable)) {
+		if ((GET_HAL_DATA(padapter)->bFWReady) && (pwrpriv->bHWPwrPindetect) && (padapter->registrypriv.usbss_enable)) {
 			u8 bOpen = _FALSE;
 			rtw_interface_ps_func(padapter, HAL_USB_SELECT_SUSPEND, &bOpen);
 		}
@@ -1031,7 +1029,6 @@ static int rtw_resume(struct usb_interface *pusb_intf)
 	PADAPTER padapter;
 	struct mlme_ext_priv *pmlmeext;
 	int ret = 0;
-	u32 mac_80 = 0;
 
 
 	dvobj = usb_get_intfdata(pusb_intf);
@@ -1040,44 +1037,15 @@ static int rtw_resume(struct usb_interface *pusb_intf)
 	padapter = dvobj_get_primary_adapter(dvobj);
 	pmlmeext = &padapter->mlmeextpriv;
 
-	RTW_INFO("==> %s (%s:%d), MAC_81=%x\n", __FUNCTION__, current->comm, current->pid, rtw_read8(padapter, REG_MCUFW_CTRL+1));
-
-	mac_80 = rtw_read32(padapter, REG_MCUFW_CTRL);
-	if (mac_80 == 0) {
-		mac_reg_dump(0, padapter);
-		rtw_set_surprise_removed(padapter);
-		rtw_init_pwrctrl_priv_reset(padapter);
-		goto exit;
-	}
-
-	if(!(rtw_read8(padapter, REG_MCUFW_CTRL+1) & BIT7) && (pwrpriv->wowlan_mode || pwrpriv->wowlan_ap_mode)) {
-		u8 retry_cnt = 0;
-
-		ret = rtl8822bu_reset_halmac(padapter);
-		#ifdef LGE_PRIVATE
-		while (ret < 0 && retry_cnt < 3) {
-			rtw_msleep_os(50);
-			ret = rtl8822bu_reset_halmac(padapter);
-			retry_cnt ++;
-		}
-		#endif
-		if (ret < 0) {
-			mac_reg_dump(0, padapter);
-			rtw_set_surprise_removed(padapter);
-			rtw_init_pwrctrl_priv_reset(padapter);
-			goto exit;
-		}
-		rtw_hal_power_off(padapter);
-		padapter->bup = _FALSE ;
-		rtw_init_pwrctrl_priv_reset(padapter);
-		pwrpriv->bInSuspend = _TRUE;
-	}
-		
+	RTW_INFO("==> %s (%s:%d)\n", __FUNCTION__, current->comm, current->pid);
 	pdbgpriv->dbg_resume_cnt++;
 
+	#ifdef CONFIG_AUTOSUSPEND
 	if (pwrpriv->bInternalAutoSuspend)
 		ret = rtw_resume_process(padapter);
-	else {
+	else 
+	#endif
+	{
 		if (pwrpriv->wowlan_mode || pwrpriv->wowlan_ap_mode) {
 			rtw_resume_lock_suspend();
 			ret = rtw_resume_process(padapter);
@@ -1097,7 +1065,7 @@ static int rtw_resume(struct usb_interface *pusb_intf)
 #endif
 		}
 	}
-exit:
+
 	pmlmeext->last_scan_time = rtw_get_current_time();
 	RTW_INFO("<========  %s return %d\n", __FUNCTION__, ret);
 
@@ -1284,6 +1252,11 @@ _adapter *rtw_usb_primary_adapter_init(struct dvobj_priv *dvobj,
 	/* step usb endpoint mapping */
 	rtw_hal_chip_configure(padapter);
 
+#ifdef CONFIG_BT_COEXIST
+	rtw_btcoex_Initialize(padapter);
+#endif
+	rtw_btcoex_wifionly_initialize(padapter);
+
 	/* step read efuse/eeprom data and get mac_addr */
 	if (rtw_hal_read_chip_info(padapter) == _FAIL)
 		goto free_hal_data;
@@ -1292,15 +1265,6 @@ _adapter *rtw_usb_primary_adapter_init(struct dvobj_priv *dvobj,
 	if (rtw_init_drv_sw(padapter) == _FAIL) {
 		goto free_hal_data;
 	}
-
-#ifdef CONFIG_BT_COEXIST
-	if (GET_HAL_DATA(padapter)->EEPROMBluetoothCoexist)
-		rtw_btcoex_Initialize(padapter);
-	else
-		rtw_btcoex_wifionly_initialize(padapter);
-#else /* !CONFIG_BT_COEXIST */
-	rtw_btcoex_wifionly_initialize(padapter);
-#endif /* CONFIG_BT_COEXIST */
 
 #ifdef CONFIG_PM
 #if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 18))
@@ -1390,7 +1354,7 @@ static void rtw_usb_primary_adapter_deinit(_adapter *padapter)
 		rtw_disassoc_cmd(padapter, 0, RTW_CMDF_DIRECTLY);
 
 #ifdef CONFIG_AP_MODE
-	if (check_fwstate(&padapter->mlmepriv, WIFI_AP_STATE) == _TRUE) {
+	if (MLME_IS_AP(padapter) || MLME_IS_MESH(padapter)) {
 		free_mlme_ap_info(padapter);
 		#ifdef CONFIG_HOSTAPD_MLME
 		hostapd_mode_unload(padapter);
@@ -1558,7 +1522,7 @@ static void rtw_dev_remove(struct usb_interface *pusb_intf)
 	/*else
 	{
 
-		padapter->HalData->hw_init_completed = _FALSE;
+		rtw_set_hw_init_completed(padapter, _FALSE);
 	}*/
 
 
@@ -1566,7 +1530,7 @@ static void rtw_dev_remove(struct usb_interface *pusb_intf)
 	rtw_unregister_early_suspend(pwrctl);
 #endif
 
-	if (padapter->bFWReady == _TRUE) {
+	if (GET_HAL_DATA(padapter)->bFWReady == _TRUE) {
 		rtw_pm_set_ips(padapter, IPS_NONE);
 		rtw_pm_set_lps(padapter, PS_MODE_ACTIVE);
 
@@ -1633,6 +1597,7 @@ static int __init rtw_drv_entry(void)
 	rtw_suspend_lock_init();
 	rtw_drv_proc_init();
 	rtw_ndev_notifier_register();
+	rtw_inetaddr_notifier_register();
 
 	ret = usb_register(&usb_drv.usbdrv);
 
@@ -1641,6 +1606,7 @@ static int __init rtw_drv_entry(void)
 		rtw_suspend_lock_uninit();
 		rtw_drv_proc_deinit();
 		rtw_ndev_notifier_unregister();
+		rtw_inetaddr_notifier_unregister();
 		goto exit;
 	}
 
@@ -1662,6 +1628,7 @@ static void __exit rtw_drv_halt(void)
 	rtw_suspend_lock_uninit();
 	rtw_drv_proc_deinit();
 	rtw_ndev_notifier_unregister();
+	rtw_inetaddr_notifier_unregister();
 
 	RTW_PRINT("module exit success\n");
 

@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright(c) 2015 Realtek Corporation. All rights reserved.
+ * Copyright(c) 2015 - 2017 Realtek Corporation.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of version 2 of the GNU General Public License as
@@ -11,11 +11,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
  * more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
- *
- ******************************************************************************/
+ *****************************************************************************/
 #ifdef CONFIG_MCC_MODE
 
 #ifndef _RTW_MCC_H_
@@ -173,7 +169,7 @@ struct mcc_adapter_priv {
 
 struct mcc_obj_priv {
 	u8 en_mcc; /* enable MCC or not */
-	u8 duration; /* store duration(%) from registry */
+	u8 duration; /* store duration(%) from registry, for primary adapter */
 	u8 interval;
 	u8 start_time;
 	u8 mcc_c2h_status;
@@ -216,7 +212,7 @@ void rtw_hal_clear_mcc_status(PADAPTER padapter, u8 mcc_status);
 
 /* dl mcc rsvd page */
 u8 rtw_hal_dl_mcc_fw_rsvd_page(_adapter *adapter, u8 *pframe, u16 *index
-	, u8 tx_desc, u32 page_size, u8 *page_num, u32 *total_pkt_len, RSVDPAGE_LOC *rsvd_page_loc);
+	, u8 tx_desc, u32 page_size, u8 *total_page_num, RSVDPAGE_LOC *rsvd_page_loc, u8 *page_num);
 
 /* handle C2H */
 void rtw_hal_mcc_c2h_handler(PADAPTER padapter, u8 buflen, u8 *tmpBuf);
@@ -258,16 +254,16 @@ void rtw_hal_mcc_issue_null_data(_adapter *padapter, u8 chbw_allow, u8 ps_mode);
 
 u8 *rtw_hal_mcc_append_go_p2p_ie(PADAPTER padapter, u8 *pframe, u32 *len);
 
-void rtw_hal_mcc_update_switch_channel_policy_table(PADAPTER padapter);
-
 void rtw_hal_dump_mcc_policy_table(void *sel);
 
-void rtw_hal_mcc_update_macid_bitmap(PADAPTER padapter, u8 mac_id, u8 add);
+void rtw_hal_mcc_update_macid_bitmap(PADAPTER padapter, int mac_id, u8 add);
 
 void rtw_hal_mcc_process_noa(PADAPTER padapter);
 
 void rtw_hal_mcc_parameter_init(PADAPTER padapter);
 
 u8 rtw_set_mcc_duration_hdl(PADAPTER adapter, u8 type, const u8 *val);
+
+u8 rtw_set_mcc_duration_cmd(_adapter *adapter, u8 type, u8 val);
 #endif /* _RTW_MCC_H_ */
 #endif /* CONFIG_MCC_MODE */

@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright(c) 2007 - 2012 Realtek Corporation. All rights reserved.
+ * Copyright(c) 2007 - 2017 Realtek Corporation.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of version 2 of the GNU General Public License as
@@ -11,12 +11,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
  * more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
- *
- *
- ******************************************************************************/
+ *****************************************************************************/
 #ifndef __COMMON_H2C_H__
 #define __COMMON_H2C_H__
 
@@ -85,8 +80,9 @@ enum h2c_cmd {
 	H2C_DYNAMIC_TX_PATH = 0x48,/* for 8814A */
 
 	H2C_FW_TRACE_EN = 0x49,
-	H2C_GENERAL_INFO = 0x4c,
-
+#ifdef RTW_PER_CMD_SUPPORT_FW
+	H2C_REQ_PER_RPT = 0x4e,
+#endif
 	/* BT Class: 011 */
 	H2C_B_TYPE_TDMA = 0x60,
 	H2C_BT_INFO = 0x61,
@@ -120,6 +116,9 @@ enum h2c_cmd {
 	H2C_CUSTOMER_STR_W1 = 0xC6,
 	H2C_CUSTOMER_STR_W2 = 0xC7,
 	H2C_CUSTOMER_STR_W3 = 0xC8,
+#ifdef DBG_FW_DEBUG_MSG_PKT
+	H2C_FW_DBG_MSG_PKT = 0xE1,
+#endif /*DBG_FW_DEBUG_MSG_PKT*/
 	H2C_MAXID,
 };
 
@@ -174,12 +173,16 @@ enum h2c_cmd {
 	#define H2C_LPS_POFF_PARAM_LEN		5
 #endif
 
-#define H2C_GENERAL_INFO_LEN 4
-#define H2C_SINGLE_CHANNELSWITCH_V2_LEN 2
-
 #if defined(CONFIG_BT_COEXIST) && defined(CONFIG_FW_MULTI_PORT_SUPPORT)
 #define H2C_BTC_WL_PORT_ID_LEN	1
 #endif
+
+#ifdef DBG_FW_DEBUG_MSG_PKT
+	#define H2C_FW_DBG_MSG_PKT_LEN	2
+#endif /*DBG_FW_DEBUG_MSG_PKT*/
+
+#define H2C_SINGLE_CHANNELSWITCH_V2_LEN 2
+
 #define eq_mac_addr(a, b)						(((a)[0] == (b)[0] && (a)[1] == (b)[1] && (a)[2] == (b)[2] && (a)[3] == (b)[3] && (a)[4] == (b)[4] && (a)[5] == (b)[5]) ? 1 : 0)
 #define cp_mac_addr(des, src)					((des)[0] = (src)[0], (des)[1] = (src)[1], (des)[2] = (src)[2], (des)[3] = (src)[3], (des)[4] = (src)[4], (des)[5] = (src)[5])
 #define cpIpAddr(des, src)					((des)[0] = (src)[0], (des)[1] = (src)[1], (des)[2] = (src)[2], (des)[3] = (src)[3])
@@ -264,7 +267,8 @@ enum h2c_cmd {
 #define H2C_MSR_ROLE_GO		4
 #define H2C_MSR_ROLE_TDLS	5
 #define H2C_MSR_ROLE_ADHOC	6
-#define H2C_MSR_ROLE_MAX	7
+#define H2C_MSR_ROLE_MESH	7
+#define H2C_MSR_ROLE_MAX	8
 
 extern const char *const _h2c_msr_role_str[];
 #define h2c_msr_role_str(role) (((role) >= H2C_MSR_ROLE_MAX) ? _h2c_msr_role_str[H2C_MSR_ROLE_MAX] : _h2c_msr_role_str[(role)])
@@ -343,23 +347,6 @@ s32 rtw_hal_customer_str_write(_adapter *adapter, const u8 *cs);
 #define SET_H2CCMD_AP_WOW_PS_32K_EN(__pH2CCmd, __Value)		SET_BITS_TO_LE_1BYTE(__pH2CCmd, 1, 1, __Value)
 #define SET_H2CCMD_AP_WOW_PS_RF(__pH2CCmd, __Value)			SET_BITS_TO_LE_1BYTE(__pH2CCmd, 2, 1, __Value)
 #define SET_H2CCMD_AP_WOW_PS_DURATION(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE((__pH2CCmd)+1, 0, 8, __Value)
-
-/* INACTIVE_PS 0x27, duration unit is TBTT */
-#define SET_H2CCMD_INACTIVE_PS_EN(__pH2CCmd, __Value) \
-	SET_BITS_TO_LE_1BYTE(__pH2CCmd, 0, 1, __Value)
-#define SET_H2CCMD_INACTIVE_IGNORE_PS(__pH2CCmd, __Value) \
-	SET_BITS_TO_LE_1BYTE(__pH2CCmd, 1, 1, __Value)
-#define SET_H2CCMD_INACTIVE_PERIOD_SCAN_EN(__pH2CCmd, __Value) \
-	SET_BITS_TO_LE_1BYTE(__pH2CCmd, 2, 1, __Value)
-#define SET_H2CCMD_INACTIVE_DISBBRF(__pH2CCmd, __Value) \
-	SET_BITS_TO_LE_1BYTE(__pH2CCmd, 3, 1, __Value)
-#define SET_H2CCMD_INACTIVE_PS_FREQ(__pH2CCmd, __Value) \
-	SET_BITS_TO_LE_1BYTE(__pH2CCmd + 1, 0, 8, __Value)
-#define SET_H2CCMD_INACTIVE_PS_DURATION(__pH2CCmd, __Value) \
-	SET_BITS_TO_LE_1BYTE(__pH2CCmd + 2, 0, 8, __Value)
-#define SET_H2CCMD_INACTIVE_PS_PERIOD_SCAN_TIME(__pH2CCmd, __Value) \
-	SET_BITS_TO_LE_1BYTE(__pH2CCmd + 3, 0, 8, __Value)
-
 
 #ifdef CONFIG_LPS_POFF
 /*PARTIAL OFF Control 0x29*/
@@ -472,17 +459,10 @@ s32 rtw_hal_customer_str_write(_adapter *adapter, const u8 *cs);
 #define SET_H2CCMD_SINGLE_CH_SWITCH_V2_PRIMARY_CH_IDX(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE((__pH2CCmd) + 1, 0, 4, __Value)
 #define SET_H2CCMD_SINGLE_CH_SWITCH_V2_BW(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE((__pH2CCmd) + 1, 4, 4, __Value)
 
+
 #if defined(CONFIG_BT_COEXIST) && defined(CONFIG_FW_MULTI_PORT_SUPPORT)
 #define SET_H2CCMD_BTC_WL_PORT_ID(__pH2CCmd, __Value) SET_BITS_TO_LE_1BYTE(__pH2CCmd, 0, 4, __Value)
 #endif
-
-/* H2C_GENERAL_INFO 0x4C */
-#define SET_H2CCMD_GENERAL_INFO_RFE_TYPE(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE(__pH2CCmd, 0, 8, __Value)
-#define SET_H2CCMD_GENERAL_INFO_RF_TYPE(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE((__pH2CCmd) + 1, 0, 8, __Value)
-#define SET_H2CCMD_GENERAL_INFO_CUT_VERSION(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE((__pH2CCmd) + 2, 0, 8, __Value)
-#define SET_H2CCMD_GENERAL_INFO_RX_ANT_STATUS(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE((__pH2CCmd) + 3, 0, 4, __Value)
-#define SET_H2CCMD_GENERAL_INFO_TX_ANT_STATUS(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE((__pH2CCmd) + 3, 4, 4, __Value)
-
 
 /* _WoWLAN PARAM_CMD_0x80 */
 #define SET_H2CCMD_WOWLAN_FUNC_ENABLE(__pH2CCmd, __Value)			SET_BITS_TO_LE_1BYTE(__pH2CCmd, 0, 1, __Value)
@@ -498,26 +478,13 @@ s32 rtw_hal_customer_str_write(_adapter *adapter, const u8 *cs);
 #define SET_H2CCMD_WOWLAN_GPIO_DURATION(__pH2CCmd, __Value)			SET_BITS_TO_LE_1BYTE((__pH2CCmd)+2, 0, 8, __Value)
 #define SET_H2CCMD_WOWLAN_GPIO_PULSE_EN(__pH2CCmd, __Value)		SET_BITS_TO_LE_1BYTE((__pH2CCmd)+3, 0, 1, __Value)
 #define SET_H2CCMD_WOWLAN_GPIO_PULSE_COUNT(__pH2CCmd, __Value)		SET_BITS_TO_LE_1BYTE((__pH2CCmd)+3, 1, 7, __Value)
-#define SET_H2CCMD_WOWLAN_LOWPR_RX(__pH2CCmd, __Value)				SET_BITS_TO_LE_1BYTE((__pH2CCmd)+4, 0, 1, __Value)
-#define SET_H2CCMD_WOWLAN_DIS_UPHY(__pH2CCmd, __Value) \
-	SET_BITS_TO_LE_1BYTE((__pH2CCmd)+4, 0, 1, __Value)
-#define SET_H2CCMD_WOWLAN_HOST_2_DEV(__pH2CCmd, __Value) \
-	SET_BITS_TO_LE_1BYTE((__pH2CCmd)+4, 1, 1, __Value)
-
+#define SET_H2CCMD_WOWLAN_DISABLE_UPHY(__pH2CCmd, __Value)				SET_BITS_TO_LE_1BYTE((__pH2CCmd)+4, 0, 1, __Value)
+#define SET_H2CCMD_WOWLAN_HST2DEV_EN(__pH2CCmd, __Value)				SET_BITS_TO_LE_1BYTE((__pH2CCmd)+4, 1, 1, __Value)
+#define SET_H2CCMD_WOWLAN_GPIO_DURATION_MS(__pH2CCmd, __Value)		SET_BITS_TO_LE_1BYTE((__pH2CCmd)+4, 2, 1, __Value)
 #define SET_H2CCMD_WOWLAN_CHANGE_UNIT(__pH2CCmd, __Value)		SET_BITS_TO_LE_1BYTE((__pH2CCmd)+4, 2, 1, __Value)
-
-#define SET_H2CCMD_WOWLAN_DIS_UPHY_UNIT(__pH2CCmd, __Value) \
-	SET_BITS_TO_LE_1BYTE((__pH2CCmd)+4, 3, 1, __Value)
-#define SET_H2CCMD_WOWLAN_DIS_UPHY_TAKE_PDN(__pH2CCmd, __Value) \
-	SET_BITS_TO_LE_1BYTE((__pH2CCmd)+4, 4, 1, __Value)
-#ifdef CONFIG_RTW_ONE_PIN_GPIO
-#define SET_H2CCMD_WOWLAN_DIS_UPHY_GPIO_INPUT(__pH2CCmd, __Value) \
-	SET_BITS_TO_LE_1BYTE((__pH2CCmd)+4, 5, 1, __Value)
-#define SET_H2CCMD_WOWLAN_DIS_UPHY_DEV2HST_EN(__pH2CCmd, __Value) \
-	SET_BITS_TO_LE_1BYTE((__pH2CCmd)+4, 7, 1, __Value)
-#endif /* CONFIG_RTW_ONE_PIN_GPIO */
-#define SET_H2CCMD_WOWLAN_DIS_UPHY_TIME(__pH2CCmd, __Value) \
-	SET_BITS_TO_LE_1BYTE((__pH2CCmd)+5, 0, 8, __Value)
+#define SET_H2CCMD_WOWLAN_UNIT_FOR_UPHY_DISABLE(__pH2CCmd, __Value)		SET_BITS_TO_LE_1BYTE((__pH2CCmd)+4, 3, 1, __Value)
+#define SET_H2CCMD_WOWLAN_TAKE_PDN_UPHY_DIS_EN(__pH2CCmd, __Value)		SET_BITS_TO_LE_1BYTE((__pH2CCmd)+4, 4, 1, __Value)
+#define SET_H2CCMD_WOWLAN_GPIO_INPUT_EN(__pH2CCmd, __Value)		SET_BITS_TO_LE_1BYTE((__pH2CCmd)+4, 5, 1, __Value)
 
 /* _REMOTE_WAKEUP_CMD_0x81 */
 #define SET_H2CCMD_REMOTE_WAKECTRL_ENABLE(__pH2CCmd, __Value)		SET_BITS_TO_LE_1BYTE(__pH2CCmd, 0, 1, __Value)
@@ -547,6 +514,8 @@ s32 rtw_hal_customer_str_write(_adapter *adapter, const u8 *cs);
 #ifdef CONFIG_GTK_OL
 #define SET_H2CCMD_AOAC_RSVDPAGE_LOC_GTK_EXT_MEM(__pH2CCmd, __Value)		SET_BITS_TO_LE_1BYTE((__pH2CCmd)+5, 0, 8, __Value)
 #endif /* CONFIG_GTK_OL */
+#define SET_H2CCMD_AOAC_RSVDPAGE_LOC_NDP_INFO(__pH2CCmd, __Value) \
+	SET_BITS_TO_LE_1BYTE((__pH2CCmd)+6, 0, 8, __Value)
 
 /* AOAC_RSVDPAGE_2_0x84 */
 
@@ -585,6 +554,11 @@ s32 rtw_hal_customer_str_write(_adapter *adapter, const u8 *cs);
 #define SET_H2CCMD_LPSPG_LOC(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE(__pH2CCmd+1, 0, 8, __Value)/*Loc_LPS_PG*/
 #endif
 
+#ifdef DBG_FW_DEBUG_MSG_PKT
+#define SET_H2CCMD_FW_DBG_MSG_PKT_EN(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE(__pH2CCmd, 0, 1, __Value)/*sniffer_dbg_en*/
+#define SET_H2CCMD_RSVDPAGE_LOC_FW_DBG_MSG_PKT(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE((__pH2CCmd)+1, 0, 8, __Value) /*loc_debug_packet*/
+#endif /*DBG_FW_DEBUG_MSG_PKT*/
+
 /* ---------------------------------------------------------------------------------------------------------
  * -------------------------------------------    Structure    --------------------------------------------------
  * --------------------------------------------------------------------------------------------------------- */
@@ -605,6 +579,7 @@ typedef struct _RSVDPAGE_LOC {
 #ifdef CONFIG_GTK_OL
 	u8 LocGTKEXTMEM;
 #endif /* CONFIG_GTK_OL */
+	u8 LocNDPInfo;
 	u8 LocAOACReport;
 #ifdef CONFIG_PNO_SUPPORT
 	u8 LocPNOInfo;
@@ -621,6 +596,9 @@ typedef struct _RSVDPAGE_LOC {
 	u8 LocInviteRsp;
 	u8 LocPDRsp;
 #endif /* CONFIG_P2P_WOWLAN */
+#ifdef DBG_FW_DEBUG_MSG_PKT
+	u8 loc_fw_dbg_msg_pkt;
+#endif /*DBG_FW_DEBUG_MSG_PKT*/
 } RSVDPAGE_LOC, *PRSVDPAGE_LOC;
 
 #endif
@@ -635,4 +613,9 @@ u8 rtw_hal_set_fw_media_status_cmd(_adapter *adapter, u8 mstatus, u8 macid);
 		/* H2C 0x8B */
 		u8 rtw_hal_set_p2p_wowlan_offload_cmd(_adapter *adapter);
 	#endif /* CONFIG_P2P_WOWLAN */
+#endif
+
+#ifdef RTW_PER_CMD_SUPPORT_FW
+u8 rtw_hal_set_req_per_rpt_cmd(_adapter *adapter, u8 group_macid,
+			       u8 rpt_type, u32 macid_bitmap);
 #endif

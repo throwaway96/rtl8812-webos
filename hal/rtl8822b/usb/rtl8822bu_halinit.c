@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright(c) 2015 - 2016 Realtek Corporation. All rights reserved.
+ * Copyright(c) 2015 - 2017 Realtek Corporation.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of version 2 of the GNU General Public License as
@@ -11,12 +11,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
  * more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
- *
- *
- ******************************************************************************/
+ *****************************************************************************/
 #define _RTL8822BU_HALINIT_C_
 
 #include <hal_data.h>			/* HAL DATA */
@@ -52,8 +47,8 @@ u8 rtl8822bu_fw_ips_init(_adapter *padapter)
 	struct pwrctrl_priv *pwrctl = adapter_to_pwrctl(padapter);
 
 	if (pwrctl->bips_processing == _TRUE && psrtpriv->silent_reset_inprogress == _FALSE
-		&& padapter->bFWReady == _TRUE && pwrctl->pre_ips_type == 0) {
-		u32 start_time;
+		&& GET_HAL_DATA(padapter)->bFWReady == _TRUE && pwrctl->pre_ips_type == 0) {
+		systime start_time;
 		u8 cpwm_orig, cpwm_now, rpwm;
 		u8 bMacPwrCtrlOn = _TRUE;
 
@@ -119,7 +114,7 @@ u8 rtl8822bu_fw_ips_deinit(_adapter *padapter)
 	struct pwrctrl_priv *pwrctl = adapter_to_pwrctl(padapter);
 
 	if (pwrctl->bips_processing == _TRUE && psrtpriv->silent_reset_inprogress == _FALSE
-		&& padapter->bFWReady == _TRUE && padapter->netif_up == _TRUE) {
+		&& GET_HAL_DATA(padapter)->bFWReady == _TRUE && padapter->netif_up == _TRUE) {
 		int cnt = 0;
 		u8 val8 = 0, rpwm;
 
@@ -182,19 +177,38 @@ u8 rtl8822bu_fw_ips_deinit(_adapter *padapter)
 
 #endif
 
+static void init_hwled(PADAPTER adapter, u8 enable)
+{
+	u8 mode = 0;
+	struct led_priv *ledpriv = adapter_to_led(adapter);
+
+	if (ledpriv->LedStrategy != HW_LED)
+		return;
+
+	rtw_halmac_led_cfg(adapter_to_dvobj(adapter), enable, mode);
+}
+
+static void hal_init_misc(PADAPTER adapter)
+{
+#ifdef CONFIG_RTW_LED
+	init_hwled(adapter, 1);
+#endif /* CONFIG_RTW_LED */
+
+}
+
 u32 rtl8822bu_init(PADAPTER padapter)
 {
 	u8 status = _SUCCESS;
-	u32 init_start_time = rtw_get_current_time();
+	systime init_start_time = rtw_get_current_time();
 
 #ifdef CONFIG_FWLPS_IN_IPS
 	if (_SUCCESS == rtl8822bu_fw_ips_init(padapter))
 		goto exit;
 #endif
 
-	if (rtl8822b_init(padapter) == _FAIL) {
-		status = _FAIL;
-	}
+	rtl8822b_init(padapter);
+
+	hal_init_misc(padapter);
 
 exit:
 	RTW_INFO("%s in %dms\n", __func__, rtw_get_passing_time_ms(init_start_time));
@@ -202,9 +216,11 @@ exit:
 	return status;
 }
 
-static void hal_deinit_misc(PADAPTER padapter)
+static void hal_deinit_misc(PADAPTER adapter)
 {
-
+#ifdef CONFIG_RTW_LED
+	init_hwled(adapter, 0);
+#endif /* CONFIG_RTW_LED */
 }
 
 u32 rtl8822bu_deinit(PADAPTER padapter)
@@ -399,7 +415,7 @@ void rtl8822bu_interface_configure(PADAPTER padapter)
 #ifdef CONFIG_USB_TX_AGGREGATION
 	/* according to value defined by halmac */
 	pHalData->UsbTxAggMode		= 1;
-	pHalData->UsbTxAggDescNum	= HALMAC_BLK_DESC_NUM_8822B;
+	rtw_halmac_usb_get_txagg_desc_num(pdvobjpriv, &pHalData->UsbTxAggDescNum);
 #endif /* CONFIG_USB_TX_AGGREGATION */
 
 #ifdef CONFIG_USB_RX_AGGREGATION
@@ -410,10 +426,14 @@ void rtl8822bu_interface_configure(PADAPTER padapter)
 	pHalData->rxagg_usb_timeout = 0x10;
 	pHalData->rxagg_usb_stage = RXAGG_DEFAULT;
 #endif /* LGE_PRIVATE */
-#if 0
-	pHalData->rxagg_dma_size = 16;
-	pHalData->rxagg_dma_timeout = 0x6;
-#endif
+#ifdef CONFIG_PLATFORM_NOVATEK_NT72668
+	pHalData->rxagg_usb_size = 0x03;
+	pHalData->rxagg_usb_timeout = 0x20;
+#elif defined(CONFIG_PLATFORM_HISILICON)
+	 /* use 16k to workaround for HISILICON platform */
+	pHalData->rxagg_usb_size = 3;
+	pHalData->rxagg_usb_timeout = 8;
+#endif /* CONFIG_PLATFORM_NOVATEK_NT72668 */
 #endif /* CONFIG_USB_RX_AGGREGATION */
 
 	usb_set_queue_pipe_mapping(padapter,

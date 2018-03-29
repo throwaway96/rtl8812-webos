@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright(c) 2015 - 2016 Realtek Corporation. All rights reserved.
+ * Copyright(c) 2015 - 2017 Realtek Corporation.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of version 2 of the GNU General Public License as
@@ -11,12 +11,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
  * more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
- *
- *
- ******************************************************************************/
+ *****************************************************************************/
 #define _RTL8822B_HALINIT_C_
 
 #include <drv_types.h>		/* PADAPTER, basic_types.h and etc. */
@@ -54,6 +49,12 @@ void rtl8822b_init_hal_spec(PADAPTER adapter)
 			    ;
 
 	hal_spec->hci_type = 0;
+
+	rtw_macid_ctl_init_sleep_reg(adapter_to_macidctl(adapter)
+		, REG_MACID_SLEEP_8822B
+		, REG_MACID_SLEEP1_8822B
+		, REG_MACID_SLEEP2_8822B
+		, REG_MACID_SLEEP3_8822B);
 }
 
 u32 rtl8822b_power_on(PADAPTER adapter)
@@ -82,11 +83,6 @@ u32 rtl8822b_power_on(PADAPTER adapter)
 	bMacPwrCtrlOn = _TRUE;
 	rtw_hal_set_hwreg(adapter, HW_VAR_APFM_ON_MAC, &bMacPwrCtrlOn);
 
-#ifdef CONFIG_BT_COEXIST
-	hal = GET_HAL_DATA(adapter);
-	if (hal->EEPROMBluetoothCoexist)
-		rtw_btcoex_PowerOnSetting(adapter);
-#endif /* CONFIG_BT_COEXIST */
 out:
 	return ret;
 }
@@ -114,7 +110,7 @@ void rtl8822b_power_off(PADAPTER adapter)
 	bMacPwrCtrlOn = _FALSE;
 	rtw_hal_set_hwreg(adapter, HW_VAR_APFM_ON_MAC, &bMacPwrCtrlOn);
 
-	adapter->bFWReady = _FALSE;
+	GET_HAL_DATA(adapter)->bFWReady = _FALSE;
 
 out:
 	return;
@@ -130,7 +126,7 @@ u8 rtl8822b_hal_init(PADAPTER adapter)
 	d = adapter_to_dvobj(adapter);
 	hal = GET_HAL_DATA(adapter);
 
-	adapter->bFWReady = _FALSE;
+	hal->bFWReady = _FALSE;
 	hal->fw_ractrl = _FALSE;
 
 #ifdef CONFIG_FILE_FWIMG
@@ -160,12 +156,12 @@ u8 rtl8822b_hal_init(PADAPTER adapter)
 	
 
 	RTW_INFO("%s Download Firmware from %s success\n", __FUNCTION__, (fw_bin) ? "file" : "array");
-	RTW_INFO("%s FW Version:%d SubVersion:%d SubIndex:%d FW size:%d\n", "NIC",
-		hal->firmware_version, hal->firmware_sub_version, hal->firmware_sub_index, hal->firmware_size);
+	RTW_INFO("%s FW Version:%d SubVersion:%d FW size:%d\n", "NIC",
+		hal->firmware_version, hal->firmware_sub_version, hal->firmware_size);
 
 	/* Sync driver status with hardware setting */
-	rtl8822b_rcr_get(adapter, NULL);
-	adapter->bFWReady = _TRUE;
+	rtw_hal_get_hwreg(adapter, HW_VAR_RCR, NULL);
+	hal->bFWReady = _TRUE;
 	hal->fw_ractrl = _TRUE;
 
 	return _TRUE;
@@ -233,7 +229,7 @@ void rtl8822b_init_misc(PADAPTER adapter)
 	invalidate_cam_all(adapter);
 
 	/* check RCR/ICV bit */
-	rtl8822b_rcr_clear(adapter, BIT_ACRC32_8822B | BIT_AICV_8822B);
+	rtw_hal_rcr_clear(adapter, BIT_ACRC32_8822B | BIT_AICV_8822B);
 
 	/* clear rx ctrl frame */
 	rtw_write16(adapter, REG_RXFLTMAP1_8822B, 0);
@@ -246,13 +242,6 @@ void rtl8822b_init_misc(PADAPTER adapter)
 	rtw_write32(adapter, REG_FWHW_TXQ_CTRL_8822B,
 		rtw_read32(adapter, REG_FWHW_TXQ_CTRL_8822B) | BIT_EN_QUEUE_RPT_8822B(BIT(4)));
 #endif /* CONFIG_XMIT_ACK */
-
-#ifdef CONFIG_MCC_MODE
-	/* RX BAR to update seq number to avoid packet drop */
-	if(MCC_EN(adapter))
-		rtw_write16(adapter, REG_RXFLTMAP1_8822B ,
-			rtw_read16(adapter, REG_RXFLTMAP1_8822B) | BIT_CTRLFLT8EN_8822B);
-#endif
 
 }
 
@@ -297,7 +286,7 @@ u32 rtl8822b_deinit(PADAPTER adapter)
 	d = adapter_to_dvobj(adapter);
 	hal = GET_HAL_DATA(adapter);
 
-	adapter->bFWReady = _FALSE;
+	hal->bFWReady = _FALSE;
 	hal->fw_ractrl = _FALSE;
 
 	err = rtw_halmac_deinit_hal(d);
@@ -326,10 +315,6 @@ void rtl8822b_init_default_value(PADAPTER adapter)
 
 	/* init phydm default value */
 	hal->bIQKInitialized = _FALSE;
-	hal->odmpriv.rf_calibrate_info.tm_trigger = 0; /* for IQK */
-	hal->odmpriv.rf_calibrate_info.thermal_value_hp_index = 0;
-	for (i = 0; i < HP_THERMAL_NUM; i++)
-		hal->odmpriv.rf_calibrate_info.thermal_value_hp[i] = 0;
 
 	/* init Efuse variables */
 	hal->EfuseUsedBytes = 0;

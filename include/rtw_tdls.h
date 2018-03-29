@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
+ * Copyright(c) 2007 - 2017 Realtek Corporation.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of version 2 of the GNU General Public License as
@@ -11,12 +11,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
  * more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
- *
- *
- ******************************************************************************/
+ *****************************************************************************/
 #ifndef __RTW_TDLS_H_
 #define __RTW_TDLS_H_
 
@@ -81,7 +76,7 @@ struct wpa_tdls_ftie {
 		};
 	};
 	/* followed by optional elements */
-};
+} ;
 
 struct wpa_tdls_lnkid {
 	u8 ie_type; /* Link Identifier IE */
@@ -121,16 +116,18 @@ u8 rtw_tdls_is_setup_allowed(_adapter *padapter);
 u8 rtw_tdls_is_chsw_allowed(_adapter *padapter);
 #endif
 
+void rtw_tdls_set_link_established(_adapter *adapter, bool en);
 void rtw_reset_tdls_info(_adapter *padapter);
 int rtw_init_tdls_info(_adapter *padapter);
 void rtw_free_tdls_info(struct tdls_info *ptdlsinfo);
-void rtw_free_all_tdls_sta(_adapter *padapter, u8 from_cmd_thread);
+void rtw_free_all_tdls_sta(_adapter *padapter, u8 enqueue_cmd);
 void rtw_enable_tdls_func(_adapter *padapter);
-void rtw_disable_tdls_func(_adapter *padapter, u8 from_cmd_thread);
+void rtw_disable_tdls_func(_adapter *padapter, u8 enqueue_cmd);
 int issue_nulldata_to_TDLS_peer_STA(_adapter *padapter, unsigned char *da, unsigned int power_mode, int try_cnt, int wait_ms);
 void rtw_init_tdls_timer(_adapter *padapter, struct sta_info *psta);
-void	rtw_free_tdls_timer(struct sta_info *psta);
-void free_tdls_sta(_adapter *padapter, struct sta_info *ptdls_sta);
+void	rtw_cancel_tdls_timer(struct sta_info *psta);
+void rtw_tdls_teardown_pre_hdl(_adapter *padapter, struct sta_info *psta);
+void rtw_tdls_teardown_post_hdl(_adapter *padapter, struct sta_info *psta, u8 enqueue_cmd);
 
 #ifdef CONFIG_TDLS_CH_SW
 void rtw_tdls_set_ch_sw_oper_control(_adapter *padapter, u8 enable);
@@ -180,7 +177,6 @@ void rtw_build_tdls_peer_traffic_indication_ies(_adapter *padapter, struct xmit_
 void rtw_build_tunneled_probe_req_ies(_adapter *padapter, struct xmit_frame *pxmitframe, u8 *pframe);
 void rtw_build_tunneled_probe_rsp_ies(_adapter *padapter, struct xmit_frame *pxmitframe, u8 *pframe);
 
-u32 update_mask_tdls(_adapter *padapter, struct sta_info *psta);
 int rtw_tdls_is_driver_setup(_adapter *padapter);
 void rtw_tdls_set_key(_adapter *padapter, struct sta_info *ptdls_sta);
 const char *rtw_tdls_action_txt(enum TDLS_ACTION_FIELD action);
