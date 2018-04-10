@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright(c) 2013 - 2017 Realtek Corporation.
+ * Copyright(c) 2013 Realtek Corporation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of version 2 of the GNU General Public License as
@@ -11,12 +11,16 @@
  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
  * more details.
  *
- *****************************************************************************/
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
+ *
+ *
+ ******************************************************************************/
 
-#ifndef LGE_PRIVATE
-#error "You have defined CONFIG_CUSTOMIZED_COUNTRY_CHPLAN_MAP to use a customized map of your own instead of the default one"
-#error "Before removing these error notifications, please make sure regulatory certification requirements of your target markets"
-#else
+//#error "You have defined CONFIG_CUSTOMIZED_COUNTRY_CHPLAN_MAP to use a customized map of your own instead of the default one"
+//#error "Before removing these error notifications, please make sure regulatory certification requirements of your target markets"
+
 static const struct country_chplan CUSTOMIZED_country_chplan_map[] = {
 	COUNTRY_CHPLAN_ENT2("AU", 0x22, 1, 0x1FB, 0), /* Australia */
 	COUNTRY_CHPLAN_ENT2("BO", 0x23, 1, 0x1F1, 0), /* Bolivia */
@@ -52,5 +56,4 @@ static const struct country_chplan CUSTOMIZED_country_chplan_map[] = {
 	COUNTRY_CHPLAN_ENT2("UA", 0x38, 1, 0x1FB, 0), /* Ukraine */
 	COUNTRY_CHPLAN_ENT2("US", 0x39, 1, 0x1FF, 0), /* United States of America (USA) */
 };
-#endif /* LGE_PRIVATE */
 

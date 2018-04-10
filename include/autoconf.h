@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright(c) 2015 - 2017 Realtek Corporation.
+ * Copyright(c) 2015 - 2016 Realtek Corporation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of version 2 of the GNU General Public License as
@@ -11,7 +11,12 @@
  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
  * more details.
  *
- *****************************************************************************/
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
+ *
+ *
+ ******************************************************************************/
 #define CONFIG_SINGLE_IMG
 /* #define CONFIG_DISABLE_ODM */
 
@@ -76,13 +81,18 @@
 
 #define CONFIG_RECV_REORDERING_CTRL	1
 
+/* #define CONFIG_TCP_CSUM_OFFLOAD_RX	1 */
+
+/* #define CONFIG_DRVEXT_MODULE	1 */
+
+
 /* #define CONFIG_SUPPORT_USB_INT */
 #ifdef CONFIG_SUPPORT_USB_INT
 	/* #define CONFIG_USB_INTERRUPT_IN_PIPE  1 */
 #endif /* CONFIG_SUPPORT_USB_INT */
 
-#ifdef CONFIG_POWER_SAVING
-	/* #define CONFIG_IPS	1 */
+/* #ifndef CONFIG_MP_INCLUDED */
+	#define CONFIG_IPS	1
 	#ifdef CONFIG_IPS
 	/* #define CONFIG_IPS_LEVEL_2 1*/ /*enable this to set default IPS mode to IPS_LEVEL_2*/
 	#define CONFIG_IPS_CHECK_IN_WD /* Do IPS Check in WatchDog.	*/
@@ -92,7 +102,7 @@
 
 	#define CONFIG_LPS	1
 	#if defined(CONFIG_LPS)
-		/* #define CONFIG_LPS_LCLK	1 */
+		#define CONFIG_LPS_LCLK	1
 	#endif
 
 	#ifdef CONFIG_LPS_LCLK
@@ -106,10 +116,6 @@
 		/* #define DBG_CHECK_FW_PS_STATE */
 	#endif /* CONFIG_LPS_LCLK */
 
-	#ifdef CONFIG_LPS
-		#define CONFIG_WMMPS_STA 1
-	#endif /* CONFIG_LPS */
-#endif /*CONFIG_POWER_SAVING*/
 	/* before link */
 	/* #define CONFIG_ANTENNA_DIVERSITY */
 
@@ -118,6 +124,19 @@
 	#define CONFIG_HW_ANTENNA_DIVERSITY
 	#endif
 
+
+	/*#define CONFIG_CONCURRENT_MODE 1 */
+	#ifdef CONFIG_CONCURRENT_MODE
+		/* #define CONFIG_HWPORT_SWAP */				/* Port0->Sec , Port1->Pri */
+		/*#define CONFIG_RUNTIME_PORT_SWITCH*/
+		/* #define DBG_RUNTIME_PORT_SWITCH */
+		#define CONFIG_SCAN_BACKOP
+		#if 0
+		#ifdef CONFIG_RTL8812A
+			#define CONFIG_TSF_RESET_OFFLOAD 1		/* For 2 PORT TSF SYNC. */
+		#endif
+		#endif
+	#endif
 
 /*#else*/	/* CONFIG_MP_INCLUDED */
 
@@ -154,7 +173,7 @@
 	/* #define CONFIG_P2P_IPS */
 	#define CONFIG_P2P_OP_CHK_SOCIAL_CH
 	#define CONFIG_CFG80211_ONECHANNEL_UNDER_CONCURRENT  /* replace CONFIG_P2P_CHK_INVITE_CH_LIST flag */
-	/*#define CONFIG_P2P_INVITE_IOT*/
+	#define CONFIG_P2P_INVITE_IOT
 #endif
 
 /*	Added by Kurt 20110511 */
@@ -167,24 +186,22 @@
 */
 	/* #define CONFIG_TDLS_AUTOSETUP */
 	#define CONFIG_TDLS_AUTOCHECKALIVE
-	/* #define CONFIG_TDLS_CH_SW */		/* Enable "CONFIG_TDLS_CH_SW" by default, however limit it to only work in wifi logo test mode but not in normal mode currently */
+	/* #define CONFIG_TDLS_CH_SW */
 #endif
 
 
 #define CONFIG_SKB_COPY	1 /* amsdu */
 
-#define CONFIG_RTW_LED
-#ifdef CONFIG_RTW_LED
-	#define CONFIG_RTW_SW_LED
-	#ifdef CONFIG_RTW_SW_LED
-		/* #define CONFIG_RTW_LED_HANDLED_BY_CMD_THREAD */
+#define CONFIG_LED
+#ifdef CONFIG_LED
+	#define CONFIG_SW_LED
+	#ifdef CONFIG_SW_LED
+		/* #define CONFIG_LED_HANDLED_BY_CMD_THREAD */
 	#endif
-#endif /* CONFIG_RTW_LED */
+#endif /* CONFIG_LED */
 
 #define USB_INTERFERENCE_ISSUE /* this should be checked in all usb interface */
 #define CONFIG_GLOBAL_UI_PID
-
-/*#define CONFIG_RTW_80211K*/
 
 #define CONFIG_LAYER2_ROAMING
 #define CONFIG_LAYER2_ROAMING_RESUME
@@ -194,10 +211,11 @@
 /*#define CONFIG_SET_SCAN_DENY_TIMER */
 #define CONFIG_LONG_DELAY_ISSUE
 #define CONFIG_NEW_SIGNAL_STAT_PROCESS
-#define CONFIG_SIGNAL_DISPLAY_DBM /*display RX signal with dbm */
-#ifdef CONFIG_SIGNAL_DISPLAY_DBM
+
+
+/*#define CONFIG_SIGNAL_DISPLAY_DBM*/ /*display RX signal with dbm */
 #define CONFIG_BACKGROUND_NOISE_MONITOR
-#endif
+
 #define RTW_NOTCH_FILTER 0 /* 0:Disable, 1:Enable, */
 
 #define CONFIG_TX_MCAST2UNI		/*Support IP multicast->unicast*/
@@ -275,6 +293,22 @@
 /*
  * Platform  Related Config
  */
+#ifdef CONFIG_PLATFORM_MN10300
+	#define CONFIG_SPECIAL_SETTING_FOR_FUNAI_TV
+	#define CONFIG_USE_USB_BUFFER_ALLOC_RX
+
+	#if defined(CONFIG_SW_ANTENNA_DIVERSITY)
+		#undef CONFIG_SW_ANTENNA_DIVERSITY
+		#define CONFIG_HW_ANTENNA_DIVERSITY
+	#endif
+
+	#if defined(CONFIG_POWER_SAVING)
+		#undef CONFIG_POWER_SAVING
+	#endif
+
+#endif /* CONFIG_PLATFORM_MN10300 */
+
+
 #if defined(CONFIG_PLATFORM_ACTIONS_ATM702X)
 	#ifdef CONFIG_USB_TX_AGGREGATION
 		#undef CONFIG_USB_TX_AGGREGATION
@@ -301,6 +335,8 @@
 #endif
 
 #define	RTL8188E_EARLY_MODE_PKT_NUM_10	0
+
+#define CONFIG_80211D
 
 #define CONFIG_ATTEMPT_TO_FIX_AP_BEACON_ERROR
 
@@ -341,5 +377,3 @@
 
 #define DBG_MEMORY_LEAK	1
 */
-
-/*#define DBG_FW_DEBUG_MSG_PKT*/  /* FW use this feature to tx debug broadcast pkt. This pkt include FW debug message*/

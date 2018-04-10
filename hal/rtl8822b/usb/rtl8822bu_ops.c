@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright(c) 2015 - 2017 Realtek Corporation.
+ * Copyright(c) 2015 - 2016 Realtek Corporation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of version 2 of the GNU General Public License as
@@ -11,7 +11,12 @@
  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
  * more details.
  *
- *****************************************************************************/
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
+ *
+ *
+ ******************************************************************************/
 #define _RTL8822BU_OPS_C_
 
 #include <drv_types.h>			/* PADAPTER, basic_types.h and etc. */
@@ -33,60 +38,34 @@ void rtl8822bu_set_hw_type(struct dvobj_priv *pdvobj)
 	RTW_INFO("CHIP TYPE: RTL8822B\n");
 }
 
-static u8 sethwreg(PADAPTER padapter, u8 variable, u8 *val)
+static void sethwreg(PADAPTER padapter, u8 variable, u8 *val)
 {
 	HAL_DATA_TYPE *pHalData = GET_HAL_DATA(padapter);
 	struct dvobj_priv	*pdvobjpriv = adapter_to_dvobj(padapter);
 	struct pwrctrl_priv *pwrctl = adapter_to_pwrctl(padapter);
 	struct registry_priv *registry_par = &padapter->registrypriv;
 	int status = 0;
-	u8 ret = _SUCCESS;
 	u8 change = _FALSE;
 
 	switch (variable) {
 	case HW_VAR_RXDMA_AGG_PG_TH:
 #ifdef CONFIG_USB_RX_AGGREGATION
 #ifdef LGE_PRIVATE
-		if (pdvobjpriv->traffic_stat.cur_rx_tp > 50
-			&& pHalData->rxagg_usb_stage == RXAGG_DEFAULT) {
+		if (pdvobjpriv->traffic_stat.cur_rx_tp > 50 && pHalData->rxagg_usb_stage == RXAGG_DEFAULT) {
 			pHalData->rxagg_usb_timeout = 0x10;
 			pHalData->rxagg_usb_size = 0x05;
 			pHalData->rxagg_usb_stage = RXAGG_RX_HIGH;
 			change = _TRUE;
-		} else if (pdvobjpriv->traffic_stat.cur_rx_tp < 40
-			&& pHalData->rxagg_usb_stage != RXAGG_DEFAULT) {
+		} else if(pdvobjpriv->traffic_stat.cur_rx_tp < 40 && pHalData->rxagg_usb_stage != RXAGG_DEFAULT) {
 			/* default 8K */
 			pHalData->rxagg_usb_timeout = 0x10;
 			pHalData->rxagg_usb_size = 0x1;
 			pHalData->rxagg_usb_stage = RXAGG_DEFAULT;
 			change = _TRUE;
 		}
-
-		if (change)
-			rtw_halmac_rx_agg_switch(pdvobjpriv, _TRUE);
-#else
-		if (pdvobjpriv->traffic_stat.cur_tx_tp < 1 && pdvobjpriv->traffic_stat.cur_rx_tp < 1) {
-			/* for low traffic, do not usb AGGREGATION */
-			pHalData->rxagg_usb_timeout = 0x01;
-			pHalData->rxagg_usb_size = 0x01;
-
-		} else {
-#ifdef CONFIG_PLATFORM_NOVATEK_NT72668
-			pHalData->rxagg_usb_timeout = 0x20;
-			pHalData->rxagg_usb_size = 0x03;
-#elif defined(CONFIG_PLATFORM_HISILICON)
-			/* use 16k to workaround for HISILICON platform */
-			pHalData->rxagg_usb_timeout = 8;
-			pHalData->rxagg_usb_size = 3;
-#else
-			/* default setting */
-			pHalData->rxagg_usb_timeout = 0x20;
-			pHalData->rxagg_usb_size = 0x05;
-#endif
-		}
-		rtw_halmac_rx_agg_switch(pdvobjpriv, _TRUE);
 #endif /* LGE_PRIVATE */
-
+		if(change)
+			rtw_halmac_rx_agg_switch(pdvobjpriv, _TRUE);
 #if 0
 		RTW_INFO("\n==========RAFFIC_STATISTIC==============\n");
 		RTW_INFO("cur_tx_bytes:%lld\n", pdvobjpriv->traffic_stat.cur_tx_bytes);
@@ -151,11 +130,9 @@ static u8 sethwreg(PADAPTER padapter, u8 variable, u8 *val)
 	}
 	break;
 	default:
-		ret = rtl8822b_sethwreg(padapter, variable, val);
+		rtl8822b_sethwreg(padapter, variable, val);
 		break;
 	}
-
-	return ret;
 }
 
 static void gethwreg(PADAPTER padapter, u8 variable, u8 *val)
@@ -172,7 +149,7 @@ static void gethwreg(PADAPTER padapter, u8 variable, u8 *val)
 	case HW_VAR_RPWM_TOG:
 #ifdef CONFIG_LPS_LCLK
 		*val = rtw_read8(padapter, REG_USB_HRPWM_8822B);
-		*val &= BIT_TOGGLE_8822B;
+		*val &= BIT_TOGGLING_8822B;
 #endif /* CONFIG_LPS_LCLK */
 		break;
 
@@ -248,36 +225,6 @@ static u8 rtl8822bu_ps_func(PADAPTER padapter, HAL_INTF_PS_FUNC efunc_id, u8 *va
 	return bResult;
 }
 
-#ifdef CONFIG_RTW_LED
-static void read_ledsetting(PADAPTER adapter)
-{
-	struct led_priv *ledpriv = adapter_to_led(adapter);
-
-#ifdef CONFIG_RTW_SW_LED
-	PHAL_DATA_TYPE hal;
-	
-	hal = GET_HAL_DATA(adapter);
-	ledpriv->bRegUseLed = _TRUE;
-
-	switch (hal->EEPROMCustomerID) {
-	default:
-		hal->CustomerID = RT_CID_DEFAULT;
-		break;
-	}
-
-	switch (hal->CustomerID) {
-	case RT_CID_DEFAULT:
-	default:
-		ledpriv->LedStrategy = SW_LED_MODE9;
-		break;
-	}
-#else /* HW LED */
-	ledpriv->LedStrategy = HW_LED;
-#endif /* CONFIG_RTW_SW_LED */
-}
-#endif /* CONFIG_RTW_LED */
- 
-
 /*
  * Description:
  *	Collect all hardware information, fill "HAL_DATA_TYPE".
@@ -289,13 +236,12 @@ static void read_ledsetting(PADAPTER adapter)
  */
 static u8 read_adapter_info(PADAPTER padapter)
 {
-	u8 ret = _FAIL;
-
 	/*
 	 * 1. Read Efuse/EEPROM to initialize
 	 */
-	if (rtl8822b_read_efuse(padapter) != _SUCCESS)
-		goto exit;
+	if (rtl8822b_read_efuse(padapter) != _SUCCESS) {
+		return _FAIL;
+	}
 
 	/*
 	 * 2. Read registers to initialize
@@ -304,17 +250,16 @@ static u8 read_adapter_info(PADAPTER padapter)
 	/*
 	 * 3. Other Initialization
 	 */
-
-#ifdef CONFIG_RTW_LED
-	read_ledsetting(padapter);
-#endif /* CONFIG_RTW_LED */
-
-	ret = _SUCCESS;
-
-exit:
-	return ret;
+	return _SUCCESS;
 }
 
+int rtl8822bu_reset_halmac(PADAPTER padapter)
+{
+	int ret = 0;
+	ret = rtl8822bu_halmac_reset_adapter(padapter);
+
+	return ret;
+}
 
 void rtl8822bu_set_hal_ops(PADAPTER padapter)
 {
@@ -343,9 +288,12 @@ void rtl8822bu_set_hal_ops(PADAPTER padapter)
 
 	ops->init_recv_priv = rtl8822bu_init_recv_priv;
 	ops->free_recv_priv = rtl8822bu_free_recv_priv;
-#ifdef CONFIG_RTW_SW_LED
+#ifdef CONFIG_SW_LED
 	ops->InitSwLeds = rtl8822bu_initswleds;
 	ops->DeInitSwLeds = rtl8822bu_deinitswleds;
+#else
+	ops->InitSwLeds = NULL;
+	ops->DeInitSwLeds = NULL;
 #endif
 
 	ops->init_default_value = rtl8822bu_init_default_value;

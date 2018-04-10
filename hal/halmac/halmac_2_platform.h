@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright(c) 2015 - 2018 Realtek Corporation. All rights reserved.
+ * Copyright(c) 2015 - 2016 Realtek Corporation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of version 2 of the GNU General Public License as
@@ -11,8 +11,12 @@
  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
  * more details.
  *
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
+ *
+ *
  ******************************************************************************/
-
 #ifndef _HALMAC_2_PLATFORM_H_
 #define _HALMAC_2_PLATFORM_H_
 
@@ -34,6 +38,14 @@
 #endif
 
 #define HALMAC_INLINE	inline
+
+typedef u8	*pu8;
+typedef u16	*pu16;
+typedef u32	*pu32;
+typedef s8	*ps8;
+typedef s16	*ps16;
+typedef s32	*ps32;
+
 
 #define HALMAC_PLATFORM_LITTLE_ENDIAN	1
 #define HALMAC_PLATFORM_BIG_ENDIAN	0
@@ -58,20 +70,12 @@
 /*[Driver] config if enable the dbg msg or notl*/
 #define HALMAC_DBG_MSG_ENABLE		1
 
-#define HALMAC_MSG_LEVEL_TRACE		3
-#define HALMAC_MSG_LEVEL_WARNING	2
-#define HALMAC_MSG_LEVEL_ERR		1
-#define HALMAC_MSG_LEVEL_NO_LOG		0
-/*[Driver] config halmac msg level
- * Use HALMAC_MSG_LEVEL_XXXX
- */
-#define HALMAC_MSG_LEVEL HALMAC_MSG_LEVEL_TRACE
+/*[Driver] define the Platform SDIO Bus CLK */
+#define PLATFORM_SD_CLK	50000000 /*50MHz*/
 
 /*[Driver] define the Rx FIFO expanding mode packet size unit for 8821C and 8822B */
 /*Should be 8 Byte alignment*/
-#define HALMAC_RX_FIFO_EXPANDING_MODE_PKT_SIZE	80 /*Bytes*/
-
-#define HALMAC_USE_TYPEDEF		0
+#define HALMAC_RX_FIFO_EXPANDING_MODE_PKT_SIZE	16 /*Bytes*/
 
 /*[Driver] provide the type mutex*/
 /* Mutex type */

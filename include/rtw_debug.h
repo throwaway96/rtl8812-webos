@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright(c) 2007 - 2017 Realtek Corporation.
+ * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of version 2 of the GNU General Public License as
@@ -11,7 +11,12 @@
  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
  * more details.
  *
- *****************************************************************************/
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
+ *
+ *
+ ******************************************************************************/
 #ifndef __RTW_DEBUG_H__
 #define __RTW_DEBUG_H__
 
@@ -28,7 +33,6 @@ enum {
 
 #define DRIVER_PREFIX "RTW: "
 
-#define CLR_NONEN "\033[0m\n"
 #define CLR_NONE "\033[0m"
 #define CLR_RED "\033[0;32;31m"
 #define CLR_LT_RED "\033[1;31m"
@@ -81,11 +85,15 @@ extern void rtl871x_cedbg(const char *fmt, ...);
 #define RTW_INFO_DUMP(_TitleString, _HexData, _HexDataLen) do {} while (0)
 #define RTW_DBG_DUMP(_TitleString, _HexData, _HexDataLen) do {} while (0)
 #define RTW_PRINT_DUMP(_TitleString, _HexData, _HexDataLen) do {} while (0)
+#define _RTW_INFO_DUMP(_TitleString, _HexData, _HexDataLen) do {} while (0)
+#define _RTW_DBG_DUMP(_TitleString, _HexData, _HexDataLen) do {} while (0)
 
 #define RTW_DBG_EXPR(EXPR) do {} while (0)
 
 #define RTW_DBGDUMP 0 /* 'stream' for _dbgdump */
 
+/* don't use these 3 APIs anymore, will be removed later */
+#define RT_TRACE(_Comp, _Level, Fmt) do {} while (0)
 
 
 #undef _dbgdump
@@ -93,28 +101,17 @@ extern void rtl871x_cedbg(const char *fmt, ...);
 
 #if defined(PLATFORM_WINDOWS) && defined(PLATFORM_OS_XP)
 	#define _dbgdump DbgPrint
-	#define KERN_CONT
 	#define _seqdump(sel, fmt, arg...) _dbgdump(fmt, ##arg)
 #elif defined(PLATFORM_WINDOWS) && defined(PLATFORM_OS_CE)
 	#define _dbgdump rtl871x_cedbg
-	#define KERN_CONT
 	#define _seqdump(sel, fmt, arg...) _dbgdump(fmt, ##arg)
 #elif defined PLATFORM_LINUX
 	#define _dbgdump printk
-	#if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 24))
-	#define KERN_CONT
-	#endif
 	#define _seqdump seq_printf
 #elif defined PLATFORM_FREEBSD
 	#define _dbgdump printf
-	#if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 24))
-	#define KERN_CONT
-	#endif
 	#define _seqdump(sel, fmt, arg...) _dbgdump(fmt, ##arg)
 #endif
-
-void RTW_BUF_DUMP_SEL(uint _loglevel, void *sel, u8 *_titlestring,
-								bool _idx_show, const u8 *_hexdata, int _hexdatalen);
 
 #ifdef CONFIG_RTW_DEBUG
 
@@ -167,25 +164,65 @@ extern uint rtw_drv_log_level;
 		} \
 	} while (0)
 
+
 #undef RTW_INFO_DUMP
-#define RTW_INFO_DUMP(_TitleString, _HexData, _HexDataLen)	\
-	RTW_BUF_DUMP_SEL(_DRV_INFO_, RTW_DBGDUMP, _TitleString, _FALSE, _HexData, _HexDataLen)
+#define RTW_INFO_DUMP(_TitleString, _HexData, _HexDataLen)			\
+	do {\
+		if (_DRV_INFO_ <= rtw_drv_log_level) {	\
+			int __i;								\
+			u8	*ptr = (u8 *)_HexData;				\
+			_dbgdump("%s", DRIVER_PREFIX);						\
+			_dbgdump(_TitleString);						\
+			for (__i = 0; __i < (int)_HexDataLen; __i++) {				\
+				_dbgdump("%02X%s", ptr[__i], (((__i + 1) % 4) == 0) ? "  " : " ");	\
+				if (((__i + 1) % 16) == 0)	\
+					_dbgdump("\n");			\
+			}								\
+			_dbgdump("\n");							\
+		} \
+	} while (0)
 
 #undef RTW_DBG_DUMP
-#define RTW_DBG_DUMP(_TitleString, _HexData, _HexDataLen)	\
-	RTW_BUF_DUMP_SEL(_DRV_DEBUG_, RTW_DBGDUMP, _TitleString, _FALSE, _HexData, _HexDataLen)
+#define RTW_DBG_DUMP(_TitleString, _HexData, _HexDataLen)			\
+	do {\
+		if (_DRV_DEBUG_ <= rtw_drv_log_level) { \
+			int __i;								\
+			u8	*ptr = (u8 *)_HexData;				\
+			_dbgdump("%s", DRIVER_PREFIX);						\
+			_dbgdump(_TitleString);						\
+			for (__i = 0; __i < (int)_HexDataLen; __i++) {				\
+				_dbgdump("%02X%s", ptr[__i], (((__i + 1) % 4) == 0) ? "  " : " ");	\
+				if (((__i + 1) % 16) == 0)	\
+					_dbgdump("\n");			\
+			}								\
+			_dbgdump("\n");							\
+		} \
+	} while (0)
 
 
 #undef RTW_PRINT_DUMP
-#define RTW_PRINT_DUMP(_TitleString, _HexData, _HexDataLen)	\
-	RTW_BUF_DUMP_SEL(_DRV_ALWAYS_, RTW_DBGDUMP, _TitleString, _FALSE, _HexData, _HexDataLen)
+#define RTW_PRINT_DUMP(_TitleString, _HexData, _HexDataLen)			\
+	do {\
+		if (_DRV_ALWAYS_ <= rtw_drv_log_level) { \
+			int __i;								\
+			u8	*ptr = (u8 *)_HexData;				\
+			_dbgdump("%s", DRIVER_PREFIX);						\
+			_dbgdump(_TitleString); 					\
+			for (__i = 0; __i < (int)_HexDataLen; __i++) {				\
+				_dbgdump("%02X%s", ptr[__i], (((__i + 1) % 4) == 0) ? "  " : " ");	\
+				if (((__i + 1) % 16) == 0)	\
+					_dbgdump("\n"); 		\
+			}								\
+			_dbgdump("\n"); 						\
+		} \
+	} while (0)
 
 /* without driver-defined prefix */
 #undef _RTW_PRINT
 #define _RTW_PRINT(fmt, arg...)     \
 	do {\
 		if (_DRV_ALWAYS_ <= rtw_drv_log_level) {\
-			_dbgdump(KERN_CONT fmt, ##arg);\
+			_dbgdump(fmt, ##arg);\
 		} \
 	} while (0)
 
@@ -193,7 +230,7 @@ extern uint rtw_drv_log_level;
 #define _RTW_ERR(fmt, arg...)     \
 	do {\
 		if (_DRV_ERR_ <= rtw_drv_log_level) {\
-			_dbgdump(KERN_CONT fmt, ##arg);\
+			_dbgdump(fmt, ##arg);\
 		} \
 	} while (0)
 
@@ -202,7 +239,7 @@ extern uint rtw_drv_log_level;
 #define _RTW_WARN(fmt, arg...)     \
 	do {\
 		if (_DRV_WARNING_ <= rtw_drv_log_level) {\
-			_dbgdump(KERN_CONT fmt, ##arg);\
+			_dbgdump(fmt, ##arg);\
 		} \
 	} while (0)
 
@@ -210,7 +247,7 @@ extern uint rtw_drv_log_level;
 #define _RTW_INFO(fmt, arg...)     \
 	do {\
 		if (_DRV_INFO_ <= rtw_drv_log_level) {\
-			_dbgdump(KERN_CONT fmt, ##arg);\
+			_dbgdump(fmt, ##arg);\
 		} \
 	} while (0)
 
@@ -218,10 +255,38 @@ extern uint rtw_drv_log_level;
 #define _RTW_DBG(fmt, arg...)     \
 	do {\
 		if (_DRV_DEBUG_ <= rtw_drv_log_level) {\
-			_dbgdump(KERN_CONT fmt, ##arg);\
+			_dbgdump(fmt, ##arg);\
 		} \
 	} while (0)
 
+
+#undef _RTW_INFO_DUMP
+#define _RTW_INFO_DUMP(_TitleString, _HexData, _HexDataLen)			\
+	if (_DRV_INFO_ <= rtw_drv_log_level) {	\
+		int __i;								\
+		u8	*ptr = (u8 *)_HexData;				\
+		_dbgdump(_TitleString);						\
+		for (__i = 0; __i<(int)_HexDataLen; __i++)				\
+		{								\
+			_dbgdump("%02X%s", ptr[__i], (((__i + 1) % 4) == 0) ? "  " : " ");	\
+			if (((__i + 1) % 16) == 0)	_dbgdump("\n");			\
+		}								\
+		_dbgdump("\n");							\
+	}
+
+#undef _RTW_DBG_DUMP
+#define _RTW_DBG_DUMP(_TitleString, _HexData, _HexDataLen)			\
+	if (_DRV_DEBUG_ <= rtw_drv_log_level) { \
+		int __i;								\
+		u8	*ptr = (u8 *)_HexData;				\
+		_dbgdump(_TitleString);						\
+		for (__i = 0; __i<(int)_HexDataLen; __i++)				\
+		{								\
+			_dbgdump("%02X%s", ptr[__i], (((__i + 1) % 4) == 0) ? "  " : " ");	\
+			if (((__i + 1) % 16) == 0)	_dbgdump("\n");			\
+		}								\
+		_dbgdump("\n");							\
+	}
 
 /* other debug APIs */
 #undef RTW_DBG_EXPR
@@ -255,12 +320,31 @@ extern uint rtw_drv_log_level;
 	} while (0)
 
 /* dump message to selected 'stream' */
-#undef RTW_DUMP_SEL
-#define RTW_DUMP_SEL(sel, _HexData, _HexDataLen) \
-	RTW_BUF_DUMP_SEL(_DRV_ALWAYS_, sel, NULL, _FALSE, _HexData, _HexDataLen)
+#undef _RTW_DUMP_SEL
+#define _RTW_DUMP_SEL(sel, _HexData, _HexDataLen) \
+	do {\
+		if (sel == RTW_DBGDUMP) {\
+			int __i;								\
+			u8	*ptr = (u8 *)_HexData;				\
+			for (__i = 0; __i < (int)_HexDataLen; __i++) {				\
+				_dbgdump("%02X%s", ptr[__i], (((__i + 1) % 4) == 0) ? "  " : " ");	\
+				if (((__i + 1) % 16) == 0)	\
+					_dbgdump("\n");			\
+			}								\
+			_dbgdump("\n");							\
+		} \
+		else {\
+			int __i;								\
+			u8	*ptr = (u8 *)_HexData;				\
+			for (__i = 0; __i < (int)_HexDataLen; __i++) {				\
+				_seqdump(sel, "%02X%s", ptr[__i], (((__i + 1) % 4) == 0) ? "  " : " ");	\
+				if (((__i + 1) % 16) == 0)	\
+					_seqdump(sel, "\n");			\
+			}								\
+			_seqdump(sel, "\n");							\
+		} \
+	} while (0)
 
-#define RTW_MAP_DUMP_SEL(sel, _TitleString, _HexData, _HexDataLen) \
-	RTW_BUF_DUMP_SEL(_DRV_ALWAYS_, sel, _TitleString, _TRUE, _HexData, _HexDataLen)
 #endif /* defined(_seqdump) */
 
 
@@ -284,7 +368,7 @@ void bb_reg_dump(void *sel, _adapter *adapter);
 void bb_reg_dump_ex(void *sel, _adapter *adapter);
 void rf_reg_dump(void *sel, _adapter *adapter);
 
-void rtw_sink_rtp_seq_dbg(_adapter *adapter, u8 *ehdr_pos);
+void rtw_sink_rtp_seq_dbg(_adapter *adapter, _pkt *pkt);
 
 struct sta_info;
 void sta_rx_reorder_ctl_dump(void *sel, struct sta_info *sta);
@@ -330,10 +414,6 @@ ssize_t proc_set_backop_flags_sta(struct file *file, const char __user *buffer, 
 int proc_get_backop_flags_ap(struct seq_file *m, void *v);
 ssize_t proc_set_backop_flags_ap(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data);
 #endif /* CONFIG_SCAN_BACKOP */
-#ifdef CONFIG_RTW_REPEATER_SON
-int proc_get_rson_data(struct seq_file *m, void *v);
-ssize_t proc_set_rson_data(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data);
-#endif
 int proc_get_survey_info(struct seq_file *m, void *v);
 ssize_t proc_set_survey_info(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data);
 int proc_get_ap_info(struct seq_file *m, void *v);
@@ -350,14 +430,10 @@ ssize_t proc_set_bw_ctl(struct file *file, const char __user *buffer, size_t cou
 int proc_get_rx_cnt_dump(struct seq_file *m, void *v);
 ssize_t proc_set_rx_cnt_dump(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data);
 #endif
+int proc_get_dis_pwt(struct seq_file *m, void *v);
+ssize_t proc_set_dis_pwt(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data);
 
-#ifdef CONFIG_AP_MODE
-int proc_get_bmc_tx_rate(struct seq_file *m, void *v);
-ssize_t proc_set_bmc_tx_rate(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data);
-#endif /*CONFIG_AP_MODE*/
-
-int proc_get_ps_dbg_info(struct seq_file *m, void *v);
-ssize_t proc_set_ps_dbg_info(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data);
+int proc_get_suspend_resume_info(struct seq_file *m, void *v);
 
 bool rtw_fwdl_test_trigger_chksum_fail(void);
 bool rtw_fwdl_test_trigger_wintint_rdy_fail(void);
@@ -433,9 +509,6 @@ ssize_t proc_set_txbf_cap(struct file *file, const char __user *buffer, size_t c
 int proc_get_rx_ampdu_factor(struct seq_file *m, void *v);
 ssize_t proc_set_rx_ampdu_factor(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data);
 
-int proc_get_tx_max_agg_num(struct seq_file *m, void *v);
-ssize_t proc_set_tx_max_agg_num(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data);
-
 int proc_get_rx_ampdu_density(struct seq_file *m, void *v);
 ssize_t proc_set_rx_ampdu_density(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data);
 
@@ -487,18 +560,11 @@ int proc_get_int_logs(struct seq_file *m, void *v);
 int proc_get_rx_ring(struct seq_file *m, void *v);
 int proc_get_tx_ring(struct seq_file *m, void *v);
 int proc_get_pci_aspm(struct seq_file *m, void *v);
-#ifdef DBG_TXBD_DESC_DUMP
-int proc_get_tx_ring_ext(struct seq_file *m, void *v);
-ssize_t proc_set_tx_ring_ext(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data);
-#endif
 #endif
 
 #ifdef CONFIG_WOWLAN
 int proc_get_pattern_info(struct seq_file *m, void *v);
 ssize_t proc_set_pattern_info(struct file *file, const char __user *buffer,
-		size_t count, loff_t *pos, void *data);
-int proc_get_wakeup_event(struct seq_file *m, void *v);
-ssize_t proc_set_wakeup_event(struct file *file, const char __user *buffer,
 		size_t count, loff_t *pos, void *data);
 int proc_get_wakeup_reason(struct seq_file *m, void *v);
 #endif
@@ -518,10 +584,6 @@ ssize_t proc_set_new_bcn_max(struct file *file, const char __user *buffer, size_
 
 #ifdef CONFIG_POWER_SAVING
 int proc_get_ps_info(struct seq_file *m, void *v);
-#ifdef CONFIG_WMMPS_STA	
-int proc_get_wmmps_info(struct seq_file *m, void *v);
-ssize_t proc_set_wmmps_info(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data);
-#endif /* CONFIG_WMMPS_STA */
 #endif /* CONFIG_POWER_SAVING */
 
 #ifdef CONFIG_TDLS
@@ -568,6 +630,7 @@ ssize_t proc_set_mcc_sta_bw20_target_tp(struct file *file, const char __user *bu
 ssize_t proc_set_mcc_sta_bw40_target_tp(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data);
 ssize_t proc_set_mcc_sta_bw80_target_tp(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data);
 int proc_get_mcc_policy_table(struct seq_file *m, void *v);
+ssize_t proc_set_mcc_policy_table(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data);
 #endif /* CONFIG_MCC_MODE */
 
 int proc_get_ack_timeout(struct seq_file *m, void *v);
@@ -576,12 +639,6 @@ ssize_t proc_set_ack_timeout(struct file *file, const char __user *buffer, size_
 int proc_get_fw_offload(struct seq_file *m, void *v);
 ssize_t proc_set_fw_offload(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data);
 
-#ifdef CONFIG_DBG_RF_CAL
-int proc_get_iqk_info(struct seq_file *m, void *v);
-ssize_t proc_set_iqk(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data);
-int proc_get_lck_info(struct seq_file *m, void *v);
-ssize_t proc_set_lck(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data);
-#endif /*CONFIG_DBG_RF_CAL*/
 
 #define _drv_always_		1
 #define _drv_emerg_			2

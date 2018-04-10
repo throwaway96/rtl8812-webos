@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright(c) 2007 - 2017 Realtek Corporation.
+ * Copyright(c) 2007 - 2012 Realtek Corporation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of version 2 of the GNU General Public License as
@@ -11,7 +11,12 @@
  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
  * more details.
  *
- *****************************************************************************/
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
+ *
+ *
+ ******************************************************************************/
 
 #include <drv_types.h>
 #include <hal_data.h>
@@ -126,18 +131,31 @@ void sreset_restore_security_station(_adapter *padapter)
 		rtw_hal_set_hwreg(padapter, HW_VAR_SEC_CFG, (u8 *)(&val8));
 	}
 
-	if ((padapter->securitypriv.dot11PrivacyAlgrthm == _TKIP_) ||
-	    (padapter->securitypriv.dot11PrivacyAlgrthm == _AES_)) {
-		psta = rtw_get_stainfo(pstapriv, get_bssid(mlmepriv));
-		if (psta == NULL) {
-			/* DEBUG_ERR( ("Set wpa_set_encryption: Obtain Sta_info fail\n")); */
-		} else {
-			/* pairwise key */
-			rtw_setstakey_cmd(padapter, psta, UNICAST_KEY, _FALSE);
-			/* group key */
-			rtw_set_key(padapter, &padapter->securitypriv, padapter->securitypriv.dot118021XGrpKeyid, 0, _FALSE);
+#if 0
+	if ((padapter->securitypriv.dot11PrivacyAlgrthm == _WEP40_) ||
+	    (padapter->securitypriv.dot11PrivacyAlgrthm == _WEP104_)) {
+
+		for (EntryId = 0; EntryId < 4; EntryId++) {
+			if (EntryId == psecuritypriv->dot11PrivacyKeyIndex)
+				rtw_set_key(padapter, &padapter->securitypriv, EntryId, 1, _FALSE);
+			else
+				rtw_set_key(padapter, &padapter->securitypriv, EntryId, 0, _FALSE);
 		}
-	}
+
+	} else
+#endif
+		if ((padapter->securitypriv.dot11PrivacyAlgrthm == _TKIP_) ||
+		    (padapter->securitypriv.dot11PrivacyAlgrthm == _AES_)) {
+			psta = rtw_get_stainfo(pstapriv, get_bssid(mlmepriv));
+			if (psta == NULL) {
+				/* DEBUG_ERR( ("Set wpa_set_encryption: Obtain Sta_info fail\n")); */
+			} else {
+				/* pairwise key */
+				rtw_setstakey_cmd(padapter, psta, UNICAST_KEY, _FALSE);
+				/* group key */
+				rtw_set_key(padapter, &padapter->securitypriv, padapter->securitypriv.dot118021XGrpKeyid, 0, _FALSE);
+			}
+		}
 }
 
 void sreset_restore_network_station(_adapter *padapter)
@@ -166,7 +184,7 @@ void sreset_restore_network_station(_adapter *padapter)
 	}
 #endif
 
-	rtw_setopmode_cmd(padapter, Ndis802_11Infrastructure, RTW_CMDF_DIRECTLY);
+	rtw_setopmode_cmd(padapter, Ndis802_11Infrastructure, _FALSE);
 
 	{
 		u8 threshold;
@@ -201,7 +219,6 @@ void sreset_restore_network_station(_adapter *padapter)
 	{
 		u8	join_type = 0;
 		rtw_hal_set_hwreg(padapter, HW_VAR_MLME_JOIN, (u8 *)(&join_type));
-		rtw_hal_rcr_set_chk_bssid(padapter, MLME_STA_CONNECTING);
 	}
 
 	Set_MSR(padapter, (pmlmeinfo->state & 0x3));
@@ -223,8 +240,8 @@ void sreset_restore_network_status(_adapter *padapter)
 	if (check_fwstate(mlmepriv, WIFI_STATION_STATE)) {
 		RTW_INFO(FUNC_ADPT_FMT" fwstate:0x%08x - WIFI_STATION_STATE\n", FUNC_ADPT_ARG(padapter), get_fwstate(mlmepriv));
 		sreset_restore_network_station(padapter);
-	} else if (MLME_IS_AP(padapter) || MLME_IS_MESH(padapter)) {
-		RTW_INFO(FUNC_ADPT_FMT" %s\n", FUNC_ADPT_ARG(padapter), MLME_IS_AP(padapter) ? "AP" : "MESH");
+	} else if (check_fwstate(mlmepriv, WIFI_AP_STATE)) {
+		RTW_INFO(FUNC_ADPT_FMT" fwstate:0x%08x - WIFI_AP_STATE\n", FUNC_ADPT_ARG(padapter), get_fwstate(mlmepriv));
 		rtw_ap_restore_network(padapter);
 	} else if (check_fwstate(mlmepriv, WIFI_ADHOC_STATE))
 		RTW_INFO(FUNC_ADPT_FMT" fwstate:0x%08x - WIFI_ADHOC_STATE\n", FUNC_ADPT_ARG(padapter), get_fwstate(mlmepriv));
@@ -256,7 +273,7 @@ void sreset_stop_adapter(_adapter *padapter)
 
 	if (check_fwstate(pmlmepriv, _FW_UNDER_LINKING)) {
 		rtw_set_to_roam(padapter, 0);
-		rtw_join_timeout_handler(padapter);
+		_rtw_join_timeout_handler(padapter);
 	}
 
 }
@@ -294,11 +311,13 @@ void sreset_reset(_adapter *padapter)
 	struct mlme_priv	*pmlmepriv = &(padapter->mlmepriv);
 	struct xmit_priv	*pxmitpriv = &padapter->xmitpriv;
 	_irqL irqL;
-	systime start = rtw_get_current_time();
+	u32 start = rtw_get_current_time();
 	struct dvobj_priv *psdpriv = padapter->dvobj;
 	struct debug_priv *pdbgpriv = &psdpriv->drv_dbg;
+	u8 backup_drv_log_level = rtw_drv_log_level;
 
-	RTW_INFO("%s\n", __FUNCTION__);
+	RTW_INFO("::\n");
+	rtw_drv_log_level = _DRV_NONE_;
 
 	psrtpriv->Wifi_Error_Status = WIFI_STATUS_SUCCESS;
 
@@ -326,7 +345,11 @@ void sreset_reset(_adapter *padapter)
 	RTW_INFO("%s done in %d ms\n", __FUNCTION__, rtw_get_passing_time_ms(start));
 	pdbgpriv->dbg_sreset_cnt++;
 
-	psrtpriv->self_dect_fw = _FALSE;
-	psrtpriv->rx_cnt = 0;
+	pHalData->self_detection.self_dect_fw = _FALSE;
+	pHalData->self_detection.self_dect_scan = _FALSE;
+	pHalData->self_detection.is_txbuf_empty = _FALSE;
+	pHalData->self_detection.rx_cnt = 0;
+
+	rtw_drv_log_level = backup_drv_log_level;
 #endif
 }

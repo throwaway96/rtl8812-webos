@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright(c) 2015 - 2017 Realtek Corporation.
+ * Copyright(c) 2015 - 2016 Realtek Corporation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of version 2 of the GNU General Public License as
@@ -11,12 +11,17 @@
  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
  * more details.
  *
- *****************************************************************************/
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
+ *
+ *
+ ******************************************************************************/
 #define _RTL8822BU_HALMAC_C_
 
 #include <drv_types.h>		/* struct dvobj_priv and etc. */
 #include "../../hal_halmac.h"
-#include "../rtl8822b.h"	/* rtl8822b_cal_txdesc_chksum() and etc. */
+#include "../rtl8822b.h"	 /* rtl8822b_cal_txdesc_chksum() */
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 5, 0)) || (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 18))
 #define usb_write_port_complete_not_xmitframe(purb, regs)	usb_write_port_complete_not_xmitframe(purb)
@@ -129,6 +134,8 @@ static u8 usb_write_data_not_xmitframe(void *d, u8 *pBuf, u32 size, u8 qsel)
 	struct dvobj_priv *pobj = (struct dvobj_priv *)d;
 	PADAPTER padapter = dvobj_get_primary_adapter(pobj);
 	HAL_DATA_TYPE	*pHalData = GET_HAL_DATA(padapter);
+	PHALMAC_ADAPTER halmac;
+	PHALMAC_API api;
 	u32 desclen, len;
 	u8 *buf;
 	u8 ret;
@@ -136,7 +143,14 @@ static u8 usb_write_data_not_xmitframe(void *d, u8 *pBuf, u32 size, u8 qsel)
 	u8 add_pkt_offset = 0;
 
 
-	desclen = rtl8822b_get_tx_desc_size(padapter);
+
+	halmac = dvobj_to_halmac((struct dvobj_priv *)d);
+	if (!halmac)
+		return _FALSE;
+	
+	api = HALMAC_GET_API(halmac);
+
+	desclen = HALMAC_TX_DESC_SIZE_8822B;
 	len = desclen + size;
 
 	if (qsel == HALMAC_TXDESC_QSEL_BEACON) {
@@ -169,8 +183,6 @@ static u8 usb_write_data_not_xmitframe(void *d, u8 *pBuf, u32 size, u8 qsel)
 		if (!buf)
 			return _FALSE;
 
-		_rtw_memcpy(buf + desclen, pBuf, size);
-
 		SET_TX_DESC_TXPKTSIZE_8822B(buf, size);
 	} else {
 
@@ -200,11 +212,16 @@ static u8 usb_write_data_rsvd_page_normal(void *d, u8 *pBuf, u32 size)
 {
 	struct dvobj_priv *pobj = (struct dvobj_priv *)d;
 	PADAPTER padapter = dvobj_get_primary_adapter(pobj);
+	PHALMAC_ADAPTER halmac = dvobj_to_halmac((struct dvobj_priv *)d);
 	struct xmit_priv	*pxmitpriv = &padapter->xmitpriv;
 	struct xmit_frame	*pcmdframe = NULL;
 	struct pkt_attrib	*pattrib = NULL;
+	PHALMAC_API api;
 	u8 txdesoffset = 0;
 	u8 *buf = NULL;
+
+	if (!halmac)
+		return _FALSE;
 
 	if (size + TXDESC_OFFSET > MAX_CMDBUF_SZ) {
 		RTW_INFO("%s: total buffer size(%d) > MAX_CMDSZE(%d)\n"
@@ -218,6 +235,8 @@ static u8 usb_write_data_rsvd_page_normal(void *d, u8 *pBuf, u32 size)
 		RTW_INFO("%s: alloc cmd frame fail!\n", __func__);
 		return _FALSE;
 	}
+
+	api = HALMAC_GET_API(halmac);
 
 	txdesoffset = TXDESC_OFFSET;
 	buf = pcmdframe->buf_addr;
@@ -240,11 +259,16 @@ static u8 usb_write_data_h2c_normal(void *d, u8 *pBuf, u32 size)
 {
 	struct dvobj_priv *pobj = (struct dvobj_priv *)d;
 	PADAPTER padapter = dvobj_get_primary_adapter(pobj);
+	PHALMAC_ADAPTER halmac = dvobj_to_halmac((struct dvobj_priv *)d);
 	struct xmit_priv	*pxmitpriv = &padapter->xmitpriv;
 	struct xmit_frame	*pcmdframe = NULL;
 	struct pkt_attrib	*pattrib = NULL;
+	PHALMAC_API api;
 	u8 txdesoffset = 0;
 	u8 *buf = NULL;
+
+	if (!halmac)
+		return _FALSE;
 
 	if (size + TXDESC_OFFSET > MAX_XMIT_EXTBUF_SZ) {
 		RTW_INFO("%s: total buffer size(%d) > MAX_XMIT_EXTBUF_SZ(%d)\n"
@@ -258,6 +282,8 @@ static u8 usb_write_data_h2c_normal(void *d, u8 *pBuf, u32 size)
 		RTW_INFO("%s: alloc cmd frame fail!\n", __func__);
 		return _FALSE;
 	}
+
+	api = HALMAC_GET_API(halmac);
 
 	txdesoffset = TXDESC_SIZE;
 	buf = pcmdframe->buf_addr;
@@ -305,7 +331,7 @@ static u8 usb_write_data_h2c(void *d, u8 *pBuf, u32 size)
 int rtl8822bu_halmac_init_adapter(PADAPTER padapter)
 {
 	struct dvobj_priv *d;
-	struct halmac_platform_api *api;
+	PHALMAC_PLATFORM_API api;
 	int err;
 
 
@@ -314,6 +340,24 @@ int rtl8822bu_halmac_init_adapter(PADAPTER padapter)
 	api->SEND_RSVD_PAGE = usb_write_data_rsvd_page;
 	api->SEND_H2C_PKT = usb_write_data_h2c;
 
+	err = rtw_halmac_init_adapter(d, api);
+
+	return err;
+}
+
+int rtl8822bu_halmac_reset_adapter(PADAPTER padapter)
+{
+	struct dvobj_priv *d;
+	PHALMAC_PLATFORM_API api;
+	int err;
+
+
+	d = adapter_to_dvobj(padapter);
+	api = &rtw_halmac_platform_api;
+	api->SEND_RSVD_PAGE = usb_write_data_rsvd_page;
+	api->SEND_H2C_PKT = usb_write_data_h2c;
+	
+	rtw_halmac_deinit_adapter(d);
 	err = rtw_halmac_init_adapter(d, api);
 
 	return err;
