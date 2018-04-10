@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright(c) 2007 - 2017 Realtek Corporation.
+ * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of version 2 of the GNU General Public License as
@@ -11,7 +11,12 @@
  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
  * more details.
  *
- *****************************************************************************/
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
+ *
+ *
+ ******************************************************************************/
 #ifndef __RTL8188E_HAL_H__
 #define __RTL8188E_HAL_H__
 
@@ -110,11 +115,7 @@ typedef struct _RT_8188E_FIRMWARE_HDR {
 
 
 /* #define MAX_RX_DMA_BUFFER_SIZE_88E	      0x2400 */ /* 9k for 88E nornal chip , */ /* MaxRxBuff=10k-max(TxReportSize(64*8), WOLPattern(16*24)) */
-#ifdef CONFIG_USB_HCI
-	#define RX_DMA_SIZE_88E(__Adapter) 0x2800
-#else
-	#define RX_DMA_SIZE_88E(__Adapter) ((!IS_VENDOR_8188E_I_CUT_SERIES(__Adapter))?0x2800:0x4000)
-#endif
+#define RX_DMA_SIZE_88E(__Adapter) ((!IS_VENDOR_8188E_I_CUT_SERIES(__Adapter))?0x2800:0x4000)
 
 #ifdef CONFIG_WOWLAN
 	#define RESV_FMWF	(WKFMCAM_SIZE * MAX_WKFM_CAM_NUM) /* 16 entries, for each is 24 bytes*/
@@ -147,11 +148,7 @@ Tx FIFO Size : previous CUT:22K /I_CUT after:32KB
 Tx page Size : 128B
 Total page numbers : 176(0xB0) / 256(0x100)
 */
-#ifdef CONFIG_USB_HCI
-	#define TOTAL_PAGE_NUMBER_88E(_Adapter) (0xB0 - 1)
-#else
-	#define TOTAL_PAGE_NUMBER_88E(_Adapter)	((IS_VENDOR_8188E_I_CUT_SERIES(_Adapter)?0x100:0xB0) - 1)/* must reserved 1 page for dma issue */
-#endif
+#define TOTAL_PAGE_NUMBER_88E(_Adapter)	((IS_VENDOR_8188E_I_CUT_SERIES(_Adapter)?0x100:0xB0) - 1)/* must reserved 1 page for dma issue */
 #define TX_TOTAL_PAGE_NUMBER_88E(_Adapter)	(TOTAL_PAGE_NUMBER_88E(_Adapter) - BCNQ_PAGE_NUM_88E - WOWLAN_PAGE_NUM_88E)
 #define TX_PAGE_BOUNDARY_88E(_Adapter)		(TX_TOTAL_PAGE_NUMBER_88E(_Adapter) + 1) /* beacon header start address */
 
@@ -285,9 +282,6 @@ BOOLEAN HalDetectPwrDownMode88E(PADAPTER Adapter);
 
 void rtl8188e_init_default_value(_adapter *adapter);
 
-void InitBeaconParameters_8188e(_adapter *adapter);
-void SetBeaconRelatedRegisters8188E(PADAPTER padapter);
-
 void rtl8188e_set_hal_ops(struct hal_ops *pHalFunc);
 void init_hal_spec_8188e(_adapter *adapter);
 
@@ -303,7 +297,7 @@ void rtw_IOL_cmd_tx_pkt_buf_dump(ADAPTER *Adapter, int data_len);
 #endif/* CONFIG_IOL_EFUSE_PATCH */
 void _InitTransferPageSize(PADAPTER padapter);
 
-u8 SetHwReg8188E(PADAPTER padapter, u8 variable, u8 *val);
+void SetHwReg8188E(PADAPTER padapter, u8 variable, u8 *val);
 void GetHwReg8188E(PADAPTER padapter, u8 variable, u8 *val);
 
 u8

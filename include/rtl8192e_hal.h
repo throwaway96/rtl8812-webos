@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright(c) 2012 - 2017 Realtek Corporation.
+ * Copyright(c) 2007 - 2013 Realtek Corporation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of version 2 of the GNU General Public License as
@@ -11,7 +11,12 @@
  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
  * more details.
  *
- *****************************************************************************/
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
+ *
+ *
+ ******************************************************************************/
 #ifndef __RTL8192E_HAL_H__
 #define __RTL8192E_HAL_H__
 
@@ -126,11 +131,9 @@ typedef struct _RT_FIRMWARE_8192E {
  * Beacon:2, PS-Poll:1, Null Data:1,Prob Rsp:1,Qos Null Data:1 */
 #define RSVD_PAGE_NUM_8192E		0x08
 /* For WoWLan , more reserved page
- * ARP Rsp:1, RWC:1, GTK Info:1,GTK RSP:2,GTK EXT MEM:2, AOAC rpt: 1,PNO: 6
- * NS offload: 2 NDP info: 1
- */
+ * ARP Rsp:1, RWC:1, GTK Info:1,GTK RSP:2,GTK EXT MEM:2, AOAC rpt: 1,PNO: 6 */
 #ifdef CONFIG_WOWLAN
-	#define WOWLAN_PAGE_NUM_8192E	0x0b
+	#define WOWLAN_PAGE_NUM_8192E	0x08
 #else
 	#define WOWLAN_PAGE_NUM_8192E	0x00
 #endif
@@ -273,6 +276,7 @@ void _InitID_8192E(IN  PADAPTER Adapter);
 VOID _InitNetworkType_8192E(IN  PADAPTER Adapter);
 VOID _InitWMACSetting_8192E(IN PADAPTER Adapter);
 VOID _InitAdaptiveCtrl_8192E(IN  PADAPTER Adapter);
+VOID _InitRateFallback_8192E(IN  PADAPTER Adapter);
 VOID _InitEDCA_8192E(IN  PADAPTER Adapter);
 VOID _InitRetryFunction_8192E(IN  PADAPTER Adapter);
 VOID _BBTurnOnBlock_8192E(IN	PADAPTER Adapter);
@@ -286,7 +290,7 @@ VOID hal_ReadRFType_8192E(PADAPTER	Adapter);
 /* RTL8192E-MAC Setting
  ***********************************************************/
 
-u8 SetHwReg8192E(PADAPTER Adapter, u8 variable, u8 *val);
+void SetHwReg8192E(PADAPTER Adapter, u8 variable, u8 *val);
 void GetHwReg8192E(PADAPTER Adapter, u8 variable, u8 *val);
 u8
 SetHalDefVar8192E(
@@ -312,7 +316,7 @@ void rtl8192e_stop_thread(_adapter *padapter);
 
 #ifdef CONFIG_PCI_HCI
 	BOOLEAN	InterruptRecognized8192EE(PADAPTER Adapter);
-	u16	get_txbd_rw_reg(u16 ff_hwaddr);
+	u16	get_txdesc_buf_addr(u16 ff_hwaddr);
 #endif
 
 #ifdef CONFIG_SDIO_HCI

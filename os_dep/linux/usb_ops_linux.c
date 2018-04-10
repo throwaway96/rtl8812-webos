@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright(c) 2007 - 2017 Realtek Corporation.
+ * Copyright(c) 2007 - 2012 Realtek Corporation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of version 2 of the GNU General Public License as
@@ -11,7 +11,11 @@
  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
  * more details.
  *
- *****************************************************************************/
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
+ *
+ *******************************************************************************/
 #define _USB_OPS_LINUX_C_
 
 #include <drv_types.h>
@@ -64,7 +68,7 @@ int usbctrl_vendorreq(struct intf_hdl *pintfhdl, u8 request, u16 value, u16 inde
 	}
 
 #ifdef CONFIG_USB_VENDOR_REQ_MUTEX
-	_enter_critical_mutex_lock(&pdvobjpriv->usb_vendor_req_mutex, NULL);
+	_enter_critical_mutex(&pdvobjpriv->usb_vendor_req_mutex, NULL);
 #endif
 
 
@@ -150,7 +154,7 @@ int usbctrl_vendorreq(struct intf_hdl *pintfhdl, u8 request, u16 value, u16 inde
 
 #if (defined(CONFIG_RTL8822B) || defined(CONFIG_RTL8821C))
 	if (value < 0xFE00) {
-		if (0x00 <= value && value <= 0xff)
+		if (value <= 0xff)
 			current_reg_sec = REG_ON_SEC;
 		else if (0x1000 <= value && value <= 0x10ff)
 			current_reg_sec = REG_ON_SEC;
@@ -273,15 +277,18 @@ unsigned int ffaddr2pipehdl(struct dvobj_priv *pdvobj, u32 addr)
 	else if (addr == RECV_INT_IN_ADDR)
 		pipe = usb_rcvintpipe(pusbd, pdvobj->RtInPipe[1]);
 
-	else if (addr < HW_QUEUE_ENTRY) {
 #ifdef RTW_HALMAC
+	else if (addr < sizeof(pdvobj->RtOutPipe)/pdvobj->RtOutPipe[0]) {
 		/* halmac already translate queue id to bulk out id */
 		ep_num = pdvobj->RtOutPipe[addr];
-#else
-		ep_num = pdvobj->Queue2Pipe[addr];
-#endif
 		pipe = usb_sndbulkpipe(pusbd, ep_num);
 	}
+#else
+	else if (addr < HW_QUEUE_ENTRY) {
+		ep_num = pdvobj->Queue2Pipe[addr];
+		pipe = usb_sndbulkpipe(pusbd, ep_num);
+	}
+#endif
 
 	return pipe;
 }
@@ -759,7 +766,7 @@ void usb_read_port_complete(struct urb *purb, struct pt_regs *regs)
 			 , __func__
 			 , rtw_is_drv_stopped(padapter) ? "True" : "False"
 			, rtw_is_surprise_removed(padapter) ? "True" : "False");
-		return;
+		goto exit;
 	}
 
 	if (purb->status == 0) {
@@ -812,6 +819,8 @@ void usb_read_port_complete(struct urb *purb, struct pt_regs *regs)
 			break;
 		}
 	}
+
+exit:
 
 }
 

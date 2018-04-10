@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright(c) 2007 - 2017  Realtek Corporation.
+ * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of version 2 of the GNU General Public License as
@@ -8,20 +8,15 @@
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
  * more details.
  *
- * The full GNU General Public License is included in this distribution in the
- * file called LICENSE.
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * Contact Information:
- * wlanfae <wlanfae@realtek.com>
- * Realtek Corporation, No. 2, Innovation Road II, Hsinchu Science Park,
- * Hsinchu 300, Taiwan.
  *
- * Larry Finger <Larry.Finger@lwfinger.net>
- *
- *****************************************************************************/
+ ******************************************************************************/
 
 #ifndef	__PHYDMACS_H__
 #define    __PHYDMACS_H__
@@ -37,7 +32,7 @@
 #define RESTORE_DEFAULT_NHM_SETTING             1
 #define ACS_NHM_SETTING                         2
 
-struct acs_info {
+struct _ACS_ {
 	boolean		is_force_acs_result;
 	u8		clean_channel_2g;
 	u8		clean_channel_5g;
@@ -69,43 +64,38 @@ struct acs_info {
 
 void
 odm_auto_channel_select_init(
-	void			*dm_void
+	void			*p_dm_void
 );
 
 void
 odm_auto_channel_select_reset(
-	void			*dm_void
+	void			*p_dm_void
 );
 
 void
 odm_auto_channel_select(
-	void			*dm_void,
+	void			*p_dm_void,
 	u8			channel
 );
 
 u8
 odm_get_auto_channel_select_result(
-	void			*dm_void,
+	void			*p_dm_void,
 	u8			band
-);
-
-boolean
-phydm_acs_check(
-	void	*dm_void
 );
 
 #if (DM_ODM_SUPPORT_TYPE & ODM_AP)
 
 void
 phydm_auto_channel_select_setting_ap(
-	void   *dm_void,
+	void   *p_dm_void,
 	u32  setting,             /* 0: STORE_DEFAULT_NHM_SETTING; 1: RESTORE_DEFAULT_NHM_SETTING, 2: ACS_NHM_SETTING */
 	u32  acs_step
 );
 
 void
 phydm_get_nhm_statistics_ap(
-	void       *dm_void,
+	void       *p_dm_void,
 	u32      idx,                /* @ 2G, Real channel number = idx+1 */
 	u32      acs_step
 );

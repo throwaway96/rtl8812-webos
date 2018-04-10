@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright(c) 2007 - 2017  Realtek Corporation.
+ * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of version 2 of the GNU General Public License as
@@ -8,20 +8,15 @@
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
  * more details.
  *
- * The full GNU General Public License is included in this distribution in the
- * file called LICENSE.
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
  *
- * Contact Information:
- * wlanfae <wlanfae@realtek.com>
- * Realtek Corporation, No. 2, Innovation Road II, Hsinchu Science Park,
- * Hsinchu 300, Taiwan.
  *
- * Larry Finger <Larry.Finger@lwfinger.net>
- *
- *****************************************************************************/
+ ******************************************************************************/
 
 #ifndef	__PHYDMDYMICRXPATH_H__
 #define    __PHYDMDYMICRXPATH_H__
@@ -35,18 +30,9 @@
 #define CANCEL_DRP_TIMMER		1
 #define RELEASE_DRP_TIMMER		2
 
-#if (RTL8822B_SUPPORT == 1)
-struct drp_rtl8822b_struct {
-	enum bb_path	path_judge;
-	u16	path_a_cck_fa;
-	u16	path_b_cck_fa;
-	
-};
-#endif
+#if (CONFIG_DYNAMIC_RX_PATH == 1)
 
-#ifdef CONFIG_DYNAMIC_RX_PATH
-
-enum drp_state {
+enum drp_state_e {
 	DRP_INIT_STATE				= 0,
 	DRP_TRAINING_STATE_0	= 1,
 	DRP_TRAINING_STATE_1		= 2,
@@ -54,7 +40,7 @@ enum drp_state {
 	DRP_DECISION_STATE		= 4
 };
 
-enum adjustable_value {
+enum adjustable_value_e {
 	DRP_TRAINING_TIME		= 0,
 	DRP_TRAINING_PERIOD	= 1,
 	DRP_RSSI_THRESHOLD	= 2,
@@ -84,7 +70,7 @@ struct _DYNAMIC_RX_PATH_ {
 	RT_WORK_ITEM	phydm_dynamic_rx_path_workitem;
 #endif
 #endif
-	struct phydm_timer_list		phydm_dynamic_rx_path_timer;
+	struct timer_list		phydm_dynamic_rx_path_timer;
 
 };
 
@@ -92,25 +78,25 @@ struct _DYNAMIC_RX_PATH_ {
 
 void
 phydm_process_phy_status_for_dynamic_rx_path(
-	void			*dm_void,
-	void			*phy_info_void,
-	void			*pkt_info_void
+	void			*p_dm_void,
+	void			*p_phy_info_void,
+	void			*p_pkt_info_void
 );
 
 void
 phydm_dynamic_rx_path(
-	void			*dm_void
+	void			*p_dm_void
 );
 
 #if (DM_ODM_SUPPORT_TYPE == ODM_WIN)
 void
 phydm_dynamic_rx_path_callback(
-	struct phydm_timer_list		*timer
+	struct timer_list		*p_timer
 );
 
 void
 phydm_dynamic_rx_path_workitem_callback(
-	void		*context
+	void		*p_context
 );
 
 #else if (DM_ODM_SUPPORT_TYPE == ODM_CE)
@@ -124,18 +110,18 @@ phydm_dynamic_rx_path_callback(
 
 void
 phydm_dynamic_rx_path_timers(
-	void		*dm_void,
+	void		*p_dm_void,
 	u8		state
 );
 
 void
 phydm_dynamic_rx_path_init(
-	void			*dm_void
+	void			*p_dm_void
 );
 
 void
 phydm_drp_debug(
-	void		*dm_void,
+	void		*p_dm_void,
 	u32		*const dm_value,
 	u32		*_used,
 	char			*output,
@@ -144,7 +130,7 @@ phydm_drp_debug(
 
 void
 phydm_dynamic_rx_path_caller(
-	void			*dm_void
+	void			*p_dm_void
 );
 
 #endif
