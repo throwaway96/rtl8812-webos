@@ -374,11 +374,11 @@ char *rtw_initmac = 0;  /* temp mac address if users want to use instead of the 
 	#endif
 
 #endif
-#ifdef CONFIG_RTW_ONE_PIN_GPIO
+#ifdef LGE_PRIVATE
 int rtw_wowlan_sta_mix_mode = 1;
 #else
 int rtw_wowlan_sta_mix_mode = 0;
-#endif /* CONFIG_RTW_ONE_PIN_GPIO */
+#endif /* LGE_PRIVATE */
 module_param(rtw_wowlan_sta_mix_mode, int, 0644);
 
 module_param(rtw_pwrtrim_enable, int, 0644);
@@ -4144,15 +4144,15 @@ int rtw_suspend_common(_adapter *padapter)
 #endif /* LGE_PRIVATE */
 
 	if (rtw_mi_check_status(padapter, MI_AP_MODE) == _FALSE
-#ifdef CONFIG_RTW_ONE_PIN_GPIO
+#ifdef LGE_PRIVATE
 		||WOWLAN_IS_STA_MIX_MODE(padapter)
-#endif /* CONFIG_RTW_ONE_PIN_GPIO */
+#endif /* LGE_PRIVATE */
 	) {
 #ifdef CONFIG_WOWLAN
 		if (check_fwstate(pmlmepriv, _FW_LINKED)
-#ifdef CONFIG_RTW_ONE_PIN_GPIO
+#ifdef LGE_PRIVATE
 			||WOWLAN_IS_STA_MIX_MODE(padapter)
-#endif /* CONFIG_RTW_ONE_PIN_GPIO */
+#endif /* LGE_PRIVATE */
 		)
 			pwrpriv->wowlan_mode = _TRUE;
 		else if (pwrpriv->wowlan_pno_enable == _TRUE)
@@ -4236,10 +4236,10 @@ int rtw_resume_process_wow(_adapter *padapter)
 		rtw_set_ps_mode(padapter, PS_MODE_ACTIVE, 0, 0, "WOWLAN");
 #endif /* CONFIG_LPS */
 
-#ifdef CONFIG_RTW_ONE_PIN_GPIO
+#ifdef LGE_PRIVATE
 		if(adapter_wdev_data(padapter)->wowl == _FALSE)
 			rtw_hal_init_phy(padapter);
-#endif /* CONFIG_RTW_ONE_PIN_GPIO */
+#endif /* LGE_PRIVATE */
 		
 		pwrpriv->bFwCurrentInPSMode = _FALSE;
 

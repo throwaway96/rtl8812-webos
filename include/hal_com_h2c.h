@@ -114,6 +114,7 @@ enum h2c_cmd {
 	H2C_AOAC_RSVDPAGE3 = 0x88,
 	H2C_P2P_OFFLOAD_RSVD_PAGE = 0x8A,
 	H2C_P2P_OFFLOAD = 0x8B,
+	H2C_WOWLAN_EXT = 0x8F,
 
 	H2C_RESET_TSF = 0xC0,
 	H2C_BCNHWSEQ = 0xC5,
@@ -133,6 +134,7 @@ enum h2c_cmd {
 #endif
 #define H2C_KEEP_ALIVE_CTRL_LEN	2
 #define H2C_DISCON_DECISION_LEN		3
+#define H2C_WOW_EXT_LEN		1
 #define H2C_AP_OFFLOAD_LEN		3
 #define H2C_AP_WOW_GPIO_CTRL_LEN	4
 #define H2C_AP_PS_LEN			2
@@ -140,7 +142,7 @@ enum h2c_cmd {
 #define H2C_PSTUNEPARAM_LEN			4
 #define H2C_MACID_CFG_LEN		7
 #define H2C_BTMP_OPER_LEN			5
-#define H2C_WOWLAN_LEN			6
+#define H2C_WOWLAN_LEN			7
 #define H2C_REMOTE_WAKE_CTRL_LEN	3
 #define H2C_AOAC_GLOBAL_INFO_LEN	2
 #define H2C_AOAC_RSVDPAGE_LOC_LEN	7
@@ -292,6 +294,10 @@ s32 rtw_hal_set_FwMediaStatusRpt_range_cmd(_adapter *adapter, bool opmode, bool 
 #define SET_H2CCMD_DISCONDECISION_PORT_NUM(__pH2CCmd, __Value)			SET_BITS_TO_LE_1BYTE(__pH2CCmd, 4, 3, __Value)
 #define SET_H2CCMD_DISCONDECISION_PARM_CHECK_PERIOD(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE(__pH2CCmd+1, 0, 8, __Value)
 #define SET_H2CCMD_DISCONDECISION_PARM_TRY_PKT_NUM(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE(__pH2CCmd+2, 0, 8, __Value)
+
+/* _WOWLAN_EXT_CMD_0x8F */
+#define SET_H2CCMD_WOWLAN_EXT_ENABLE(__pH2CCmd, __Value)		SET_BITS_TO_LE_1BYTE(__pH2CCmd, 0, 1, __Value)
+#define SET_H2CCMD_CUSTOM_HST2DEV_NUM(__pH2CCmd, __Value)		SET_BITS_TO_LE_1BYTE(__pH2CCmd, 1, 7, __Value)
 
 #ifdef CONFIG_RTW_CUSTOMER_STR
 #define RTW_CUSTOMER_STR_LEN 16
@@ -518,6 +524,10 @@ s32 rtw_hal_customer_str_write(_adapter *adapter, const u8 *cs);
 #endif /* CONFIG_RTW_ONE_PIN_GPIO */
 #define SET_H2CCMD_WOWLAN_DIS_UPHY_TIME(__pH2CCmd, __Value) \
 	SET_BITS_TO_LE_1BYTE((__pH2CCmd)+5, 0, 8, __Value)
+#define SET_H2CCMD_RISE_HST2DEV(__pH2CCmd, __Value) \
+	SET_BITS_TO_LE_1BYTE((__pH2CCmd)+6, 2, 1, __Value)
+#define SET_H2CCMD_WOWLAN_EXT_EN(__pH2CCmd, __Value) \
+	SET_BITS_TO_LE_1BYTE((__pH2CCmd)+6, 7, 1, __Value)
 
 /* _REMOTE_WAKEUP_CMD_0x81 */
 #define SET_H2CCMD_REMOTE_WAKECTRL_ENABLE(__pH2CCmd, __Value)		SET_BITS_TO_LE_1BYTE(__pH2CCmd, 0, 1, __Value)

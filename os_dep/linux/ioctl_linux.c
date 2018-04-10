@@ -8668,9 +8668,9 @@ static int rtw_wowlan_ctrl(struct net_device *dev,
 
 	if ((!check_fwstate(pmlmepriv, _FW_LINKED) &&
 		check_fwstate(pmlmepriv, WIFI_STATION_STATE))
-#ifdef CONFIG_RTW_ONE_PIN_GPIO
+#ifdef LGE_PRIVATE
 		&& !WOWLAN_IS_STA_MIX_MODE(padapter)
-#endif /* CONFIG_RTW_ONE_PIN_GPIO */
+#endif /* LGE_PRIVATE */
 	) {
 #ifdef CONFIG_PNO_SUPPORT
 		pwrctrlpriv->wowlan_pno_enable = _TRUE;

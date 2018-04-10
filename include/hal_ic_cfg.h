@@ -155,6 +155,9 @@
 			#ifndef WAKEUP_GPIO_IDX
 				#define WAKEUP_GPIO_IDX	6	/* WIFI Chip Side */
 			#endif /* !WAKEUP_GPIO_IDX */
+			#ifndef HST2DEV_GPIO_IDX
+				#define HST2DEV_GPIO_IDX	0	/* WIFI Chip Side */
+			#endif /* !HST2DEV_GPIO_IDX */
 		#endif /* CONFIG_GPIO_WAKEUP */
 
 	#endif /* CONFIG_WOWLAN */

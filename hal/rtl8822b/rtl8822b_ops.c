@@ -2747,7 +2747,11 @@ void rtl8822b_sethwreg(PADAPTER adapter, u8 variable, u8 *val)
 			rtw_write8(adapter, addr, value & (~BIT(1)));
 		else if (enable == _FALSE)
 			rtw_write8(adapter, addr, value | BIT(1));
-
+		if(HST2DEV_GPIO_IDX == 0) {
+			/*HST2DEV use GPIO0, switch the to wifi */
+			rtw_write8(adapter, REG_PAD_CTRL1_8822B + 2, rtw_read8(adapter, REG_PAD_CTRL1_8822B + 2) & (~(BIT0|BIT1|BIT2)));
+			rtw_write16(adapter, REG_GPIO_MUXCFG_8822B, rtw_read16(adapter, REG_GPIO_MUXCFG_8822B) & (~(BIT0|BIT1|BIT10)) | BIT9);
+		}
 		RTW_INFO("[HW_SET_GPIO_WL_CTRL] 0x%02X=0x%02X\n", addr, rtw_read8(adapter, addr));
 	}
 	break;

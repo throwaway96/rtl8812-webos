@@ -410,12 +410,12 @@ void rtl8822b_set_FwPwrMode_cmd(PADAPTER adapter, u8 psmode)
 	struct wifidirect_info *wdinfo = &adapter->wdinfo;
 #endif /* CONFIG_P2P */
 
-#ifdef CONFIG_RTW_ONE_PIN_GPIO
+#ifdef LGE_PRIVATE
 	if (!check_fwstate(pmlmepriv, _FW_LINKED)) {
 		RTW_INFO("%s, disconnect case\n", __func__);
 		return;
 	}
-#endif /* CONFIG_RTW_ONE_PIN_GPIO */
+#endif /* LGE_PRIVATE */
 
 	if (pwrpriv->dtim > 0)
 		RTW_INFO(FUNC_ADPT_FMT ": FW LPS mode = %d, SmartPS=%d, dtim=%d, HW port id=%d\n",
