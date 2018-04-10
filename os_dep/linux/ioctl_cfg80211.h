@@ -38,6 +38,7 @@
 
 #if RTW_P2P_GROUP_INTERFACE
 	#ifndef CONFIG_RTW_DYNAMIC_NDEV
+		/* The last adapter for dynamic use. */
 		#define CONFIG_RTW_DYNAMIC_NDEV
 	#endif
 	#ifndef RTW_SINGLE_WIPHY
@@ -48,6 +49,9 @@
 	#endif
 	#ifndef RTW_DEDICATED_P2P_DEVICE
 		#define RTW_DEDICATED_P2P_DEVICE
+#ifdef LGE_PRIVATE
+		#undef RTW_DEDICATED_P2P_DEVICE
+#endif /* LGE_PRIVATE */
 	#endif
 #endif
 
@@ -192,8 +196,10 @@ struct rtw_wiphy_data {
 #define wiphy_to_dvobj(wiphy) (((struct rtw_wiphy_data *)wiphy_priv(wiphy))->dvobj)
 #ifdef RTW_SINGLE_WIPHY
 #define wiphy_to_adapter(wiphy) (dvobj_get_primary_adapter(wiphy_to_dvobj(wiphy)))
+#define wiphy_to_p2p_adapter(wiphy) (dvobj_get_p2p_adapter(wiphy_to_dvobj(wiphy)))
 #else
 #define wiphy_to_adapter(wiphy) (((struct rtw_wiphy_data *)wiphy_priv(wiphy))->adapter)
+#define wiphy_to_p2p_adapter(wiphy) (((struct rtw_wiphy_data *)wiphy_priv(wiphy))->adapter)
 #endif
 
 #if defined(RTW_DEDICATED_P2P_DEVICE)

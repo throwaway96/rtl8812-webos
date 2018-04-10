@@ -2286,7 +2286,7 @@ static int cfg80211_rtw_scan(struct wiphy *wiphy
 	wdev = request->wdev;
 	#if defined(RTW_DEDICATED_P2P_DEVICE)
 	if (wdev == wiphy_to_pd_wdev(wiphy))
-		padapter = wiphy_to_adapter(wiphy);
+		padapter = wiphy_to_p2p_adapter(wiphy);
 	else
 	#endif
 	if (wdev_to_ndev(wdev))
@@ -4726,18 +4726,32 @@ static int	cfg80211_rtw_assoc(struct wiphy *wiphy, struct net_device *ndev,
 
 void rtw_cfg80211_rx_probe_request(_adapter *adapter, union recv_frame *rframe)
 {
-	struct wireless_dev *wdev = adapter->rtw_wdev;
-	struct rtw_wdev_priv *pwdev_priv = adapter_wdev_data(adapter);
+	struct wireless_dev *wdev = NULL;
+	struct wiphy *wiphy = NULL;
 	u8 *frame = get_recvframe_data(rframe);
 	uint frame_len = rframe->u.hdr.len;
 	s32 freq;
 	u8 ch, sch = rtw_get_oper_ch(adapter);
 
+	wiphy = adapter->rtw_wdev->wiphy;
+
+#if defined(RTW_DEDICATED_P2P_DEVICE)
+	wdev = wiphy_to_pd_wdev(wiphy);
+#endif
+
+	if (wdev == NULL) 
+		wdev = adapter->rtw_wdev;
+
+	RTW_INFO(FUNC_ADPT_FMT " id(%d) type(%d) wdev(%p)\n",
+			 FUNC_ADPT_ARG(adapter), adapter->iface_id,
+			 adapter->adapter_type, wdev);
+
 	ch = rframe->u.hdr.attrib.ch ? rframe->u.hdr.attrib.ch : sch;
 	freq = rtw_ch2freq(ch);
 
 #ifdef CONFIG_DEBUG_CFG80211
-	RTW_INFO("RTW_Rx: probe request, ch=%d(%d)\n", ch, sch);
+	RTW_INFO("RTW_Rx: probe request, ch=%d(%d), ta="MAC_FMT"\n"
+		, ch, sch, MAC_ARG(get_addr2_ptr(frame)));
 #endif
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,37)) || defined(COMPAT_KERNEL_RELEASE)
@@ -5183,7 +5197,7 @@ static s32 cfg80211_rtw_remain_on_channel(struct wiphy *wiphy,
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 6, 0))
 	#if defined(RTW_DEDICATED_P2P_DEVICE)
 	if (wdev == wiphy_to_pd_wdev(wiphy))
-		padapter = wiphy_to_adapter(wiphy);
+		padapter = wiphy_to_p2p_adapter(wiphy);
 	else
 	#endif
 	if (wdev_to_ndev(wdev))
@@ -5360,7 +5374,7 @@ static s32 cfg80211_rtw_cancel_remain_on_channel(struct wiphy *wiphy,
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 6, 0))
 	#if defined(RTW_DEDICATED_P2P_DEVICE)
 	if (wdev == wiphy_to_pd_wdev(wiphy))
-		padapter = wiphy_to_adapter(wiphy);
+		padapter = wiphy_to_p2p_adapter(wiphy);
 	else
 	#endif
 	if (wdev_to_ndev(wdev))
@@ -5458,7 +5472,7 @@ int rtw_pd_iface_alloc(struct wiphy *wiphy, const char *name, struct wireless_de
 	struct rtw_wiphy_data *wiphy_data = rtw_wiphy_priv(wiphy);
 	struct wireless_dev *wdev = NULL;
 	struct rtw_netdev_priv_indicator *npi;
-	_adapter *primary_adpt = wiphy_to_adapter(wiphy);
+	_adapter *p2p_adapter = wiphy_to_p2p_adapter(wiphy);
 	int ret = 0;
 
 	if (wiphy_data->pd_wdev) {
@@ -5476,7 +5490,7 @@ int rtw_pd_iface_alloc(struct wiphy *wiphy, const char *name, struct wireless_de
 
 	wdev->wiphy = wiphy;
 	wdev->iftype = NL80211_IFTYPE_P2P_DEVICE;
-	_rtw_memcpy(wdev->address, adapter_mac_addr(primary_adpt), ETH_ALEN);
+	_rtw_memcpy(wdev->address, adapter_mac_addr(p2p_adapter), ETH_ALEN);
 
 	wiphy_data->pd_wdev = wdev;
 	*pd_wdev = wdev;
@@ -5826,7 +5840,7 @@ static int cfg80211_rtw_mgmt_tx(struct wiphy *wiphy,
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 6, 0))
 	#if defined(RTW_DEDICATED_P2P_DEVICE)
 	if (wdev == wiphy_to_pd_wdev(wiphy))
-		padapter = wiphy_to_adapter(wiphy);
+		padapter = wiphy_to_p2p_adapter(wiphy);
 	else
 	#endif
 	if (wdev_to_ndev(wdev))
@@ -6049,12 +6063,17 @@ static void cfg80211_rtw_mgmt_frame_register(struct wiphy *wiphy,
 	if (wiphy == NULL)
 		goto exit;
 
-	adapter = wiphy_to_adapter(wiphy);
+#if defined(RTW_DEDICATED_P2P_DEVICE)
+	if (wdev == wiphy_to_pd_wdev(wiphy))
+		adapter = wiphy_to_p2p_adapter(wiphy);
+	else
+#endif
+		adapter = (_adapter *)rtw_netdev_priv(ndev);
 	pwdev_priv = adapter_wdev_data(adapter);
 
 #ifdef CONFIG_DEBUG_CFG80211
 	RTW_INFO(FUNC_ADPT_FMT" frame_type:%x, reg:%d\n", FUNC_ADPT_ARG(adapter),
-		frame_type, reg);
+			 frame_type, reg);
 #endif
 
 #ifndef PURE_SUPPLICANT
@@ -6848,7 +6867,7 @@ struct ieee80211_iface_combination rtw_combinations[] = {
 	{
 		.limits = rtw_limits,
 		.n_limits = ARRAY_SIZE(rtw_limits),
-		#if defined(RTW_DEDICATED_P2P_DEVICE)
+		#if defined(RTW_DEDICATED_P2P_DEVICE) | defined(LGE_PRIVATE)
 		.max_interfaces = 3,
 		#else
 		.max_interfaces = 2,
@@ -7148,7 +7167,7 @@ int rtw_wdev_alloc(_adapter *padapter, struct wiphy *wiphy)
 	struct wireless_dev *wdev;
 	struct rtw_wdev_priv *pwdev_priv;
 
-	RTW_INFO("%s(padapter=%p)\n", __func__, padapter);
+	RTW_INFO("%s(padapter[%u]=%p)\n", __func__, padapter->iface_id, padapter);
 
 	/*  wdev */
 	wdev = (struct wireless_dev *)rtw_zmalloc(sizeof(struct wireless_dev));

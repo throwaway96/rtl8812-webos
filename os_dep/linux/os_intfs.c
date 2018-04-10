@@ -1686,8 +1686,7 @@ int rtw_os_ndevs_alloc(struct dvobj_priv *dvobj)
 		if (adapter && !adapter->pnetdev) {
 
 			#ifdef CONFIG_RTW_DYNAMIC_NDEV
-			if (!is_primary_adapter(adapter))
-				continue;
+			if (i == (CONFIG_IFACE_NUMBER-1)) continue;
 			#endif
 
 			status = rtw_os_ndev_alloc(adapter);
@@ -2799,8 +2798,7 @@ int rtw_os_ndevs_register(struct dvobj_priv *dvobj)
 			char *name;
 
 			#ifdef CONFIG_RTW_DYNAMIC_NDEV
-			if (!is_primary_adapter(adapter))
-				continue;
+			if (i == (CONFIG_IFACE_NUMBER-1)) continue;
 			#endif
 
 			if (adapter->iface_id == IFACE_ID0)

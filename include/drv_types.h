@@ -1180,6 +1180,7 @@ _adapter *dvobj_get_port0_adapter(struct dvobj_priv *dvobj);
 _adapter *dvobj_get_unregisterd_adapter(struct dvobj_priv *dvobj);
 _adapter *dvobj_get_adapter_by_addr(struct dvobj_priv *dvobj, u8 *addr);
 #define dvobj_get_primary_adapter(dvobj)	((dvobj)->padapters[IFACE_ID0])
+#define dvobj_get_p2p_adapter(dvobj)	((dvobj)->padapters[IFACE_ID1])
 
 enum _hw_port {
 	HW_PORT0,
