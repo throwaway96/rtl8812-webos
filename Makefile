@@ -80,7 +80,7 @@ CONFIG_RTW_LOG_LEVEL = 4
 ######################## Wake On Lan ##########################
 CONFIG_WOWLAN = y
 CONFIG_GPIO_WAKEUP = y
-CONFIG_ONE_PIN_GPIO = n
+CONFIG_ONE_PIN_GPIO = y
 CONFIG_DEFAULT_PATTERNS_EN = y
 CONFIG_WAKEUP_GPIO_IDX = default
 CONFIG_HIGH_ACTIVE = n

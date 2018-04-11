@@ -4164,7 +4164,7 @@ static u8 rtw_hal_set_wowlan_ctrl_cmd(_adapter *adapter, u8 enable, u8 change_un
 	if (enable) {
 		dis_uphy = 1;
 		/* time unit: 0 -> ms, 1 -> 256 ms*/
-		dis_uphy_unit = 0;
+		dis_uphy_unit = 1;
 		dis_uphy_time = 0x16;
 		dis_uphy_take_pdn = 0;
 	}
