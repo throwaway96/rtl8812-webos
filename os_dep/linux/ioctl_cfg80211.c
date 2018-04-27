@@ -6867,7 +6867,7 @@ struct ieee80211_iface_combination rtw_combinations[] = {
 	{
 		.limits = rtw_limits,
 		.n_limits = ARRAY_SIZE(rtw_limits),
-		#if defined(RTW_DEDICATED_P2P_DEVICE) | defined(LGE_PRIVATE)
+		#if defined(RTW_DEDICATED_P2P_DEVICE) || defined(LGE_PRIVATE)
 		.max_interfaces = 3,
 		#else
 		.max_interfaces = 2,

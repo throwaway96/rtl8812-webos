@@ -2547,7 +2547,7 @@ void rtw_hal_set_macaddr_port(_adapter *adapter, u8 *val)
 	case HW_PORT1:
 		reg_macid = REG_MACID1;
 		break;
-#if defined(CONFIG_RTL8814A)
+#if defined(CONFIG_RTL8814A) || defined(CONFIG_RTL8822B)
 	case HW_PORT2:
 		reg_macid = REG_MACID2;
 		break;
@@ -2580,7 +2580,7 @@ void rtw_hal_get_macaddr_port(_adapter *adapter, u8 *mac_addr)
 	case HW_PORT1:
 		reg_macid = REG_MACID1;
 		break;
-#if defined(CONFIG_RTL8814A)
+#if defined(CONFIG_RTL8814A) || defined(CONFIG_RTL8822B)
 	case HW_PORT2:
 		reg_macid = REG_MACID2;
 		break;

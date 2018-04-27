@@ -285,7 +285,7 @@
 	#error "HW count not support over 8 interfaces !!"
 #endif
 
-#if (CONFIG_IFACE_NUMBER > 2)
+#if (CONFIG_IFACE_NUMBER > 2) && (!defined(CONFIG_FIX_HWPORT))
 	#define CONFIG_MI_WITH_MBSSID_CAM
 
 	#ifdef CONFIG_MI_WITH_MBSSID_CAM

@@ -88,6 +88,7 @@ const char *get_miracast_mode_str(int mode);
 void rtw_wfd_st_switch(struct sta_info *sta, bool on);
 
 #define MLME_STATE(adapter) get_fwstate(&((adapter)->mlmepriv))
+#define CHK_MLME_STATE(adapter, state) check_fwstate(&((adapter)->mlmepriv), (state))
 
 #define MLME_IS_STA(adapter) (MLME_STATE((adapter)) & WIFI_STATION_STATE)
 #define MLME_IS_AP(adapter) (MLME_STATE((adapter)) & WIFI_AP_STATE)
@@ -113,7 +114,8 @@ void rtw_wfd_st_switch(struct sta_info *sta, bool on);
 
 #define MLME_IS_MSRC(adapter) rtw_chk_miracast_mode((adapter), MIRACAST_SOURCE)
 #define MLME_IS_MSINK(adapter) rtw_chk_miracast_mode((adapter), MIRACAST_SINK)
-
+#define MLME_IS_LINKING(adapter) CHK_MLME_STATE(adapter, WIFI_UNDER_LINKING)
+#define MLME_IS_ASOC(adapter) CHK_MLME_STATE(adapter, WIFI_ASOC_STATE)
 #ifdef CONFIG_IOCTL_CFG80211
 #define MLME_IS_MGMT_TX(adapter) rtw_cfg80211_get_is_mgmt_tx(adapter)
 #else

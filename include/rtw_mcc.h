@@ -192,6 +192,8 @@ struct mcc_obj_priv {
 	PADAPTER iface[MAX_MCC_NUM]; /* by order, use for mcc parameter cmd */
 	struct submit_ctx mcc_sctx;
 	struct submit_ctx mcc_tsf_req_sctx;
+	u8 mcc_tsf_req_sctx_order;
+	_mutex mcc_tsf_req_mutex;
 #ifdef CONFIG_MCC_MODE_V2
 	u8 mcc_iqk_value_rsvd_page[3];
 #endif /* CONFIG_MCC_MODE_V2 */

@@ -354,7 +354,7 @@ char *ifname = "wlan%d";
 module_param(ifname, charp, 0644);
 MODULE_PARM_DESC(ifname, "The default name to allocate for first interface");
 
-#ifdef CONFIG_PLATFORM_ANDROID
+#if defined(CONFIG_PLATFORM_ANDROID) || defined(LGE_PRIVATE)
 	char *if2name = "p2p%d";
 #else /* CONFIG_PLATFORM_ANDROID */
 	char *if2name = "wlan%d";
@@ -1984,6 +1984,7 @@ struct dvobj_priv *devobj_init(void)
 
 #ifdef CONFIG_MCC_MODE
 	_rtw_mutex_init(&(pdvobj->mcc_objpriv.mcc_mutex));
+	_rtw_mutex_init(&(pdvobj->mcc_objpriv.mcc_tsf_req_mutex));
 	_rtw_spinlock_init(&pdvobj->mcc_objpriv.mcc_lock);
 #endif /* CONFIG_MCC_MODE */
 
@@ -2003,6 +2004,7 @@ void devobj_deinit(struct dvobj_priv *pdvobj)
 
 #ifdef CONFIG_MCC_MODE
 	_rtw_mutex_free(&(pdvobj->mcc_objpriv.mcc_mutex));
+	_rtw_mutex_free(&(pdvobj->mcc_objpriv.mcc_tsf_req_mutex));
 	_rtw_spinlock_free(&pdvobj->mcc_objpriv.mcc_lock);
 #endif /* CONFIG_MCC_MODE */
 
@@ -2639,6 +2641,19 @@ _adapter *rtw_drv_add_vir_if(_adapter *primary_padapter,
 
 	padapter->intf_start = primary_padapter->intf_start;
 	padapter->intf_stop = primary_padapter->intf_stop;
+
+#if defined(LGE_PRIVATE) && defined(CONFIG_FIX_HWPORT)
+	/* keep HW_PORT0 for Dynamic P2P Interface */
+	if (padapter->iface_id == 1) {
+		padapter->hw_port = HW_PORT2;
+	} else if (padapter->iface_id == 2) {
+		padapter->hw_port = HW_PORT0;
+	} else {
+		padapter->hw_port = HW_PORT1;
+	}
+	RTW_INFO(CLR_LT_GRN"%s: iface_id(%d) hw_port(%d)\n"CLR_NONE,
+		__func__, padapter->iface_id, padapter->hw_port);
+#endif
 
 	/* step init_io_priv */
 	if ((rtw_init_io_priv(padapter, set_intf_ops)) == _FAIL) {

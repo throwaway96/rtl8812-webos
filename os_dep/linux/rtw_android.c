@@ -915,114 +915,122 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 	}
 #ifdef LGE_PRIVATE
 	case LGE_PRIVATE_CMD_SET_MCHAN_SCHED_MODE:
-		{
-			u8 val = 0;
+	{
+		u8 val = 0;
 
-			RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s]\n"CLR_NONE, command);
+		RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s]\n"CLR_NONE, command);
 
-			sscanf(command, "SET_MCHAN_SCHED_MODE %u", (unsigned int *)&val);
-			adapter_wdev_data(padapter)->mchan_sched_mode = val;
-			rtw_set_mcc_duration_cmd(padapter, MCC_DURATION_MAPPING, val);
+		sscanf(command, "SET_MCHAN_SCHED_MODE %u", (unsigned int *)&val);
+		adapter_wdev_data(padapter)->mchan_sched_mode = val;
+		rtw_set_mcc_duration_cmd(padapter, MCC_DURATION_MAPPING, val);
 
-			snprintf(command, 3, "OK");
-			bytes_written = strlen("OK");
-		}
+		snprintf(command, 3, "OK");
+		bytes_written = strlen("OK");
+	}
 		break;
 	case LGE_PRIVATE_CMD_GET_CS_INFO:
-		{
-			struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
-			struct recv_priv *precvpriv = &(padapter->recvpriv);
-			char buf1[256] = { 0 };
-			char buf2[256] = { 0 };
-			u8 in_suspend = adapter_to_pwrctl(padapter)->bInSuspend;
-			u8 surprise_removed = rtw_is_surprise_removed(padapter);
+	{
+		struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
+		struct recv_priv *precvpriv = &(padapter->recvpriv);
+		char buf1[256] = { 0 };
+		char buf2[256] = { 0 };
+		u8 in_suspend = adapter_to_pwrctl(padapter)->bInSuspend;
+		u8 surprise_removed = rtw_is_surprise_removed(padapter);
 
-			if (in_suspend == _FALSE) {
-				RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s]\n"CLR_NONE, command);
-				precvpriv->store_law_data_flag = _TRUE;
+		if (in_suspend == _FALSE) {
+			RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s]\n"CLR_NONE, command);
+			precvpriv->store_law_data_flag = _TRUE;
 
-				snprintf(buf1, 256,
-						 "\nGET_CS_INFO\n"
-						 "\t\tVersion\t: %s\n"
-						 "\t\tCcode\t: R%s\n"
-						 "\t\tCcodeRev\t: %u\n"
-						 "\t\tChannel\t: %u\n",
-						 surprise_removed == _TRUE ? "N/A" : DRIVERVERSION,
-						 adapter_wdev_data(padapter)->country,
-						 adapter_wdev_data(padapter)->ccode_version,
-						 pmlmeext->cur_channel
-						);
+			snprintf(buf1, 256,
+				"\nGET_CS_INFO\n"
+				"\t\tVersion\t: %s\n"
+				"\t\tCcode\t: R%s\n"
+				"\t\tCcodeRev\t: %u\n"
+				"\t\tChannel\t: %u\n",
+				surprise_removed == _TRUE ? "N/A" : DRIVERVERSION,
+				adapter_wdev_data(padapter)->country,
+				adapter_wdev_data(padapter)->ccode_version,
+				pmlmeext->cur_channel
+				);
 
-				if (!surprise_removed)
-					rtw_hal_set_odm_var(padapter, HAL_ODM_RX_Dframe_INFO, buf2, _TRUE);
+			if (!surprise_removed)
+				rtw_hal_set_odm_var(padapter, HAL_ODM_RX_Dframe_INFO, buf2, _TRUE);
 
-				strcat(command, buf1);
-				strcat(command, buf2);
+			strcat(command, buf1);
+			strcat(command, buf2);
 
-				bytes_written = strlen(command);
-			}else
-				RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s], in_suspend=_TRUE\n"CLR_NONE, command);
-				
-			//RTW_INFO("LGE CMD[%s]\n", command);
-		}
+			bytes_written = strlen(command);
+		} else
+			RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s], in_suspend=_TRUE\n"CLR_NONE, command);
+
+		//RTW_INFO("LGE CMD[%s]\n", command);
+	}
 		break;
 	case LGE_PRIVATE_CMD_SET_WOWL:
-		{
-			u8 val = 0;
+	{
+		u8 val = 0;
 
-			RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s]\n"CLR_NONE, command);
+		RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s]\n"CLR_NONE, command);
 
-			sscanf(command, "SET_WOWL %u", (unsigned int *)&val);
-			adapter_wdev_data(padapter)->wowl = val;
+		sscanf(command, "SET_WOWL %u", (unsigned int *)&val);
+		adapter_wdev_data(padapter)->wowl = val;
 
-			snprintf(command, 3, "OK");
-			bytes_written = strlen("OK");
-			
-		}
+		snprintf(command, 3, "OK");
+		bytes_written = strlen("OK");
+
+	}
 		break;
 	case LGE_PRIVATE_CMD_WOWL_ACTIVATE:
-		{
-			u8 val = 0;
-			u8 in_suspend = adapter_to_pwrctl(padapter)->bInSuspend;
+	{
+		u8 val = 0;
+		u8 in_suspend = adapter_to_pwrctl(padapter)->bInSuspend;
+
+		if (padapter->isprimary) {
 			if (in_suspend == _FALSE) {
 				struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
-				
+
 				RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s]\n"CLR_NONE, command);
 
 				sscanf(command, "WOWL_ACTIVATE %u", (unsigned int *)&val);
 				adapter_wdev_data(padapter)->wowl_activate = 1;
 
-				if (check_fwstate(pmlmepriv, _FW_UNDER_SURVEY)) rtw_scan_abort(padapter);
+				if (check_fwstate(pmlmepriv, _FW_UNDER_SURVEY))
+					rtw_scan_abort(padapter);
 
-				if (adapter_wdev_data(padapter)->wowl) rtw_suspend_common(padapter);
+				if (adapter_wdev_data(padapter)->wowl)
+					rtw_suspend_common(padapter);
 			} else
 				RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s], in_suspend=_TRUE\n"CLR_NONE, command);
+		} else
+			RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s], is not primary\n"CLR_NONE, command);
 
-			snprintf(command, 3, "OK");
-			bytes_written = strlen("OK");
-		}
+		snprintf(command, 3, "OK");
+		bytes_written = strlen("OK");
+	}
 		break;
 	case LGE_PRIVATE_CMD_IDLE_MODE:
-		{
-			u8 val = 0;
-			u8 in_suspend = adapter_to_pwrctl(padapter)->bInSuspend;
-			if (in_suspend == _FALSE) {
-				struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	{
+		u8 val = 0;
+		u8 in_suspend = adapter_to_pwrctl(padapter)->bInSuspend;
 
-				RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s]\n"CLR_NONE, command);
+		if (in_suspend == _FALSE) {
+			struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
 
-				sscanf(command, "WOWL_ACTIVATE %u", (unsigned int *)&val);
-				adapter_wdev_data(padapter)->idle_mode = _TRUE;
+			RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s]\n"CLR_NONE, command);
 
-				if (check_fwstate(pmlmepriv, _FW_UNDER_SURVEY)) rtw_scan_abort(padapter);
+			sscanf(command, "WOWL_ACTIVATE %u", (unsigned int *)&val);
+			adapter_wdev_data(padapter)->idle_mode = _TRUE;
 
-				rtw_suspend_common(padapter);
-			} else
-				RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s], in_suspend=_TRUE\n"CLR_NONE, command);
+			if (check_fwstate(pmlmepriv, _FW_UNDER_SURVEY))
+				rtw_scan_abort(padapter);
 
-			snprintf(command, 3, "OK");
-			bytes_written = strlen("OK");
-		}
+			rtw_suspend_common(padapter);
+		} else
+			RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s], in_suspend=_TRUE\n"CLR_NONE, command);
+
+		snprintf(command, 3, "OK");
+		bytes_written = strlen("OK");
+	}
 		break;
 #endif /* LGE_PRIVATE */
 	default:

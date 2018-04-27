@@ -1292,6 +1292,63 @@ static void set_opmode_port1(PADAPTER adapter, u8 mode)
 #endif /* CONFIG_CONCURRENT_MODE */
 }
 
+static void set_opmode_port2(PADAPTER adapter, u8 mode)
+{
+#ifdef CONFIG_CONCURRENT_MODE
+	u8 is_ap_exist;
+	u8 val8;
+
+
+	is_ap_exist = rtw_mi_check_status(adapter, MI_AP_MODE);
+
+	/* disable Port1 TSF update */
+	val8 = rtw_read8(adapter, REG_BCN_CTRL_CLINT1_8822B);
+	val8 |= BIT_CLI1_DIS_TSF_UDT_8822B;
+	rtw_write8(adapter, REG_BCN_CTRL_CLINT1_8822B, val8);
+
+	Set_MSR(adapter, mode);
+
+	RTW_INFO(FUNC_ADPT_FMT ": hw_port(%d) mode=%d\n",
+		 FUNC_ADPT_ARG(adapter), adapter->hw_port, mode);
+
+	switch (mode) {
+	case _HW_STATE_NOLINK_:
+	case _HW_STATE_STATION_:
+		if (_FALSE == is_ap_exist) {
+			rtl8822b_stop_tx_beacon(adapter);
+#ifdef CONFIG_PCI_HCI
+			UpdateInterruptMask8822BE(adapter, 0, 0, RT_BCN_INT_MASKS, 0);
+#endif /* CONFIG_PCI_HCI */
+		}
+
+		/* disable beacon function */
+		val8 = BIT_CLI1_DIS_TSF_UDT_8822B | BIT_CLI1_EN_BCN_FUNCTION_8822B;
+		rtw_write8(adapter, REG_BCN_CTRL_CLINT1_8822B, val8);
+
+		/* clear rx ctrl frame */
+		/* rtw_write16(adapter, REG_RXFLTMAP1_8822B, 0); */
+		break;
+
+	case _HW_STATE_ADHOC_:
+		rtl8822b_resume_tx_beacon(adapter);
+		val8 = BIT_CLI1_DIS_TSF_UDT_8822B | BIT_CLI1_EN_BCN_FUNCTION_8822B;
+		rtw_write8(adapter, REG_BCN_CTRL_CLINT1_8822B, val8);
+
+		/* clear rx ctrl frame */
+		rtw_write16(adapter, REG_RXFLTMAP1_8822B, 0);
+		break;
+
+	case _HW_STATE_AP_:
+#ifdef CONFIG_PCI_HCI
+		UpdateInterruptMask8822BE(adapter, RT_BCN_INT_MASKS, 0, 0, 0);
+#endif /* CONFIG_PCI_HCI */
+
+		/* ToDo */
+		break;
+	}
+#endif /* CONFIG_CONCURRENT_MODE */
+}
+
 static void hw_var_set_opmode(PADAPTER adapter, u8 mode)
 {
 	u8 val8;
@@ -1335,6 +1392,10 @@ static void hw_var_set_opmode(PADAPTER adapter, u8 mode)
 
 	case HW_PORT1:
 		set_opmode_port1(adapter, mode);
+		break;
+
+	case HW_PORT2:
+		set_opmode_port2(adapter, mode);
 		break;
 
 	default:

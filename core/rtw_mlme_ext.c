@@ -10870,7 +10870,7 @@ unsigned int send_beacon(_adapter *padapter)
 	} else {
 		u32 passing_time = rtw_get_passing_time_ms(start);
 
-		if (passing_time > 100 || issue > 3)
+		if (passing_time > 100 || issue > 50)
 			RTW_INFO("%s success, issue:%d, poll:%d, %u ms\n", __FUNCTION__, issue, poll, rtw_get_passing_time_ms(start));
 		else if (0)
 			RTW_INFO("%s success, issue:%d, poll:%d, %u ms\n", __FUNCTION__, issue, poll, rtw_get_passing_time_ms(start));

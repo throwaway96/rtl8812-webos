@@ -1266,6 +1266,12 @@ _adapter *rtw_usb_primary_adapter_init(struct dvobj_priv *dvobj,
 	padapter->hw_port = HW_PORT0;
 #endif
 
+#if defined(LGE_PRIVATE) && defined(CONFIG_FIX_HWPORT)
+	/* keep HW_PORT0 for Dynamic P2P Interface */
+	padapter->hw_port = HW_PORT1;
+	RTW_INFO(CLR_LT_GRN"%s: hw_port(1)\n"CLR_NONE, __func__);
+#endif
+
 	/* step init_io_priv */
 	if (rtw_init_io_priv(padapter, usb_set_intf_ops) == _FAIL)
 		goto free_adapter;
