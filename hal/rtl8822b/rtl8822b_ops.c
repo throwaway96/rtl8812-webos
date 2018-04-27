@@ -4178,6 +4178,7 @@ static void fill_fake_txdesc(PADAPTER adapter, u8 *pDesc, u32 BufferLen,
 			if (rty_num != 0) {
 				SET_TX_DESC_RTY_LMT_EN_8822B(pDesc, 1);
 				SET_TX_DESC_RTS_DATA_RTY_LMT_8822B(pDesc, rty_num);
+				SET_TX_DESC_DATARATE_8822B(pDesc, DESC_RATE6M);
 			}
 		}
 	}

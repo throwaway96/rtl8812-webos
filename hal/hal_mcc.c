@@ -34,10 +34,10 @@
 #define TU 1024 /* 1 TU equals 1024 microseconds */
 /* port 1 druration, TSF sync offset, start time offset, interval (unit:TU (1024 microseconds))*/
 u8 mcc_switch_channel_policy_table[][7]={
-	{20, 50, 40, 100, 0, 0, 30},
-	{80, 50, 10, 100, 0, 0, 30},
-	{36, 50, 32, 100, 0, 0, 30},
-	{30, 50, 35, 100, 0, 0, 30},
+	{30, 50, 35, 100, 3, 0, 30},
+	{70, 50, 15, 100, 3, 0, 30},
+	{50, 50, 25, 100, 3, 0, 30},
+	{50, 50, 25, 100, 3, 0, 30},
 };
 
 const int mcc_max_policy_num = sizeof(mcc_switch_channel_policy_table) /sizeof(u8) /7;
@@ -556,7 +556,7 @@ static void rtw_hal_config_mcc_role_setting(PADAPTER padapter, u8 order)
 
 	/* setting Null data parameters */
 	if (pmccadapriv->role == MCC_ROLE_STA) {
-			pmccadapriv->null_early = 3;
+			pmccadapriv->null_early = 6;
 			pmccadapriv->null_rty_num= 5;
 	} else if (pmccadapriv->role == MCC_ROLE_GC) {
 			pmccadapriv->null_early = 2;
@@ -1176,7 +1176,7 @@ u8 rtw_hal_dl_mcc_fw_rsvd_page(_adapter *adapter, u8 *pframe, u16 *index,
 			_rtw_memcpy(bssid, get_my_bssid(&pmlmeinfo->network), ETH_ALEN);
 
 			rtw_hal_construct_NullFunctionData(iface
-				, &pframe[*index], &len, bssid, _FALSE, 0, 0, _FALSE);
+				, &pframe[*index], &len, bssid, _TRUE, 6, 0, _FALSE);
 			rtw_hal_fill_fake_txdesc(iface, &pframe[*index-tx_desc],
 				len, _FALSE, _FALSE, _FALSE);
 
