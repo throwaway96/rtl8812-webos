@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright(c) 2015 - 2016 Realtek Corporation. All rights reserved.
+ * Copyright(c) 2015 - 2017 Realtek Corporation.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of version 2 of the GNU General Public License as
@@ -11,12 +11,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
  * more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110, USA
- *
- *
- ******************************************************************************/
+ *****************************************************************************/
 #define _RTL8822BU_XMIT_C_
 
 #include <drv_types.h>			/* PADAPTER, rtw_xmit.h and etc. */
@@ -32,7 +27,7 @@ static void update_txdesc_h2c_pkt(struct xmit_frame *pxmitframe, u8 *pmem, s32 s
 
 	_rtw_memset(ptxdesc, 0, TXDESC_SIZE);
 	SET_TX_DESC_TXPKTSIZE_8822B(ptxdesc, sz);
-	SET_TX_DESC_QSEL_8822B(ptxdesc, HALMAC_QUEUE_SELECT_CMD);
+	SET_TX_DESC_QSEL_8822B(ptxdesc, HALMAC_TXDESC_QSEL_H2C_CMD);
 	rtl8822b_cal_txdesc_chksum(padapter, ptxdesc);
 	rtl8822b_dbg_dump_tx_desc(padapter, pxmitframe->frame_tag, ptxdesc);
 }
@@ -52,6 +47,7 @@ static s32 update_txdesc(struct xmit_frame *pxmitframe, u8 *pmem, s32 sz, u8 bag
 	sint	bmcst = IS_MCAST(pattrib->ra);
 	u16	SWDefineContent = 0x0;
 	u8	DriverFixedRate = 0x0;
+	u8 hw_port = rtw_hal_get_port(padapter);
 
 #ifndef CONFIG_USE_USB_BUFFER_ALLOC_TX
 	if (padapter->registrypriv.mp_mode == 0) {
@@ -152,12 +148,14 @@ static s32 update_txdesc(struct xmit_frame *pxmitframe, u8 *pmem, s32 sz, u8 bag
 			rtl8822b_fill_txdesc_phy(padapter, pattrib, ptxdesc);
 
 			/* compatibility for MCC consideration, use pmlmeext->cur_channel */
-			if (pmlmeext->cur_channel > 14)
-				/* for 5G. OFDM 6M */
-				SET_TX_DESC_DATA_RTY_LOWEST_RATE_8822B(ptxdesc, 4);
-			else
-				/* for 2.4G. CCK 1M */
-				SET_TX_DESC_DATA_RTY_LOWEST_RATE_8822B(ptxdesc, 0);
+			if (!bmcst) {
+				if (pmlmeext->cur_channel > 14)
+					/* for 5G. OFDM 6M */
+					SET_TX_DESC_DATA_RTY_LOWEST_RATE_8822B(ptxdesc, 4);
+				else
+					/* for 2.4G. CCK 1M */
+					SET_TX_DESC_DATA_RTY_LOWEST_RATE_8822B(ptxdesc, 0);
+			}
 
 			if (pHalData->fw_ractrl == _FALSE) {
 				SET_TX_DESC_USE_RATE_8822B(ptxdesc, 1);
@@ -167,6 +165,10 @@ static s32 update_txdesc(struct xmit_frame *pxmitframe, u8 *pmem, s32 sz, u8 bag
 					SET_TX_DESC_DATA_SHORT_8822B(ptxdesc, 1);
 
 				SET_TX_DESC_DATARATE_8822B(ptxdesc, (pHalData->INIDATA_RATE[pattrib->mac_id] & 0x7F));
+			}
+			if (bmcst) {
+				DriverFixedRate = 0x01;
+				rtl8822b_fill_txdesc_bmc_tx_rate(pattrib, ptxdesc);
 			}
 
 			/* modify data rate by iwpriv or proc */
@@ -189,9 +191,17 @@ static s32 update_txdesc(struct xmit_frame *pxmitframe, u8 *pmem, s32 sz, u8 bag
 			if (pattrib->stbc)
 				SET_TX_DESC_DATA_STBC_8822B(ptxdesc, 1);
 
-			if (pattrib->udp_src == 0x46B4 && pattrib->udp_dst == 0x1000) {
+#ifdef CONFIG_WMMPS_STA
+			if (pattrib->trigger_frame)
+				SET_TX_DESC_TRI_FRAME_8822B (ptxdesc, 1);
+#endif /* CONFIG_WMMPS_STA */			
+
+#ifdef LGE_PRIVATE
+			/* Ixia control frame */
+			if (pattrib->udp_src == 0x46B4
+				&& pattrib->udp_dst == 0x1000)
 				SET_TX_DESC_QSEL_8822B(ptxdesc, QSLT_VO);
-			}
+#endif /* LGE_PRIVATE */
 		} else {
 			/*
 				EAP data packet and ARP packet and DHCP.
@@ -272,8 +282,8 @@ static s32 update_txdesc(struct xmit_frame *pxmitframe, u8 *pmem, s32 sz, u8 bag
 
 	SET_TX_DESC_SW_DEFINE_8822B(ptxdesc, SWDefineContent);
 
-	SET_TX_DESC_PORT_ID_8822B(ptxdesc, get_hw_port(padapter));
-	SET_TX_DESC_MULTIPLE_PORT_8822B(ptxdesc, get_hw_port(padapter));
+	SET_TX_DESC_PORT_ID_8822B(ptxdesc, hw_port);
+	SET_TX_DESC_MULTIPLE_PORT_8822B(ptxdesc, hw_port);
 
 	rtl8822b_cal_txdesc_chksum(padapter, ptxdesc);
 	rtl8822b_dbg_dump_tx_desc(padapter, pxmitframe->frame_tag, ptxdesc);
@@ -306,8 +316,13 @@ s32 rtl8822bu_xmit_buf_handler(PADAPTER padapter)
 	if (_FAIL == ret)
 		return _FAIL;
 
-	if (RTW_CANNOT_RUN(padapter))
+	if (RTW_CANNOT_RUN(padapter)) {
+		RTW_DBG(FUNC_ADPT_FMT "- bDriverStopped(%s) bSurpriseRemoved(%s)\n",
+			FUNC_ADPT_ARG(padapter),
+			rtw_is_drv_stopped(padapter) ? "True" : "False",
+			rtw_is_surprise_removed(padapter) ? "True" : "False");
 		return _FAIL;
+	}
 
 	if (check_pending_xmitbuf(pxmitpriv) == _FALSE)
 		return _SUCCESS;
@@ -401,7 +416,7 @@ static s32 rtw_dump_xframe(PADAPTER padapter, struct xmit_frame *pxmitframe)
 		pxmitbuf->len = w_sz;
 		pxmitbuf->ff_hwaddr = ff_hwaddr;
 
-		if (pxmitbuf->buf_tag  == XMITBUF_CMD)
+		if ((pattrib->qsel == QSLT_BEACON) || (pattrib->qsel == QSLT_CMD))
 			/* download rsvd page or fw */
 			inner_ret = rtw_write_port(padapter, ff_hwaddr, w_sz, (unsigned char *)pxmitbuf);
 		else
@@ -428,24 +443,6 @@ static s32 rtw_dump_xframe(PADAPTER padapter, struct xmit_frame *pxmitframe)
 }
 
 #ifdef CONFIG_USB_TX_AGGREGATION
-static u32 xmitframe_need_length(struct xmit_frame *pxmitframe)
-{
-	struct pkt_attrib *pattrib = &pxmitframe->attrib;
-
-	u32 len = 0;
-
-	/* no consider fragement */
-	len = pattrib->hdrlen + pattrib->iv_len +
-	      SNAP_SIZE + sizeof(u16) +
-	      pattrib->pktlen +
-	      ((pattrib->bswenc) ? pattrib->icv_len : 0);
-
-	if (pattrib->encrypt == _TKIP_)
-		len += 8;
-
-	return len;
-}
-
 #define IDEA_CONDITION 1	/* check all packets before enqueue */
 static s32 rtl8822bu_xmitframe_complete(PADAPTER padapter, struct xmit_priv *pxmitpriv, struct xmit_buf *pxmitbuf)
 {
@@ -540,7 +537,7 @@ static s32 rtl8822bu_xmitframe_complete(PADAPTER padapter, struct xmit_priv *pxm
 
 	/* 2. aggregate same priority and same DA(AP or STA) frames */
 	pfirstframe = pxmitframe;
-	len = xmitframe_need_length(pfirstframe) + TXDESC_SIZE + (pfirstframe->pkt_offset * PACKET_OFFSET_SZ);
+	len = rtw_wlan_pkt_size(pfirstframe) + TXDESC_SIZE + (pfirstframe->pkt_offset * PACKET_OFFSET_SZ);
 	pbuf_tail = len;
 	pbuf = _RND8(pbuf_tail);
 
@@ -612,7 +609,7 @@ static s32 rtl8822bu_xmitframe_complete(PADAPTER padapter, struct xmit_priv *pxm
 		pxmitframe->pkt_offset = 0; /* not first frame of aggregation, no need to reserve offset */
 #endif
 
-		len = xmitframe_need_length(pxmitframe) + TXDESC_SIZE + (pxmitframe->pkt_offset * PACKET_OFFSET_SZ);
+		len = rtw_wlan_pkt_size(pxmitframe) + TXDESC_SIZE + (pxmitframe->pkt_offset * PACKET_OFFSET_SZ);
 
 		if (_RND8(pbuf + len) > MAX_XMITBUF_SZ) {
 			/* RTW_INFO("%s: len> MAX_XMITBUF_SZ\n", __func__); */

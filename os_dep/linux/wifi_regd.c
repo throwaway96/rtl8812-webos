@@ -1,6 +1,15 @@
 /******************************************************************************
  *
- * Copyright(c) 2009-2010  Realtek Corporation.
+ * Copyright(c) 2009-2010 - 2017 Realtek Corporation.
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of version 2 of the GNU General Public License as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
  *
  *****************************************************************************/
 
@@ -146,7 +155,7 @@ static void _rtw_reg_apply_beaconing_flags(struct wiphy *wiphy,
 	u32 bandwidth = 0;
 	int r;
 
-	for (band = 0; band < IEEE80211_NUM_BANDS; band++) {
+	for (band = 0; band < NUM_NL80211_BANDS; band++) {
 
 		if (!wiphy->bands[band])
 			continue;
