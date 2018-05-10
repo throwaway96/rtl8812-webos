@@ -190,6 +190,10 @@
 		#define CONFIG_TDLS_CH_SW_V2
 	#endif
 
+	#ifdef LGE_PRIVATE
+		#define RTW_CHANNEL_SWITCH_OFFLOAD
+	#endif
+
 	#ifndef RTW_CHANNEL_SWITCH_OFFLOAD
 		#ifdef CONFIG_TDLS_CH_SW_V2
 			#define RTW_CHANNEL_SWITCH_OFFLOAD

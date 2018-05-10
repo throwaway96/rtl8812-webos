@@ -784,7 +784,7 @@ int rtw_iqk_fw_offload;
 module_param(rtw_iqk_fw_offload, int, 0644);
 
 #ifdef RTW_CHANNEL_SWITCH_OFFLOAD
-int rtw_ch_switch_offload = 0;
+int rtw_ch_switch_offload = 1;
 #else
 int rtw_ch_switch_offload;
 #endif /* RTW_CHANNEL_SWITCH_OFFLOAD */

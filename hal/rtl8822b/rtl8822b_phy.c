@@ -658,12 +658,36 @@ void rtl8822b_write_rf_reg(PADAPTER adapter, enum rf_path path, u32 addr, u32 ma
 
 static void set_tx_power_level_by_path(PADAPTER adapter, u8 channel, u8 path)
 {
+	struct dvobj_priv *dvobj = adapter_to_dvobj(adapter);
+	_adapter *iface;
+	struct mlme_ext_priv *mlmeext;
+	u8 set_power = _TRUE;
+	int i;
+
+	for (i = 0; i < dvobj->iface_nums; i++) {
+		iface = dvobj->padapters[i];
+		mlmeext = &iface->mlmeextpriv;
+
+		/* check scan state */
+		if (mlmeext_scan_state(mlmeext) != SCAN_DISABLE
+			&& mlmeext_scan_state(mlmeext) != SCAN_COMPLETE
+				&& mlmeext_scan_state(mlmeext) != SCAN_BACKING_OP ) {
+			set_power = _FALSE;
+		} else if (mlmeext_scan_state(mlmeext) == SCAN_BACKING_OP
+			&& !mlmeext_chk_scan_backop_flags(mlmeext, SS_BACKOP_TX_RESUME)) {
+			set_power = _FALSE;
+		}
+	}
+
 	phy_set_tx_power_index_by_rate_section(adapter, path, channel, CCK);
 	phy_set_tx_power_index_by_rate_section(adapter, path, channel, OFDM);
-	phy_set_tx_power_index_by_rate_section(adapter, path, channel, HT_MCS0_MCS7);
-	phy_set_tx_power_index_by_rate_section(adapter, path, channel, HT_MCS8_MCS15);
-	phy_set_tx_power_index_by_rate_section(adapter, path, channel, VHT_1SSMCS0_1SSMCS9);
-	phy_set_tx_power_index_by_rate_section(adapter, path, channel, VHT_2SSMCS0_2SSMCS9);
+
+	if (set_power == _TRUE) {
+		phy_set_tx_power_index_by_rate_section(adapter, path, channel, HT_MCS0_MCS7);
+		phy_set_tx_power_index_by_rate_section(adapter, path, channel, HT_MCS8_MCS15);
+		phy_set_tx_power_index_by_rate_section(adapter, path, channel, VHT_1SSMCS0_1SSMCS9);
+		phy_set_tx_power_index_by_rate_section(adapter, path, channel, VHT_2SSMCS0_2SSMCS9);
+	}
 }
 
 void rtl8822b_set_tx_power_level(PADAPTER adapter, u8 channel)
@@ -979,11 +1003,32 @@ void rtl8822b_switch_chnl_and_set_bw(PADAPTER adapter)
 
 	/* config channel, bw, offset setting */
 #ifdef RTW_CHANNEL_SWITCH_OFFLOAD
-	if (hal->ch_switch_offload)
-		switch_chnl_and_set_bw_by_fw(adapter, switch_band);
+	if (hal->ch_switch_offload) {
+		struct dvobj_priv *dvobj = adapter_to_dvobj(adapter);
+		_adapter *iface;
+		struct mlme_ext_priv *mlmeext;
+		u8 drv_switch = _TRUE;
+		int i;
 
-	else
+		for (i = 0; i < dvobj->iface_nums; i++) {
+			iface = dvobj->padapters[i];
+			mlmeext = &iface->mlmeextpriv;
+
+			/* check scan state */
+			if (mlmeext_scan_state(mlmeext) != SCAN_DISABLE
+				&& mlmeext_scan_state(mlmeext) != SCAN_COMPLETE
+					&& mlmeext_scan_state(mlmeext) != SCAN_BACKING_OP)
+				drv_switch = _FALSE;
+		}
+
+		if (drv_switch == _TRUE)
+			switch_chnl_and_set_bw_by_drv(adapter, switch_band);
+		else
+			switch_chnl_and_set_bw_by_fw(adapter, switch_band);
+
+	} else {
 		switch_chnl_and_set_bw_by_drv(adapter, switch_band);
+	}
 #else
 	switch_chnl_and_set_bw_by_drv(adapter, switch_band);
 #endif /* RTW_CHANNEL_SWITCH_OFFLOAD */

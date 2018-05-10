@@ -2770,10 +2770,11 @@ void rtw_hal_mcc_sw_status_check(PADAPTER padapter)
  */
 u8 rtw_hal_mcc_change_scan_flag(PADAPTER padapter, u8 *ch, u8 *bw, u8 *offset)
 {
-	u8 need_ch_setting_union = _TRUE, i = 0, flags = 0, role = 0;
+	u8 need_ch_setting_union = _TRUE, i = 0, flags = 0, back_op = _FALSE;
 	struct dvobj_priv *dvobj = adapter_to_dvobj(padapter);
-	struct mcc_adapter_priv *pmccadapriv = NULL;
-	struct mlme_ext_priv *pmlmeext = NULL;
+	struct mcc_adapter_priv *mccadapriv = NULL;
+	struct mlme_ext_priv *mlmeext = NULL;
+	_adapter *iface = NULL;
 
 	if (!MCC_EN(padapter))
 		goto exit;
@@ -2781,50 +2782,45 @@ u8 rtw_hal_mcc_change_scan_flag(PADAPTER padapter, u8 *ch, u8 *bw, u8 *offset)
 	if (!rtw_hal_check_mcc_status(padapter, MCC_STATUS_NEED_MCC))
 		goto exit;
 
+	/* disable PS_ANNC & TX_RESUME for all interface */
+	/* ToDo: TX_RESUME by interface in SCAN_BACKING_OP */
+	mlmeext = &padapter->mlmeextpriv;
+	
+	flags = mlmeext_scan_backop_flags(mlmeext);
+	if (mlmeext_chk_scan_backop_flags(mlmeext, SS_BACKOP_PS_ANNC))
+		flags &= ~SS_BACKOP_PS_ANNC;
+
+	if (mlmeext_chk_scan_backop_flags(mlmeext, SS_BACKOP_TX_RESUME))
+		flags &= ~SS_BACKOP_TX_RESUME;
+
+	mlmeext_assign_scan_backop_flags(mlmeext, flags);
+
 	for (i = 0; i < dvobj->iface_nums; i++) {
-		if (!dvobj->padapters[i])
-				continue;
-
-		pmccadapriv = &dvobj->padapters[i]->mcc_adapterpriv;
-		if (pmccadapriv->role == MCC_ROLE_MAX)
+		iface = dvobj->padapters[i];
+		if (!iface)
 			continue;
-		
-		pmlmeext = &dvobj->padapters[i]->mlmeextpriv;
-		role = pmccadapriv->role;
 
-		switch (role) {
-		case MCC_ROLE_AP:
-		case MCC_ROLE_GO:
-			*ch = pmlmeext->cur_channel;
-			*bw = pmlmeext->cur_bwmode;
-			*offset = pmlmeext->cur_ch_offset;
-			need_ch_setting_union = _FALSE;
-			break;
-		case MCC_ROLE_STA:
-		case MCC_ROLE_GC:
-			if (dvobj->padapters[i] != padapter) {
-				*ch = pmlmeext->cur_channel;
-				*bw = pmlmeext->cur_bwmode;
-				*offset = pmlmeext->cur_ch_offset;
-				need_ch_setting_union = _FALSE;
-			}
-			break;
-		default:
-			RTW_INFO("unknown role\n");
-			rtw_warn_on(1);
-			break;
+		mlmeext = &iface->mlmeextpriv;
+
+		if (MLME_IS_GO(iface) || MLME_IS_AP(iface))
+			back_op = _TRUE;
+		else if (MLME_IS_GC(iface) && (iface != padapter))
+			/* switch to another linked interface(GO) to receive beacon to avoid no beacon disconnect */
+			back_op = _TRUE;
+		else if (MLME_IS_STA(iface) && MLME_IS_ASOC(iface) && (iface != padapter))
+			/* switch to another linked interface(STA) to receive beacon to avoid no beacon disconnect  */
+			back_op = _TRUE;
+		else {
+			/* bypass non-linked/non-linking interface/scan interface */
+			continue;
 		}
-
-		/* check other scan flag */
-		flags = mlmeext_scan_backop_flags(pmlmeext);
-		if (mlmeext_chk_scan_backop_flags(pmlmeext, SS_BACKOP_PS_ANNC))
-			flags &= ~SS_BACKOP_PS_ANNC;
-
-		if (mlmeext_chk_scan_backop_flags(pmlmeext, SS_BACKOP_TX_RESUME))
-			flags &= ~SS_BACKOP_TX_RESUME;
-
-		mlmeext_assign_scan_backop_flags(pmlmeext, flags);
-
+		
+		if (back_op) {
+			*ch = mlmeext->cur_channel;
+			*bw = mlmeext->cur_bwmode;
+			*offset = mlmeext->cur_ch_offset;
+			need_ch_setting_union = _FALSE;
+		}
 	}
 exit:
 	return need_ch_setting_union;
