@@ -2576,8 +2576,14 @@ int _netdev_vir_if_open(struct net_device *pnetdev)
 {
 	_adapter *padapter = (_adapter *)rtw_netdev_priv(pnetdev);
 	_adapter *primary_padapter = GET_PRIMARY_ADAPTER(padapter);
+#if 1 // hewit.park
+	struct wireless_dev *wdev = pnetdev->ieee80211_ptr;
+#endif
 	u8 enable = _TRUE;
-
+#if 1 // hewit.park
+	if (!wdev)
+		return -1;
+#endif
 	RTW_INFO(FUNC_NDEV_FMT" , bup=%d\n", FUNC_NDEV_ARG(pnetdev), padapter->bup);
 
 	if (!primary_padapter)
@@ -2637,7 +2643,15 @@ int _netdev_vir_if_open(struct net_device *pnetdev)
 	rtw_cfg80211_init_wiphy(padapter);
 	rtw_cfg80211_init_wdev_data(padapter);
 #endif
+#if 1 //hewit.park
+	wdev->wiphy->interface_modes |= BIT(NL80211_IFTYPE_P2P_CLIENT)
+		| BIT(NL80211_IFTYPE_P2P_GO)
+#if defined(RTW_DEDICATED_P2P_DEVICE)
+		| BIT(NL80211_IFTYPE_P2P_DEVICE)
+#endif
+	;
 
+#endif
 #if (defined(CONFIG_RTL8822B) || defined(CONFIG_RTL8821C))
 	rtw_hal_set_hwreg(padapter, HW_VAR_BCN_FUNC, (u8 *)(&enable));
 #endif
@@ -2692,7 +2706,9 @@ static int netdev_vir_if_close(struct net_device *pnetdev)
 	_adapter *padapter = (_adapter *)rtw_netdev_priv(pnetdev);
 	struct mlme_priv	*pmlmepriv = &padapter->mlmepriv;
 	u8 enable = _FALSE;
-
+#if 1 //hewit.park
+	struct wireless_dev *wdev = pnetdev->ieee80211_ptr;
+#endif
 	RTW_INFO(FUNC_NDEV_FMT" , bup=%d\n", FUNC_NDEV_ARG(pnetdev), padapter->bup);
 	padapter->net_closed = _TRUE;
 	pmlmepriv->LinkDetectInfo.bBusyTraffic = _FALSE;
@@ -2714,7 +2730,17 @@ static int netdev_vir_if_close(struct net_device *pnetdev)
 #if (defined(CONFIG_RTL8822B) || defined(CONFIG_RTL8821C))
 	rtw_hal_set_hwreg(padapter, HW_VAR_BCN_FUNC, (u8 *)(&enable));
 #endif
-
+#if 1//hewit.park
+	if (!wdev)
+		return -EINVAL;
+	wdev->wiphy->interface_modes = (wdev->wiphy->interface_modes)
+		& (~(BIT(NL80211_IFTYPE_P2P_CLIENT) |
+			BIT(NL80211_IFTYPE_P2P_GO)
+#if defined(RTW_DEDICATED_P2P_DEVICE)
+			| BIT(NL80211_IFTYPE_P2P_DEVICE)
+#endif
+			));
+#endif
 	return 0;
 }
 
