@@ -986,8 +986,21 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 
 			if (!surprise_removed) {
 				rtw_hal_set_odm_var(padapter, HAL_ODM_RX_Dframe_INFO, buf2, _TRUE);
-				strcat(command, buf2);
 			}
+
+			if (strlen(buf2) == 0) {
+				snprintf(buf2, 256,
+					"\t\tMCS\t: N/A\n"
+					"\t\tMIMO\t: N/A\n"
+					"\t\tRate\t: N/A\n"
+					"\t\tRSSI\t: N/A\n"
+					"\t\tNoise\t: N/A\n"
+					"\t\tTxpwr\t: N/A\n"
+					"\t\tNss\t: N/A\n"
+					"\t\tBW\t: N/A\n"
+					);
+			}
+			strcat(command, buf2);
 
 #ifdef CONFIG_CONCURRENT_MODE
 			if (rtw_mi_check_fwstate(padapter, _FW_LINKED) > 1) {
