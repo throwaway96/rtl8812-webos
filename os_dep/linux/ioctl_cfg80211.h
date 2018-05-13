@@ -271,6 +271,9 @@ void rtw_cfg80211_dev_res_unregister(struct dvobj_priv *dvobj);
 
 void rtw_cfg80211_init_wdev_data(_adapter *padapter);
 void rtw_cfg80211_init_wiphy(_adapter *padapter);
+#ifdef LGE_PRIVATE
+void rtw_cfg80211_update_p2p_wiphy(struct net_device *dev, int isdown);
+#endif /* LGE_PRIVATE */
 
 void rtw_cfg80211_unlink_bss(_adapter *padapter, struct wlan_network *pnetwork);
 void rtw_cfg80211_surveydone_event_callback(_adapter *padapter);

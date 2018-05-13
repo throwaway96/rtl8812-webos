@@ -9018,7 +9018,7 @@ struct ieee80211_iface_limit rtw_limits[] = {
 	{
 		.max = 1,
 		.types = BIT(NL80211_IFTYPE_AP)
-			#if 0// hewit. park defined(CONFIG_P2P) && ((LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 37)) || defined(COMPAT_KERNEL_RELEASE))
+			#if defined(CONFIG_P2P) && ((LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 37)) || defined(COMPAT_KERNEL_RELEASE))
 			| BIT(NL80211_IFTYPE_P2P_GO)
 			#endif
 	},
@@ -9056,6 +9056,33 @@ struct ieee80211_iface_combination rtw_combinations[] = {
 };
 #endif /* (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 0, 0)) */
 
+#ifdef LGE_PRIVATE
+void rtw_cfg80211_update_p2p_wiphy(struct net_device *dev, int isdown)
+{
+	_adapter *padapter = rtw_netdev_priv(dev);
+	struct wireless_dev *pwdev = padapter->rtw_wdev;
+	struct wiphy *wiphy = pwdev->wiphy;
+
+	if (padapter->isprimary == _TRUE) {
+		if (isdown == _TRUE) {
+			/* remove P2P */
+			//wiphy->interface_modes &= ~(BIT(NL80211_IFTYPE_P2P_GO) | BIT(NL80211_IFTYPE_P2P_CLIENT));
+		} else {
+			/* apply P2P */
+			wiphy->interface_modes |= (BIT(NL80211_IFTYPE_P2P_GO) | BIT(NL80211_IFTYPE_P2P_CLIENT));
+		}
+	} else {
+		if (isdown == _TRUE) {
+			/* remove P2P */
+			wiphy->interface_modes &= ~(BIT(NL80211_IFTYPE_P2P_GO) | BIT(NL80211_IFTYPE_P2P_CLIENT));
+		} else {
+			/* apply P2P */
+			wiphy->interface_modes |= (BIT(NL80211_IFTYPE_P2P_GO) | BIT(NL80211_IFTYPE_P2P_CLIENT));
+		}
+	}
+}
+#endif /* LGE_PRIVATE */
+
 static void rtw_cfg80211_preinit_wiphy(_adapter *adapter, struct wiphy *wiphy)
 {
 	struct dvobj_priv *dvobj = adapter_to_dvobj(adapter);
@@ -9083,10 +9110,7 @@ static void rtw_cfg80211_preinit_wiphy(_adapter *adapter, struct wiphy *wiphy)
 								| BIT(NL80211_IFTYPE_MONITOR)
 								#endif
 #endif
-#if 1 //hewit.park
-								| BIT(NL80211_IFTYPE_P2P_CLIENT)
-#endif
-#if 0//hewit.park defined(CONFIG_P2P) && ((LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 37)) || defined(COMPAT_KERNEL_RELEASE))
+#if defined(CONFIG_P2P) && ((LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 37)) || defined(COMPAT_KERNEL_RELEASE))
 								| BIT(NL80211_IFTYPE_P2P_CLIENT)
 								| BIT(NL80211_IFTYPE_P2P_GO)
 								#if defined(RTW_DEDICATED_P2P_DEVICE)
@@ -9791,6 +9815,12 @@ int rtw_cfg80211_dev_res_register(struct dvobj_priv *dvobj)
 #ifdef CONFIG_RFKILL_POLL
 	rtw_cfg80211_init_rfkill(dvobj_to_wiphy(dvobj));
 #endif
+
+#ifdef LGE_PRIVATE
+#if (CONFIG_IFACE_NUMBER > 2)
+	dvobj_to_wiphy(dvobj)->interface_modes &= ~(BIT(NL80211_IFTYPE_P2P_GO) | BIT(NL80211_IFTYPE_P2P_CLIENT));
+#endif
+#endif /* LGE_PRIVATE */
 #endif
 
 	ret = _SUCCESS;
