@@ -6434,6 +6434,7 @@ exit:
 
 #ifdef LGE_PRIVATE
 	if (err == -EBUSY) {
+		rtw_cfg80211_ready_on_channel(wdev, *cookie, channel, channel_type, duration, GFP_KERNEL);
 		rtw_cfg80211_remain_on_channel_expired(wdev, *cookie, channel, channel_type, GFP_KERNEL);
 		RTW_DBG("cfg80211_remain_on_channel_expired cookie:0x%llx\n", *cookie);
 		err = 0;
