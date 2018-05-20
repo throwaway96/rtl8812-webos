@@ -1098,20 +1098,24 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 	{
 		u8 val = 0;
 		u8 in_suspend = adapter_to_pwrctl(padapter)->bInSuspend;
-		if (in_suspend == _FALSE) {
-			struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
 
-			RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s]"CLR_NONEN, command);
+		if (padapter->isprimary) {
+			if (in_suspend == _FALSE) {
+				struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
 
-			sscanf(command, "WOWL_ACTIVATE %u", (unsigned int *)&val);
-			adapter_wdev_data(padapter)->idle_mode = _TRUE;
+				RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s]"CLR_NONEN, command);
 
-			if (check_fwstate(pmlmepriv, _FW_UNDER_SURVEY))
-				rtw_scan_abort(padapter);
+				sscanf(command, "WOWL_ACTIVATE %u", (unsigned int *)&val);
+				adapter_wdev_data(padapter)->idle_mode = _TRUE;
 
-			rtw_suspend_common(padapter);
+				if (check_fwstate(pmlmepriv, _FW_UNDER_SURVEY))
+					rtw_scan_abort(padapter);
+
+				rtw_suspend_common(padapter);
+			} else
+				RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s], in_suspend=_TRUE"CLR_NONEN, command);
 		} else
-			RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s], in_suspend=_TRUE"CLR_NONEN, command);
+			RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s], is not primary"CLR_NONEN, command);
 
 		snprintf(command, 3, "OK");
 		bytes_written = strlen("OK");

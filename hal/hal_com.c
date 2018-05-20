@@ -9759,6 +9759,9 @@ static void _rtw_hal_set_fw_rsvd_page(_adapter *adapter, bool finished, u8 *page
 #endif /*DBG_FW_DEBUG_MSG_PKT*/
 
 #ifdef CONFIG_WOWLAN
+#ifdef LGE_PRIVATE
+	if(adapter_wdev_data(adapter)->wowl == _TRUE)
+#endif /* LGE_PRIVATE */
 	if (pwrctl->wowlan_mode == _TRUE &&
 		pwrctl->wowlan_in_resume == _FALSE) {
 		rtw_hal_set_wow_fw_rsvd_page(adapter, ReservedPagePacket,
