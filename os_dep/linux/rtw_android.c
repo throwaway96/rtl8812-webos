@@ -956,16 +956,19 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 		break;
 	case LGE_PRIVATE_CMD_GET_CS_INFO:
 	{
-		struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
-		struct recv_priv *precvpriv = &(padapter->recvpriv);
-		struct rf_ctl_t *rfctl = adapter_to_rfctl(padapter);
+		_adapter *padapter_primary = GET_PRIMARY_ADAPTER(padapter);
+		struct mlme_ext_priv *pmlmeext = &padapter_primary->mlmeextpriv;
+		struct recv_priv *precvpriv = &(padapter_primary->recvpriv);
+		struct rf_ctl_t *rfctl = adapter_to_rfctl(padapter_primary);
 		char buf1[256] = { 0 };
 		char buf2[256] = { 0 };
-		u8 in_suspend = adapter_to_pwrctl(padapter)->bInSuspend;
-		u8 surprise_removed = rtw_is_surprise_removed(padapter);
-		u8 concurreny = 0;
+		u8 in_suspend = adapter_to_pwrctl(padapter_primary)->bInSuspend;
+		u8 surprise_removed = rtw_is_surprise_removed(padapter_primary);
+		u8 concurreny = 0, chk_primary, chk_buddy = 0;
 
 		if (in_suspend == _FALSE) {
+			char p2p_opch[8] = "N/A";
+
 			RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s]"CLR_NONEN, command);
 			precvpriv->store_law_data_flag = _TRUE;
 			command[0] = '\0';
@@ -985,7 +988,7 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 			strcat(command, buf1);
 
 			if (!surprise_removed) {
-				rtw_hal_set_odm_var(padapter, HAL_ODM_RX_Dframe_INFO, buf2, _TRUE);
+				rtw_hal_set_odm_var(padapter_primary, HAL_ODM_RX_Dframe_INFO, buf2, _TRUE);
 			}
 
 			if (strlen(buf2) == 0) {
@@ -1003,11 +1006,28 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 			strcat(command, buf2);
 
 #ifdef CONFIG_CONCURRENT_MODE
-			if (rtw_mi_check_fwstate(padapter, _FW_LINKED) > 1) {
+			/*
+			   primary, buddy
+			   0, 0 : N/A
+			   1, 0 : STA
+			   1, 1 : P2P
+			   2, 1 : MCC or SCC
+			*/
+			chk_primary = rtw_mi_check_fwstate(padapter_primary, _FW_LINKED);
+			chk_buddy = rtw_mi_buddy_check_fwstate(padapter_primary, _FW_LINKED);
+
+			if (chk_buddy == 1) {
+				_adapter *padapter_p2p = GET_ADAPTER(padapter, IFACE_ID2);
+				struct mlme_ext_priv *pmlmeext = &padapter_p2p->mlmeextpriv;
+
+				sprintf(p2p_opch, "%d", pmlmeext->cur_channel);
+			}
+
+			if (chk_primary == 2) {
 				concurreny = 1;
 #ifdef CONFIG_MCC_MODE
-				if (MCC_EN(padapter)) {
-					if (rtw_hal_check_mcc_status(padapter, MCC_STATUS_DOING_MCC))
+				if (MCC_EN(padapter_primary)) {
+					if (rtw_hal_check_mcc_status(padapter_primary, MCC_STATUS_DOING_MCC))
 						concurreny = 2;
 				}
 #endif /* CONFIG_MCC_MODE */
@@ -1015,11 +1035,11 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 #endif /*CONFIG_CONCURRENT_MODE*/
 
 			_rtw_memset(buf2, 0, 256);
-			rtw_dump_fw_version(buf2, padapter);
+			rtw_dump_fw_version(buf2, padapter_primary);
 
 			_rtw_memset(buf1, 0, 256);
 			snprintf(buf1, 256,
-				"\t\tP2P OP Channel\t: %d\n"
+				"\t\tP2P OP Channel\t: %s\n"
 				"\t\tSchedule Mode\t: %s\n"
 				"\t\tConcurrency\t: %s\n"
 				"\t\tTDLS\t: %s\n"
@@ -1029,13 +1049,13 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 				"\t\tMin MCS\t: %u\n"
 				"\t\tMin Rate\t: %u mbps\n"
 				"\t\tMin Noise\t: %d dBm\n",
-				pmlmeext->cur_channel,
-				(adapter_wdev_data(padapter)->mchan_sched_mode == 0) ? "Fair" : 
-				(adapter_wdev_data(padapter)->mchan_sched_mode == 1) ? "STA" :
-				(adapter_wdev_data(padapter)->mchan_sched_mode == 2) ? "P2P" : "N/A",
+				p2p_opch,
+				(adapter_wdev_data(padapter_primary)->mchan_sched_mode == 0) ? "Fair" : 
+				(adapter_wdev_data(padapter_primary)->mchan_sched_mode == 1) ? "STA" :
+				(adapter_wdev_data(padapter_primary)->mchan_sched_mode == 2) ? "P2P" : "N/A",
 				(concurreny == 0) ? "N/A" :
 				(concurreny == 1) ? "SCC" : "MCC", /* Concurrency */
-				(padapter->tdlsinfo.link_established == _TRUE) ? "Setup" : "N/A",
+				(padapter_primary->tdlsinfo.link_established == _TRUE) ? "Setup" : "N/A",
 				buf2,
 				"OK",
 				-40,
