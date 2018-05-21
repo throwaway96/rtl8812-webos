@@ -9064,7 +9064,7 @@ void rtw_cfg80211_update_p2p_wiphy(struct net_device *dev, int isdown)
 	struct wireless_dev *pwdev = padapter->rtw_wdev;
 	struct wiphy *wiphy = pwdev->wiphy;
 
-	if (padapter->isprimary == _TRUE) {
+	if (padapter->iface_id == IFACE_ID0) {
 		if (isdown == _TRUE) {
 			/* remove P2P */
 			//wiphy->interface_modes &= ~(BIT(NL80211_IFTYPE_P2P_GO) | BIT(NL80211_IFTYPE_P2P_CLIENT));
@@ -9072,7 +9072,7 @@ void rtw_cfg80211_update_p2p_wiphy(struct net_device *dev, int isdown)
 			/* apply P2P */
 			wiphy->interface_modes |= (BIT(NL80211_IFTYPE_P2P_GO) | BIT(NL80211_IFTYPE_P2P_CLIENT));
 		}
-	} else {
+	} else if (padapter->iface_id == IFACE_ID1) {
 		if (isdown == _TRUE) {
 			/* remove P2P */
 			wiphy->interface_modes &= ~(BIT(NL80211_IFTYPE_P2P_GO) | BIT(NL80211_IFTYPE_P2P_CLIENT));
