@@ -92,12 +92,12 @@
 
 	#define CONFIG_LPS	1
 	#if defined(CONFIG_LPS)
-		/* #define CONFIG_LPS_LCLK	1 */
+		#define CONFIG_LPS_LCLK	1
 	#endif
 
 	#ifdef CONFIG_LPS_LCLK
 		#ifdef CONFIG_POWER_SAVING
-			#define CONFIG_XMIT_THREAD_MODE
+			/* #define CONFIG_XMIT_THREAD_MODE */
 		#endif /* CONFIG_POWER_SAVING */
 		#ifndef CONFIG_SUPPORT_USB_INT
 			#define LPS_RPWM_WAIT_MS 300
