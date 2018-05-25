@@ -6358,6 +6358,17 @@ static s32 cfg80211_rtw_remain_on_channel(struct wiphy *wiphy,
 		err = -EBUSY;
 		goto exit;
 	}
+
+	#ifdef CONFIG_MCC_MODE
+	if (MCC_EN(padapter)) {
+		/* driver doesn't set channel setting reg under MCC */
+		if (rtw_hal_check_mcc_status(padapter, MCC_STATUS_DOING_MCC)) {
+			/* RTW_INFO(CLR_LT_BLU"Do not set channel under MCC mode"CLR_NONE"\n"); */
+			err = -EBUSY;
+			goto exit;
+		}
+	}
+	#endif
 #endif /* LGE_PRIVATE */
 
 	if (_FAIL == rtw_pwr_wakeup(padapter)) {
