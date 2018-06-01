@@ -3492,7 +3492,7 @@ static int recv_indicatepkt_reorder(_adapter *padapter, union recv_frame *prfram
 		RTW_INFO("DBG_RX_DROP_FRAME "FUNC_ADPT_FMT" check_indicate_seq fail\n"
 			, FUNC_ADPT_ARG(padapter));
 		#endif
-#if 0
+#if 1
 		rtw_recv_indicatepkt(padapter, prframe);
 
 		_exit_critical_bh(&ppending_recvframe_queue->lock, &irql);
