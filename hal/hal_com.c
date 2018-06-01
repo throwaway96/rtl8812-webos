@@ -8060,24 +8060,26 @@ void rtw_hal_set_wow_fw_rsvd_page(_adapter *adapter, u8 *pframe, u16 index,
 static void rtw_hal_gate_bb(_adapter *adapter, bool stop)
 {
 	struct pwrctrl_priv *pwrpriv = adapter_to_pwrctl(adapter);
-	u8 i = 0, val8 = 0, empty = _FAIL;
+	u8 i = 0, val8 = 0, empty = _FALSE, cnt = 10;
 	u16 val16 = 0;
 
 	if (stop) {
 		/* checking TX queue status */
-		for (i = 0 ; i < 5 ; i++) {
-			rtw_hal_get_hwreg(adapter, HW_VAR_CHK_MGQ_CPU_EMPTY, &empty);
-			if (empty) {
-				break;
-			} else {
-				RTW_WARN("%s: MGQ_CPU is busy(%d)!\n",
+		for (i = 0 ; i < cnt ; i++) {
+			/* MGQ is for FW, AC Queue is for download fw */
+			if ((rtw_read16(adapter,REG_TXPKT_EMPTY) & 0x7FF) == 0x7FF)
+				empty = _TRUE;
+			else
+				empty = _FALSE;
+			if (empty == _FALSE) {
+				RTW_WARN("%s: TXPKT is busy(%d)!\n",
 					 __func__, i);
 				rtw_mdelay_os(10);
 			}
 		}
 
-		if (val8 == 5)
-			RTW_ERR("%s: Polling MGQ_CPU empty fail!\n", __func__);
+		if (empty == _FALSE)
+			RTW_ERR("%s: Polling TXPKT empty fail!\n", __func__);
 
 		/* Pause TX*/
 		pwrpriv->wowlan_txpause_status = rtw_read8(adapter, REG_TXPAUSE);
