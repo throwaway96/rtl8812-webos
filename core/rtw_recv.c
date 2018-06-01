@@ -3497,7 +3497,7 @@ static int recv_indicatepkt_reorder(_adapter *padapter, union recv_frame *prfram
 
 		_exit_critical_bh(&ppending_recvframe_queue->lock, &irql);
 
-		goto _success_exit;
+		return RTW_RX_HANDLED;
 #else
 		goto _err_exit;
 #endif
