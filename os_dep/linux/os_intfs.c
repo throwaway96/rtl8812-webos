@@ -4542,8 +4542,8 @@ int rtw_resume_process_wow(_adapter *padapter)
 #endif /* CONFIG_LPS */
 
 #ifdef LGE_PRIVATE
-		if(adapter_wdev_data(padapter)->wowl == _FALSE)
-			rtw_hal_init_phy(padapter);
+		//if(adapter_wdev_data(padapter)->wowl == _FALSE)
+			//rtw_hal_init_phy(padapter);
 #endif /* LGE_PRIVATE */
 		
 		pwrpriv->bFwCurrentInPSMode = _FALSE;

@@ -598,7 +598,7 @@ void rtl8822b_set_FwPwrModeInIPS_cmd_wowlan(PADAPTER padapter, u8 ps_mode)
 		SET_H2CCMD_INACTIVE_PS_EN(param, 0);
 	else {
 		SET_H2CCMD_INACTIVE_PS_EN(param, 1);
-		SET_H2CCMD_INACTIVE_DISBBRF(param, 1);
+		//SET_H2CCMD_INACTIVE_DISBBRF(param, 1);
 	}
 
 	rtl8822b_fillh2ccmd(padapter, H2C_INACTIVE_PS_, sizeof(param), param);
