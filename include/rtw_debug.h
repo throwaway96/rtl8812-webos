@@ -284,7 +284,7 @@ void bb_reg_dump(void *sel, _adapter *adapter);
 void bb_reg_dump_ex(void *sel, _adapter *adapter);
 void rf_reg_dump(void *sel, _adapter *adapter);
 
-void rtw_sink_rtp_seq_dbg(_adapter *adapter, u8 *ehdr_pos);
+void rtw_sink_rtp_seq_dbg(_adapter *adapter, u8 *ehdr_pos, u16 l2seq);
 
 struct sta_info;
 void sta_rx_reorder_ctl_dump(void *sel, struct sta_info *sta);

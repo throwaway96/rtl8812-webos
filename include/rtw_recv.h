@@ -234,7 +234,7 @@ struct rx_pkt_attrib	{
 #define SN_EQUAL(a, b)	(a == b)
 /* #define REORDER_WIN_SIZE	128 */
 /* #define REORDER_ENTRY_NUM	128 */
-#define REORDER_WAIT_TIME	(50) /* (ms) */
+#define REORDER_WAIT_TIME	(250) /* (ms) */
 
 #define RECVBUFF_ALIGN_SZ 8
 
@@ -459,6 +459,8 @@ struct recv_priv {
 	struct smooth_rssi_data signal_strength_data;
 #endif /* CONFIG_NEW_SIGNAL_STAT_PROCESS */
 	u16 sink_udpport, pre_rtp_rxseq, cur_rtp_rxseq;
+	u16 pre_ip_identify, cur_ip_identify;
+	u16 pre_rtp_l2_rxseq, cur_rtp_l2_rxseq;
 
 	BOOLEAN store_law_data_flag;
 };

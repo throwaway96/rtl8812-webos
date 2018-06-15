@@ -90,6 +90,10 @@ sint _rtw_init_recv_priv(struct recv_priv *precvpriv, _adapter *padapter)
 	precvpriv->sink_udpport = 0;
 	precvpriv->pre_rtp_rxseq = 0;
 	precvpriv->cur_rtp_rxseq = 0;
+	precvpriv->pre_ip_identify = 0;
+	precvpriv->cur_ip_identify = 0;
+	precvpriv->pre_rtp_l2_rxseq = 0;
+	precvpriv->cur_rtp_l2_rxseq = 0;
 
 #ifdef DBG_RX_SIGNAL_DISPLAY_RAW_DATA
 	precvpriv->store_law_data_flag = 1;
@@ -2864,7 +2868,7 @@ static int rtw_recv_indicatepkt_check(union recv_frame *rframe, u8 *ehdr_pos, u3
 		RTW_PRINT("recv eapol packet\n");
 
 	if (recvpriv->sink_udpport > 0)
-		rtw_sink_rtp_seq_dbg(adapter, ehdr_pos);
+		rtw_sink_rtp_seq_dbg(adapter, ehdr_pos, rframe->u.hdr.attrib.seq_num);
 
 #ifdef DBG_UDP_PKT_LOSE_11AC
 	#define PAYLOAD_LEN_LOC_OF_IP_HDR 0x10 /*ethernet payload length location of ip header (DA + SA+eth_type+(version&hdr_len)) */

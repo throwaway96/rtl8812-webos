@@ -349,15 +349,22 @@ void rf_reg_dump(void *sel, _adapter *adapter)
 	}
 }
 
-void rtw_sink_rtp_seq_dbg(_adapter *adapter, u8 *ehdr_pos)
+void rtw_sink_rtp_seq_dbg(_adapter *adapter, u8 *ehdr_pos, u16 l2seq)
 {
 	struct recv_priv *precvpriv = &(adapter->recvpriv);
 	if (precvpriv->sink_udpport > 0) {
 		if (*((u16 *)(ehdr_pos + 0x24)) == cpu_to_be16(precvpriv->sink_udpport)) {
 			precvpriv->pre_rtp_rxseq = precvpriv->cur_rtp_rxseq;
+			precvpriv->pre_rtp_l2_rxseq = precvpriv->cur_rtp_l2_rxseq;
+			precvpriv->pre_ip_identify = precvpriv->cur_ip_identify;
 			precvpriv->cur_rtp_rxseq = be16_to_cpu(*((u16 *)(ehdr_pos + 0x2C)));
-			if (precvpriv->pre_rtp_rxseq + 1 != precvpriv->cur_rtp_rxseq)
-				RTW_INFO("%s : RTP Seq num from %d to %d\n", __FUNCTION__, precvpriv->pre_rtp_rxseq, precvpriv->cur_rtp_rxseq);
+			precvpriv->cur_rtp_l2_rxseq = l2seq;
+			precvpriv->cur_ip_identify = be16_to_cpu(*((u16 *)(ehdr_pos + 0x12)));
+			if (((precvpriv->pre_rtp_rxseq + 1) & 0xFFFF) != precvpriv->cur_rtp_rxseq)
+				RTW_INFO(CLR_LT_GRN"%s : RTP Seq num from %u to %u l3(%u to %u) l2(%u to %u)"CLR_NONEN, __FUNCTION__,
+					precvpriv->pre_rtp_rxseq, precvpriv->cur_rtp_rxseq,
+					precvpriv->pre_ip_identify, precvpriv->cur_ip_identify,
+					precvpriv->pre_rtp_l2_rxseq, precvpriv->cur_rtp_l2_rxseq);
 		}
 	}
 }
