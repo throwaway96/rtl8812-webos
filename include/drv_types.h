@@ -402,6 +402,7 @@ struct registry_priv {
 	s8 rtw_mcc_policy_table_idx;
 	u8 rtw_mcc_duration;
 	u8 rtw_mcc_enable_runtime_duration;
+	u8 rtw_mcc_phydm_offload;
 #endif /* CONFIG_MCC_MODE */
 
 #ifdef CONFIG_RTW_NAPI

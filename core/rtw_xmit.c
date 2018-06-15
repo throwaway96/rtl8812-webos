@@ -4346,8 +4346,10 @@ static void do_queue_select(_adapter	*padapter, struct pkt_attrib *pattrib)
 			if (padapter->mcc_adapterpriv.role == MCC_ROLE_GO
 			    || padapter->mcc_adapterpriv.role == MCC_ROLE_AP) {
 				pattrib->qsel = QSLT_VO; /* AP interface VO queue */
+				pattrib->priority  = QSLT_VO;
 			} else {
 				pattrib->qsel = QSLT_BE; /* STA interface BE queue */
+				pattrib->priority  = QSLT_BE;
 			}
 		} else
 			/* Not Under MCC */

@@ -1865,4 +1865,52 @@ phydm_dig_debug(
 	*_used = used;
 	*_out_len = out_len;
 }
+#ifdef CONFIG_MCC_DM
+#if (RTL8822B_SUPPORT)
+void phydm_mcc_igi_clr(void *dm_void, u8 clr_port)
+{
+	struct dm_struct *dm = (struct dm_struct *)dm_void;
+	struct _phydm_mcc_dm_ *mcc_dm = &dm->mcc_dm;
+	mcc_dm->mcc_rssi[clr_port] = 0xff;
+	mcc_dm->mcc_dm_val[0][clr_port] = 0xff; /* 0xc50 clr */
+	mcc_dm->mcc_dm_val[1][clr_port] = 0xff; /* 0xe50 clr */
+}
+void phydm_mcc_igi_chk(void *dm_void)
+{
+	struct dm_struct *dm = (struct dm_struct *)dm_void;
+	struct _phydm_mcc_dm_ *mcc_dm = &dm->mcc_dm;
+	if (mcc_dm->mcc_dm_val[0][0] == 0xff && mcc_dm->mcc_dm_val[0][1] == 0xff) {
+		mcc_dm->mcc_dm_reg[0] = 0xffff;
+		mcc_dm->mcc_reg_id[0] = 0xff;
+	}
+	if (mcc_dm->mcc_dm_val[1][0] == 0xff && mcc_dm->mcc_dm_val[1][1] == 0xff) {
+		mcc_dm->mcc_dm_reg[1] = 0xffff;
+		mcc_dm->mcc_reg_id[1] = 0xff;
+	}
+}
+void phydm_mcc_igi_cal(void *dm_void)
+{
+	struct dm_struct *dm = (struct dm_struct *)dm_void;
+	struct _phydm_mcc_dm_ *mcc_dm = &dm->mcc_dm;
+	struct phydm_dig_struct *dig_t = &dm->dm_dig_table;
+	u8	shift = 0;
+	u8	igi_val0,igi_val1;
+	if (mcc_dm->mcc_rssi[0] == 0xff)
+		phydm_mcc_igi_clr(dm, 0);
+	if (mcc_dm->mcc_rssi[1] == 0xff)
+		phydm_mcc_igi_clr(dm, 1);
+	phydm_mcc_igi_chk(dm);
+	igi_val0 = mcc_dm->mcc_rssi[0] - shift;
+	igi_val1 = mcc_dm->mcc_rssi[1] - shift;
+	phydm_fill_mcccmd(dm, 0, 0xc50, igi_val0, igi_val1);
+	phydm_fill_mcccmd(dm, 1, 0xe50, igi_val0, igi_val1);
+	/*PHYDM_DBG(dm, DBG_COMP_MCC, ("RSSI_min: %d %d, MCC_igi: %d %d\n",
+			mcc_dm->mcc_rssi[0], mcc_dm->mcc_rssi[1], mcc_dm->mcc_dm_val[0][0],
+			mcc_dm->mcc_dm_val[0][1]));*/
+	PHYDM_DBG(dm, DBG_COMP_MCC, "RSSI_min: %d %d, MCC_igi: %d %d\n",
+			mcc_dm->mcc_rssi[0], mcc_dm->mcc_rssi[1], mcc_dm->mcc_dm_val[0][0],
+			mcc_dm->mcc_dm_val[0][1]);
+}
+#endif /*#if (RTL8822B_SUPPORT)*/
+#endif /*#ifdef CONFIG_MCC_DM*/
 

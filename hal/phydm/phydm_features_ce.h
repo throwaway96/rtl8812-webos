@@ -129,4 +129,10 @@
 #define	PHYDM_SUPPORT_RSSI_MONITOR
 /*#define	PHYDM_AUTO_DEGBUG*/
 
+#if (RTL8822B_SUPPORT)
+	#ifdef CONFIG_MCC_MODE
+	#define	CONFIG_MCC_DM
+	#endif
+#endif
+
 #endif

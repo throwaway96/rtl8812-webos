@@ -948,7 +948,9 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 
 		sscanf(command, "SET_MCHAN_SCHED_MODE %u", (unsigned int *)&val);
 		adapter_wdev_data(padapter)->mchan_sched_mode = val;
+		#ifdef CONFIG_MCC_MODE
 		rtw_set_mcc_duration_cmd(padapter, MCC_DURATION_MAPPING, val);
+		#endif /* CONFIG_MCC_MODE */
 
 		snprintf(command, 3, "OK");
 		bytes_written = strlen("OK");

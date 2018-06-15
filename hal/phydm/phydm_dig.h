@@ -360,4 +360,11 @@ phydm_dig_debug(
 	u32		input_num
 );
 
+#ifdef CONFIG_MCC_DM
+void
+phydm_mcc_igi_cal(
+	void *dm_void
+);
+#endif
+
 #endif

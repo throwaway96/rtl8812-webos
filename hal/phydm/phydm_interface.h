@@ -46,6 +46,7 @@ enum phydm_h2c_cmd {
 	PHYDM_H2C_MU				= 0x4a,
 	PHYDM_H2C_FW_GENERAL_INIT = 0x4c,
 	PHYDM_H2C_FW_CLM_MNTR = 0x4d,
+	PHYDM_H2C_MCC			= 0x4f,
 	ODM_MAX_H2CCMD
 };
 

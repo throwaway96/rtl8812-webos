@@ -469,6 +469,7 @@ enum phydm_dbg_comp {
 	DBG_TXBF			= BIT(23),
 	DBG_COMMON_FLOW	= BIT(24),
 	ODM_COMP_TX_PWR_TRACK	= BIT(25),
+	DBG_COMP_MCC		= BIT(25),
 	ODM_COMP_CALIBRATION		= BIT(26),
 	ODM_COMP_MP		= BIT(27),
 	ODM_PHY_CONFIG	= BIT(28),
@@ -530,6 +531,26 @@ struct	phydm_iot_center {
 	u32			phydm_patch_id;
 
 };
+
+#ifdef CONFIG_MCC_DM
+#define MCC_DM_REG_NUM	32
+struct _phydm_mcc_dm_ {
+	u8		mcc_pre_status;
+	u8		mcc_reg_id[MCC_DM_REG_NUM];
+	u16		mcc_dm_reg[MCC_DM_REG_NUM];
+	u8		mcc_dm_val[MCC_DM_REG_NUM][2];
+	/*mcc DIG*/
+	u8		mcc_rssi[2];
+	/*u8		mcc_igi[2];*/
+
+	/* need to be config by driver*/
+	u8		mcc_status;
+	u8		sta_macid[2][NUM_STA];
+	u16		mcc_rf_channel[2];
+
+};
+#endif
+
 
 #if (DM_ODM_SUPPORT_TYPE & ODM_WIN)
 	#if (RT_PLATFORM != PLATFORM_LINUX)
@@ -801,6 +822,7 @@ struct	phydm_iot_center {
 	
 	boolean		is_disable_dym_ecs;
 	boolean		is_disable_dym_ant_weighting;
+	boolean		is_stop_dym_ant_weighting;
 	struct sta_info	*odm_sta_info[ODM_ASSOCIATE_ENTRY_NUM];/*odm_sta_info, 2012/01/12 MH For MP, we need to reduce one array pointer for default port.??*/
 	struct cmn_sta_info	*phydm_sta_info[ODM_ASSOCIATE_ENTRY_NUM];
 	u8			phydm_macid_table[ODM_ASSOCIATE_ENTRY_NUM];
@@ -914,6 +936,10 @@ struct	phydm_iot_center {
 	struct phydm_fat_struct				dm_fat_table;
 	struct phydm_dig_struct				dm_dig_table;
 	struct phydm_lna_sat_info_struct		dm_lna_sat_info;
+
+#ifdef CONFIG_MCC_DM
+	struct _phydm_mcc_dm_ mcc_dm;
+#endif
 
 #ifdef PHYDM_SUPPORT_CCKPD
 	struct phydm_cckpd_struct				dm_cckpd_table;

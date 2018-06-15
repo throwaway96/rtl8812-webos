@@ -1362,6 +1362,12 @@ odm_dm_init(
 	phydm_smt_ant_init(dm);
 	#endif
 
+#ifdef CONFIG_MCC_DM
+	#if (RTL8822B_SUPPORT == 1)
+	phydm_mcc_init (dm);
+	#endif
+#endif
+
 }
 
 void
@@ -1880,7 +1886,11 @@ phydm_watchdog(
 #ifdef PHYDM_LNA_SAT_CHK_SUPPORT
 	phydm_lna_sat_chk_watchdog(dm);
 #endif
-
+#ifdef CONFIG_MCC_DM
+	#if (RTL8822B_SUPPORT == 1)
+	phydm_mcc_switch(dm);
+	#endif
+#endif
 	phydm_common_info_self_reset(dm);
 
 }

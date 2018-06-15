@@ -5653,7 +5653,7 @@ ssize_t proc_set_mcc_duration(struct file *file, const char __user *buffer, size
 	struct net_device *dev = data;
 	_adapter *padapter = (_adapter *)rtw_netdev_priv(dev);
 	char tmp[255];
-	u32 enable_runtime_duration = 0, mcc_duration = 0;
+	u32 enable_runtime_duration = 0, mcc_duration = 0, type = 0;
 
 	if (NULL == buffer) {
 		RTW_INFO(FUNC_ADPT_FMT ": input buffer is NULL!\n", FUNC_ADPT_ARG(padapter));
@@ -5672,14 +5672,19 @@ ssize_t proc_set_mcc_duration(struct file *file, const char __user *buffer, size
 	}
 
 	if (buffer && !copy_from_user(tmp, buffer, count)) {
-		int num = sscanf(tmp, "%u %u", &enable_runtime_duration, &mcc_duration);
+		int num = sscanf(tmp, "%u %u %u", &enable_runtime_duration, &type, &mcc_duration);
 
 		if (num < 1) {
 			RTW_INFO(FUNC_ADPT_FMT ": input parameters < 1\n", FUNC_ADPT_ARG(padapter));
 			return -EINVAL;
 		}
 
-		if (num > 2) {
+		if (num > 3) {
+			RTW_INFO(FUNC_ADPT_FMT ": input parameters > 2\n", FUNC_ADPT_ARG(padapter));
+			return -EINVAL;
+		}
+
+		if (num == 2) {
 			RTW_INFO(FUNC_ADPT_FMT ": input parameters > 2\n", FUNC_ADPT_ARG(padapter));
 			return -EINVAL;
 		}
@@ -5689,14 +5694,55 @@ ssize_t proc_set_mcc_duration(struct file *file, const char __user *buffer, size
 			RTW_INFO("runtime duration:%s\n", enable_runtime_duration ? "enable":"disable");
 		}
 
-		if (num == 2) {
-			RTW_INFO("mcc duration:%d\n", mcc_duration);
-			rtw_set_mcc_duration_cmd(padapter, MCC_DURATION_DIRECET, mcc_duration);
+		if (num == 3) {
+			RTW_INFO("type:%d, mcc duration:%d\n", type, mcc_duration);
+			rtw_set_mcc_duration_cmd(padapter, type, mcc_duration);
 		}
 	}
 
 	return count;
 }
+
+ssize_t proc_set_mcc_phydm_offload_enable(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data)
+{
+	struct net_device *dev = data;
+	_adapter *padapter = (_adapter *)rtw_netdev_priv(dev);
+	char tmp[255];
+	u32 mcc_phydm_enable = 0;
+
+	if (NULL == buffer) {
+		RTW_INFO(FUNC_ADPT_FMT ": input buffer is NULL!\n", FUNC_ADPT_ARG(padapter));
+		return -EFAULT;
+	}
+
+	if (count < 1) {
+		RTW_INFO(FUNC_ADPT_FMT ": input length is 0!\n", FUNC_ADPT_ARG(padapter));
+		return -EFAULT;
+	}
+
+	if (count > sizeof(tmp)) {
+		RTW_INFO(FUNC_ADPT_FMT ": input length is too large\n", FUNC_ADPT_ARG(padapter));
+		rtw_warn_on(1);
+		return -EFAULT;
+	}
+
+	if (buffer && !copy_from_user(tmp, buffer, count)) {
+		struct dvobj_priv *dvobj = adapter_to_dvobj(padapter);
+		u8 i = 0;
+		int num = sscanf(tmp, "%u", &mcc_phydm_enable);
+
+		if (num < 1) {
+			RTW_INFO(FUNC_ADPT_FMT ": input parameters < 1\n", FUNC_ADPT_ARG(padapter));
+			return -EINVAL;
+		}
+
+		RTW_INFO("%s: mcc phydm enable = %d\n", __func__, mcc_phydm_enable);
+		rtw_set_mcc_phydm_offload_enable_cmd(padapter, mcc_phydm_enable, _TRUE);
+	}
+
+	return count;
+}
+
 
 ssize_t proc_set_mcc_single_tx_criteria(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data)
 {

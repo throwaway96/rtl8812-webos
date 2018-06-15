@@ -3682,6 +3682,13 @@ static int cfg80211_rtw_connect(struct wiphy *wiphy, struct net_device *ndev,
 		goto exit;
 	}
 
+	if (check_fwstate(pmlmepriv, _FW_LINKED | _FW_UNDER_LINKING) == _TRUE) {
+		ret = -EALREADY;
+		RTW_INFO("%s skip connect! fw_state=0x%x\n",
+			__FUNCTION__, pmlmepriv->fw_state);
+		goto exit;
+	}
+
 #ifdef CONFIG_PLATFORM_MSTAR_SCAN_BEFORE_CONNECT
 	printk("MStar Android!\n");
 	if (pwdev_priv->bandroid_scan == _FALSE) {

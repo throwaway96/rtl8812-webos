@@ -256,9 +256,6 @@ enum rtw_drvextra_cmd_id {
 	RSON_SCAN_WK_CID,
 #endif
 	MGNT_TX_WK_CID,
-#ifdef CONFIG_MCC_MODE
-	MCC_SET_DURATION_WK_CID,
-#endif /* CONFIG_MCC_MODE */
 	REQ_PER_CMD_WK_CID,
 	MAX_WK_CID
 };

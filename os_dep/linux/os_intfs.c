@@ -747,6 +747,7 @@ int rtw_mcc_single_tx_cri = MCC_SINGLE_TX_CRITERIA;
 int rtw_mcc_policy_table_idx = 2;
 int rtw_mcc_duration = 0;
 int rtw_mcc_enable_runtime_duration = 1;
+int rtw_mcc_phydm_offload = 1;
 module_param(rtw_en_mcc, int, 0644);
 module_param(rtw_mcc_single_tx_cri, int, 0644);
 module_param(rtw_mcc_ap_bw20_target_tx_tp, int, 0644);
@@ -757,6 +758,7 @@ module_param(rtw_mcc_sta_bw40_target_tx_tp, int, 0644);
 module_param(rtw_mcc_sta_bw80_target_tx_tp, int, 0644);
 module_param(rtw_mcc_policy_table_idx, int, 0644);
 module_param(rtw_mcc_duration, int, 0644);
+module_param(rtw_mcc_phydm_offload, int, 0644);
 #endif /*CONFIG_MCC_MODE */
 
 #ifdef CONFIG_RTW_NAPI
@@ -1132,6 +1134,7 @@ uint loadparam(_adapter *padapter)
 	registry_par->rtw_mcc_policy_table_idx = rtw_mcc_policy_table_idx;
 	registry_par->rtw_mcc_duration = (u8)rtw_mcc_duration;
 	registry_par->rtw_mcc_enable_runtime_duration = rtw_mcc_enable_runtime_duration;
+	registry_par->rtw_mcc_phydm_offload = rtw_mcc_phydm_offload;
 #endif /*CONFIG_MCC_MODE */
 
 #ifdef CONFIG_WOWLAN
@@ -2127,6 +2130,7 @@ struct dvobj_priv *devobj_init(void)
 #ifdef CONFIG_MCC_MODE
 	_rtw_mutex_init(&(pdvobj->mcc_objpriv.mcc_mutex));
 	_rtw_mutex_init(&(pdvobj->mcc_objpriv.mcc_tsf_req_mutex));
+	_rtw_mutex_init(&(pdvobj->mcc_objpriv.mcc_dbg_reg_mutex));
 	_rtw_spinlock_init(&pdvobj->mcc_objpriv.mcc_lock);
 #endif /* CONFIG_MCC_MODE */
 
@@ -2152,6 +2156,7 @@ void devobj_deinit(struct dvobj_priv *pdvobj)
 #ifdef CONFIG_MCC_MODE
 	_rtw_mutex_free(&(pdvobj->mcc_objpriv.mcc_mutex));
 	_rtw_mutex_free(&(pdvobj->mcc_objpriv.mcc_tsf_req_mutex));
+	_rtw_mutex_free(&(pdvobj->mcc_objpriv.mcc_dbg_reg_mutex));
 	_rtw_spinlock_free(&pdvobj->mcc_objpriv.mcc_lock);
 #endif /* CONFIG_MCC_MODE */
 
