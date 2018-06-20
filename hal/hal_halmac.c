@@ -2265,7 +2265,10 @@ int rtw_halmac_set_bandwidth(struct dvobj_priv *d, u8 channel, u8 pri_ch_idx, u8
 
 	mac = dvobj_to_halmac(d);
 	api = HALMAC_GET_API(mac);
-
+	if(!api) {
+		rtw_warn_on(1);
+		return -1;
+	}
 	status = api->halmac_cfg_ch_bw(mac, channel, pri_ch_idx, bw);
 	if (HALMAC_RET_SUCCESS != status)
 		return -1;

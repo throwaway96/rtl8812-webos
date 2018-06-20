@@ -4410,6 +4410,8 @@ int rtw_suspend_common(_adapter *padapter)
 	struct debug_priv *pdbgpriv = &dvobj->drv_dbg;
 	struct pwrctrl_priv *pwrpriv = dvobj_to_pwrctl(dvobj);
 	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	struct mlme_ext_priv	*pmlmeext = &padapter->mlmeextpriv;
+	struct mlme_ext_info	*pmlmeinfo = &(pmlmeext->mlmext_info);
 
 	int ret = 0;
 	systime start_time = rtw_get_current_time();
@@ -4420,6 +4422,12 @@ int rtw_suspend_common(_adapter *padapter)
 	pdbgpriv->dbg_suspend_cnt++;
 
 	pwrpriv->bInSuspend = _TRUE;
+#ifdef LGE_PRIVATE
+	if(adapter_wdev_data(padapter)->idle_mode && is_client_associated_to_ap(padapter)) {
+		receive_disconnect(padapter, pmlmeinfo->network.MacAddress, 0, _FALSE);
+		rtw_msleep_os(100);
+	}
+#endif /* LGE_PRIVATE */
 
 	while (pwrpriv->bips_processing == _TRUE)
 		rtw_msleep_os(1);
@@ -4541,10 +4549,6 @@ int rtw_resume_process_wow(_adapter *padapter)
 		}
 #endif /* CONFIG_LPS */
 
-#ifdef LGE_PRIVATE
-		//if(adapter_wdev_data(padapter)->wowl == _FALSE)
-			//rtw_hal_init_phy(padapter);
-#endif /* LGE_PRIVATE */
 		
 		pwrpriv->bFwCurrentInPSMode = _FALSE;
 
@@ -4917,32 +4921,14 @@ int rtw_resume_common(_adapter *padapter)
 		pwrpriv->wowlan_in_resume = _FALSE;
 	}
 
-#ifdef LGE_PRIVATE
-	adapter_wdev_data(padapter)->wowl = _FALSE;
-	adapter_wdev_data(padapter)->wowl_activate = _FALSE;
-	adapter_wdev_data(padapter)->idle_mode = _FALSE;
-	adapter_wdev_data(padapter)->block_scan = _FALSE;
-#endif /* LGE_PRIVATE */
 
 	RTW_PRINT("%s:%d in %d ms\n", __FUNCTION__ , ret,
 		  rtw_get_passing_time_ms(start_time));
 
 #ifdef LGE_PRIVATE
 	if (adapter_wdev_data(padapter)->idle_mode) {
-		struct mlme_ext_priv *pmlmeext;
-		struct mlme_ext_info *pmlmeinfo;
-		u8 channel;
+		rtw_hal_sreset_reset(padapter);
 
-		pmlmeext = &padapter->mlmeextpriv;
-		pmlmeinfo = &pmlmeext->mlmext_info;
-		channel = pmlmeext->cur_channel;
-
-		if (channel >= 36)
-			set_channel_bwmode(padapter, 11, 0, 0);
-		else
-			set_channel_bwmode(padapter, 36, 0, 0);
-
-		receive_disconnect(padapter, pmlmeinfo->network.MacAddress, 0, _FALSE);
 	}
 	adapter_wdev_data(padapter)->wowl = _FALSE;
 	adapter_wdev_data(padapter)->wowl_activate = _FALSE;

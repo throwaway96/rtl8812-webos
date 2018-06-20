@@ -173,7 +173,7 @@
 
 #define CONFIG_SKB_COPY	1 /* amsdu */
 
-#define CONFIG_RTW_LED
+/* #define CONFIG_RTW_LED */
 #ifdef CONFIG_RTW_LED
 	#define CONFIG_RTW_SW_LED
 	#ifdef CONFIG_RTW_SW_LED
@@ -313,9 +313,9 @@
 
 #define DBG_CONFIG_ERROR_DETECT
 #define CONFIG_DIS_UPHY
+#define DBG_CONFIG_ERROR_RESET
 /*
 #define DBG_CONFIG_ERROR_DETECT_INT
-#define DBG_CONFIG_ERROR_RESET
 
 #define DBG_IO
 #define DBG_DELAY_OS

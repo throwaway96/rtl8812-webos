@@ -443,6 +443,8 @@ int rtw_mlcst2unicst(_adapter *padapter, struct sk_buff *skb)
 int _rtw_xmit_entry(_pkt *pkt, _nic_hdl pnetdev)
 {
 	_adapter *padapter = (_adapter *)rtw_netdev_priv(pnetdev);
+	struct dvobj_priv *dvobj = adapter_to_dvobj(padapter);
+	struct pwrctrl_priv *pwrpriv = dvobj_to_pwrctl(dvobj);
 	struct xmit_priv *pxmitpriv = &padapter->xmitpriv;
 #ifdef CONFIG_TX_MCAST2UNI
 	struct mlme_priv	*pmlmepriv = &padapter->mlmepriv;
@@ -465,6 +467,11 @@ int _rtw_xmit_entry(_pkt *pkt, _nic_hdl pnetdev)
 		#ifdef DBG_TX_DROP_FRAME
 		RTW_INFO("DBG_TX_DROP_FRAME %s if_up fail\n", __FUNCTION__);
 		#endif
+		goto drop_packet;
+	}
+	
+	if(pwrpriv->bInSuspend == _TRUE) {
+		RTW_INFO("DBG_TX_DROP_FRAME %s bInSuspend\n", __FUNCTION__);
 		goto drop_packet;
 	}
 

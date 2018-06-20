@@ -9046,7 +9046,11 @@ static void rtw_hal_wow_disable(_adapter *adapter)
 	u8 val8;
 
 	RTW_PRINT("%s, WOWLAN_DISABLE\n", __func__);
-
+	
+#ifdef LGE_PRIVATE
+	if (adapter_wdev_data(adapter)->idle_mode)
+		return;
+#endif /*LGE_PRIVATE*/
 	if (!pwrctl->wowlan_pno_enable) {
 		psta = rtw_get_stainfo(&adapter->stapriv, get_bssid(pmlmepriv));
 		if (psta != NULL)

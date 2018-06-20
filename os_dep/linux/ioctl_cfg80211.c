@@ -3668,6 +3668,8 @@ static int cfg80211_rtw_connect(struct wiphy *wiphy, struct net_device *ndev,
 	struct wireless_dev *pwdev = padapter->rtw_wdev;
 	struct rtw_wdev_priv *pwdev_priv = adapter_wdev_data(padapter);
 	_irqL irqL;
+	struct dvobj_priv *dvobj = padapter->dvobj;
+	struct pwrctrl_priv *pwrpriv = dvobj_to_pwrctl(dvobj);
 
 	rtw_wdev_set_not_indic_disco(pwdev_priv, 1);
 
@@ -3675,6 +3677,11 @@ static int cfg80211_rtw_connect(struct wiphy *wiphy, struct net_device *ndev,
 	RTW_INFO("privacy=%d, key=%p, key_len=%d, key_idx=%d, auth_type=%d\n",
 		sme->privacy, sme->key, sme->key_len, sme->key_idx, sme->auth_type);
 
+	if(pwrpriv->bInSuspend == _TRUE) {
+		ret = -EBUSY;
+		RTW_INFO("can't connect in bInSuspend\n", __FUNCTION__);
+		goto exit;
+	}
 
 	if (pwdev_priv->block == _TRUE) {
 		ret = -EBUSY;
