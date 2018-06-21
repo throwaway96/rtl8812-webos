@@ -234,7 +234,7 @@ struct rx_pkt_attrib	{
 #define SN_EQUAL(a, b)	(a == b)
 /* #define REORDER_WIN_SIZE	128 */
 /* #define REORDER_ENTRY_NUM	128 */
-#define REORDER_WAIT_TIME	(250) /* (ms) */
+#define REORDER_WAIT_TIME	(450) /* (ms) */
 
 #define RECVBUFF_ALIGN_SZ 8
 
