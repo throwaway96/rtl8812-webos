@@ -365,6 +365,7 @@ static s32 rtw_dump_xframe(PADAPTER padapter, struct xmit_frame *pxmitframe)
 	struct xmit_priv *pxmitpriv = &padapter->xmitpriv;
 	struct security_priv *psecuritypriv = &padapter->securitypriv;
 	struct dvobj_priv *pdvobj = adapter_to_dvobj(padapter);
+	struct pwrctrl_priv *pwrpriv = dvobj_to_pwrctl(pdvobj);
 
 
 #ifdef CONFIG_80211N_HT
@@ -425,8 +426,8 @@ static s32 rtw_dump_xframe(PADAPTER padapter, struct xmit_frame *pxmitframe)
 		inner_ret = rtw_write_port(padapter, ff_hwaddr, w_sz, (unsigned char *)pxmitbuf);
 #endif
 		rtw_count_tx_stats(padapter, pxmitframe, sz);
-
-		/* RTW_INFO("rtw_write_port, w_sz=%d, sz=%d, txdesc_sz=%d, tid=%d\n", w_sz, sz, w_sz-sz, pattrib->priority);*/
+		if (!((pattrib->qsel == QSLT_BEACON) || (pattrib->qsel == QSLT_CMD)) && (pwrpriv->bInSuspend == _TRUE))
+			RTW_INFO("rtw_write_port, w_sz=%d, sz=%d, txdesc_sz=%d, tid=%d\n", w_sz, sz, w_sz-sz, pattrib->priority);
 
 		mem_addr += w_sz;
 

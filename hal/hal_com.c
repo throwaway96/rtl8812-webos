@@ -8885,6 +8885,16 @@ static void rtw_hal_wow_enable(_adapter *adapter)
 
 	RTW_PRINT("%s, WOWLAN_ENABLE\n", __func__);
 	rtw_hal_gate_bb(adapter, _TRUE);
+#ifdef LGE_PRIVATE
+	if(adapter_wdev_data(adapter)->wowl && is_client_associated_to_ap(adapter)) {
+		rtw_mi_intf_start(adapter);
+		/* Start Usb TxDMA */
+		RTW_ENABLE_FUNC(adapter, DF_TX_BIT);
+	}
+#endif /* LGE_PRIVATE */
+#ifdef LGE_PRIVATE
+		
+#endif /* LGE_PRIVATE */
 #ifdef CONFIG_GTK_OL
 	if (psecuritypriv->binstallKCK_KEK == _TRUE)
 		rtw_hal_fw_sync_cam_id(adapter);

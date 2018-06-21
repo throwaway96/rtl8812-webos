@@ -879,7 +879,7 @@ static void xmit_status_check(PADAPTER p)
 					if (!(ability & ODM_BB_ADAPTIVITY)) {
 						psrtpriv->self_dect_tx_cnt++;
 						psrtpriv->self_dect_case = 1;
-						rtw_hal_sreset_reset(p);
+						/* rtw_hal_sreset_reset(p); */
 				}
 			}
 		}
@@ -923,7 +923,7 @@ exit:
 	if (psrtpriv->rx_cnt > 3) {
 		psrtpriv->self_dect_case = 2;
 		psrtpriv->self_dect_rx_cnt++;
-		rtw_hal_sreset_reset(p);
+		/* rtw_hal_sreset_reset(p); */
 	}
 }
 
@@ -947,7 +947,7 @@ static void linked_status_check(PADAPTER p)
 	if (psrtpriv->self_dect_fw) {
 		psrtpriv->self_dect_case = 3;
 #ifdef CONFIG_USB_HCI
-		rtw_hal_sreset_reset(p);
+		/* rtw_hal_sreset_reset(p); */
 #endif /* CONFIG_USB_HCI */
 	}
 

@@ -4167,6 +4167,13 @@ int rtw_suspend_wow(_adapter *padapter)
 		/* 2.1 clean interrupt */
 		rtw_hal_clear_interrupt(padapter);
 #endif /* CONFIG_SDIO_HCI */
+#ifdef LGE_PRIVATE
+		if(adapter_wdev_data(padapter)->wowl && is_client_associated_to_ap(padapter)) {
+			/* free adapter's resource */
+			rtw_mi_intf_stop(padapter);
+			rtw_msleep_os(100);
+		}
+#endif /* LGE_PRIVATE */
 
 		/* 1. stop thread */
 		rtw_set_drv_stopped(padapter);	/*for stop thread*/
