@@ -4141,6 +4141,9 @@ int rtw_suspend_wow(_adapter *padapter)
 	struct wowlan_ioctl_param poidparam;
 	u8 ps_mode;
 	int ret = _SUCCESS;
+	struct dvobj_priv *dvobj = adapter_to_dvobj(padapter);
+	int i;
+	_adapter *iface;
 
 	RTW_INFO("==> "FUNC_ADPT_FMT" entry....\n", FUNC_ADPT_ARG(padapter));
 
@@ -4168,11 +4171,16 @@ int rtw_suspend_wow(_adapter *padapter)
 		rtw_hal_clear_interrupt(padapter);
 #endif /* CONFIG_SDIO_HCI */
 #ifdef LGE_PRIVATE
-		if(adapter_wdev_data(padapter)->wowl && is_client_associated_to_ap(padapter)) {
-			/* free adapter's resource */
-			rtw_mi_intf_stop(padapter);
-			rtw_msleep_os(100);
+	if(adapter_wdev_data(padapter)->wowl) {
+		
+		for (i = 0; i < dvobj->iface_nums; i++) {
+			iface = dvobj->padapters[i];
+			if ((iface) && rtw_is_adapter_up(iface)) {
+				rtw_write_port_cancel(iface);
+			}
 		}
+		rtw_msleep_os(500);
+	}
 #endif /* LGE_PRIVATE */
 
 		/* 1. stop thread */

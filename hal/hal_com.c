@@ -8060,7 +8060,7 @@ void rtw_hal_set_wow_fw_rsvd_page(_adapter *adapter, u8 *pframe, u16 index,
 static void rtw_hal_gate_bb(_adapter *adapter, bool stop)
 {
 	struct pwrctrl_priv *pwrpriv = adapter_to_pwrctl(adapter);
-	u8 i = 0, val8 = 0, empty = _FALSE, cnt = 10;
+	u8 i = 0, val8 = 0, empty = _FALSE, cnt = 100;
 	u16 val16 = 0;
 
 	if (stop) {
@@ -8887,7 +8887,6 @@ static void rtw_hal_wow_enable(_adapter *adapter)
 	rtw_hal_gate_bb(adapter, _TRUE);
 #ifdef LGE_PRIVATE
 	if(adapter_wdev_data(adapter)->wowl && is_client_associated_to_ap(adapter)) {
-		rtw_mi_intf_start(adapter);
 		/* Start Usb TxDMA */
 		RTW_ENABLE_FUNC(adapter, DF_TX_BIT);
 	}
