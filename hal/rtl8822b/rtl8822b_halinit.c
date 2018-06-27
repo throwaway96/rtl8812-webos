@@ -244,6 +244,14 @@ void rtl8822b_init_misc(PADAPTER adapter)
 #endif /* CONFIG_XMIT_ACK */
 
 	rtw_write8(adapter, REG_TIMER0_SRC_SEL_8822B, rtw_read8(adapter, REG_TIMER0_SRC_SEL_8822B) & ~BIT(6));
+
+	/* VHT dynamic BW */
+	if (adapter->registrypriv.wifi_spec) {
+		v8 = rtw_read8(adapter, REG_WMAC_TRXPTCL_CTL_8822B);
+		v8 &= ~(BIT(6)|BIT(5));
+		v8 |= BIT(5);
+		rtw_write8(adapter, REG_WMAC_TRXPTCL_CTL_8822B, v8);
+	}
 }
 
 u32 rtl8822b_init(PADAPTER adapter)
