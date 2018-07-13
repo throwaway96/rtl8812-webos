@@ -335,6 +335,11 @@ void	expire_timeout_chk(_adapter *padapter)
 		return;
 #endif
 
+#ifdef CONFIG_CONCURRENT_MODE
+	if (rtw_mi_buddy_check_fwstate(padapter, WIFI_UNDER_LINKING | WIFI_SITE_MONITOR))
+		return;
+#endif /* CONFIG_CONCURRENT_MODE */
+
 	_enter_critical_bh(&pstapriv->auth_list_lock, &irqL);
 
 	phead = &pstapriv->auth_list;

@@ -2169,33 +2169,29 @@ static void rtw_hal_set_mcc_ctrl_cmd(PADAPTER padapter, u8 stop)
 static u8 check_mcc_support(PADAPTER adapter)
 {
 	struct dvobj_priv *dvobj = adapter_to_dvobj(adapter);
-	u8 sta_linking_num = DEV_STA_LG_NUM(dvobj);
 	u8 sta_linked_num = DEV_STA_LD_NUM(dvobj);
 	u8 starting_ap_num = DEV_AP_STARTING_NUM(dvobj);
 	u8 ap_num = DEV_AP_NUM(dvobj);
-	u8 ret = _SUCCESS;
+	u8 ret = _FAIL;
 
-	/* case for linking sta + linked sta  */
-	if ((sta_linking_num + sta_linked_num) != MAX_MCC_NUM) {
-		ret = _FAIL;
+	RTW_INFO("[MCC] sta_linked_num=%d, starting_ap_num=%d,ap_num=%d\n",
+		sta_linked_num, starting_ap_num, ap_num);
+
+	/* case for sta + sta case  */
+	if (sta_linked_num == MAX_MCC_NUM) {
+		ret = _SUCCESS;
 		goto exit;
 	}
 
 	/* case for starting AP + linked sta */
-	if ((starting_ap_num + sta_linked_num) != MAX_MCC_NUM) {
-		ret = _FAIL;
+	if ((starting_ap_num + sta_linked_num) == MAX_MCC_NUM) {
+		ret = _SUCCESS;
 		goto exit;
 	}
 
-	/* case for linking sta  + started AP */
-	if ((sta_linking_num + ap_num) != MAX_MCC_NUM) {
-		ret = _FAIL;
-		goto exit;
-	}
-
-	/* case for starting AP +  started AP */
-	if ((starting_ap_num + ap_num) != MAX_MCC_NUM) {
-		ret = _FAIL;
+	/* case for started AP + linked sta */
+	if ((ap_num + sta_linked_num) == MAX_MCC_NUM) {
+		ret = _SUCCESS;
 		goto exit;
 	}
 
@@ -2232,9 +2228,7 @@ static u8 rtw_hal_set_mcc_start_setting(PADAPTER padapter, u8 status)
 		LeaveAllPowerSaveModeDirect(padapter);
 	}
 
-	if (check_mcc_support(padapter)) {
-		RTW_INFO("%s: check_mcc_support fail\n", __func__);
-		dump_dvobj_mi_status(RTW_DBGDUMP, __func__, padapter);
+	if (check_mcc_support(padapter) == _FAIL) {
 		ret = _FAIL;
 		goto exit;
 	}

@@ -3504,8 +3504,14 @@ unsigned int OnDeAuth(_adapter *padapter, union recv_frame *precv_frame)
 			}
 		}
 
-		RTW_PRINT(FUNC_ADPT_FMT" reason=%u, ta=%pM, ignore=%d\n"
-			, FUNC_ADPT_ARG(padapter), reason, get_addr2_ptr(pframe), ignore_received_deauth);
+		if (check_fwstate(pmlmepriv, WIFI_UNDER_DISCONNTING)) {
+			/* driver in disconnect process */
+			ignore_received_deauth = 1;
+		}
+
+		RTW_PRINT(FUNC_ADPT_FMT" reason=%u, ta=%pM, ignore=%d, fw_state:0x%x\n"
+			, FUNC_ADPT_ARG(padapter), reason, get_addr2_ptr(pframe)
+			, ignore_received_deauth, get_fwstate(pmlmepriv));
 
 		if (0 == ignore_received_deauth)
 			receive_disconnect(padapter, get_addr2_ptr(pframe), reason, _FALSE);
@@ -14690,7 +14696,7 @@ exit:
 	return ret_num;
 }
 
-#define SCANNING_TIMEOUT_EX	2000
+#define SCANNING_TIMEOUT_EX	6000
 u32 rtw_scan_timeout_decision(_adapter *padapter)
 {
 	u32 back_op_times= 0;
@@ -14856,6 +14862,7 @@ static u8 sitesurvey_pick_ch_behavior(_adapter *padapter, u8 *ch, RT_SCAN_TYPE *
 	u8 next_state;
 	u8 scan_ch = 0;
 	RT_SCAN_TYPE scan_type = SCAN_PASSIVE;
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
 	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
 	struct mlme_ext_info *pmlmeinfo = &pmlmeext->mlmext_info;
 	struct ss_res *ss = &pmlmeext->sitesurvey_res;
@@ -14916,6 +14923,12 @@ static u8 sitesurvey_pick_ch_behavior(_adapter *padapter, u8 *ch, RT_SCAN_TYPE *
 			#endif /*CONFIG_RTW_ACS*/
 				scan_type = (ch->flags & RTW_IEEE80211_CHAN_PASSIVE_SCAN) ? SCAN_PASSIVE : SCAN_ACTIVE;
 		}
+	}
+
+	if (check_fwstate(pmlmepriv, _FW_UNDER_SURVEY) == _FALSE) {
+		RTW_INFO("%s skip scan! fw_state=0x%x\n",
+			__func__, pmlmepriv->fw_state);
+		scan_ch = 0;
 	}
 
 	if (scan_ch != 0) {

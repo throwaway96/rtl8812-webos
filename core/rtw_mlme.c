@@ -614,10 +614,12 @@ void rtw_free_network(struct mlme_priv *pmlmepriv, struct	wlan_network *pnetwork
 	_rtw_free_network(pmlmepriv, pnetwork, is_freeall);
 }
 
-void rtw_free_network_nolock(_adapter *padapter, struct wlan_network *pnetwork);
-void rtw_free_network_nolock(_adapter *padapter, struct wlan_network *pnetwork)
+void rtw_free_network_nolock(_adapter *padapter, struct wlan_network *pnetwork, u8 is_free);
+void rtw_free_network_nolock(_adapter *padapter, struct wlan_network *pnetwork, u8 is_free)
 {
-	_rtw_free_network_nolock(&(padapter->mlmepriv), pnetwork);
+	if (is_free) {
+		_rtw_free_network_nolock(&(padapter->mlmepriv), pnetwork);
+	}
 #ifdef CONFIG_IOCTL_CFG80211
 	rtw_cfg80211_unlink_bss(padapter, pnetwork);
 #endif /* CONFIG_IOCTL_CFG80211 */
@@ -1576,8 +1578,8 @@ void rtw_free_assoc_resources(_adapter *adapter, int lock_scanned_queue)
 	if ((pwlan)  && (!check_fwstate(pmlmepriv, WIFI_UNDER_WPS))) {
 		pwlan->fixed = _FALSE;
 
-		RTW_INFO("free disconnecting network of scanned_queue\n");
-		rtw_free_network_nolock(adapter, pwlan);
+		RTW_INFO("skip free disconnecting network of scanned_queue\n");
+		rtw_free_network_nolock(adapter, pwlan, _FALSE);
 #ifdef CONFIG_P2P
 		if (!rtw_p2p_chk_state(&adapter->wdinfo, P2P_STATE_NONE)) {
 			rtw_mi_set_scan_deny(adapter, 2000);
@@ -1595,7 +1597,7 @@ void rtw_free_assoc_resources(_adapter *adapter, int lock_scanned_queue)
 	if ((check_fwstate(pmlmepriv, WIFI_ADHOC_MASTER_STATE) && (adapter->stapriv.asoc_sta_count == 1))
 	    /*||check_fwstate(pmlmepriv, WIFI_STATION_STATE)*/) {
 		if (pwlan)
-			rtw_free_network_nolock(adapter, pwlan);
+			rtw_free_network_nolock(adapter, pwlan, _TRUE);
 	}
 
 	if (lock_scanned_queue)
@@ -1701,7 +1703,7 @@ void rtw_indicate_disconnect(_adapter *padapter, u16 reason, u8 locally_generate
 		/* set ips_deny_time to avoid enter IPS before LPS leave */
 		rtw_set_ips_deny(padapter, 3000);
 
-		_clr_fwstate_(pmlmepriv, _FW_LINKED);
+		_clr_fwstate_(pmlmepriv, _FW_LINKED | WIFI_UNDER_DISCONNTING);
 
 		rtw_led_control(padapter, LED_CTL_NO_LINK);
 
@@ -2806,7 +2808,8 @@ void rtw_stadel_event_callback(_adapter *adapter, u8 *pbuf)
 		pwlan = _rtw_find_network(&pmlmepriv->scanned_queue, tgt_network->network.MacAddress);
 		if ((pwlan)  && (!check_fwstate(pmlmepriv, WIFI_UNDER_WPS))) {
 			pwlan->fixed = _FALSE;
-			rtw_free_network_nolock(adapter, pwlan);
+			RTW_INFO("skip free disconnecting network of scanned_queue\n");
+			rtw_free_network_nolock(adapter, pwlan, _FALSE);
 		}
 		_exit_critical_bh(&(pmlmepriv->scanned_queue.lock), &irqL);
 
@@ -2834,7 +2837,7 @@ void rtw_stadel_event_callback(_adapter *adapter, u8 *pbuf)
 			pwlan = _rtw_find_network(&pmlmepriv->scanned_queue, tgt_network->network.MacAddress);
 			if (pwlan) {
 				pwlan->fixed = _FALSE;
-				rtw_free_network_nolock(adapter, pwlan);
+				rtw_free_network_nolock(adapter, pwlan, _FALSE);
 			}
 			_exit_critical_bh(&(pmlmepriv->scanned_queue.lock), &irqL);
 			/* re-create ibss */

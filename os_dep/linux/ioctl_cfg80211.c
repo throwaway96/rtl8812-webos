@@ -3679,7 +3679,7 @@ static int cfg80211_rtw_connect(struct wiphy *wiphy, struct net_device *ndev,
 
 	if(pwrpriv->bInSuspend == _TRUE) {
 		ret = -EBUSY;
-		RTW_INFO("can't connect in bInSuspend\n", __FUNCTION__);
+		RTW_INFO("%s can't connect in bInSuspend\n", __FUNCTION__);
 		goto exit;
 	}
 
@@ -3689,9 +3689,23 @@ static int cfg80211_rtw_connect(struct wiphy *wiphy, struct net_device *ndev,
 		goto exit;
 	}
 
-	if (check_fwstate(pmlmepriv, _FW_LINKED | _FW_UNDER_LINKING) == _TRUE) {
+	if (check_fwstate(pmlmepriv, _FW_LINKED) == _TRUE) {
 		ret = -EALREADY;
 		RTW_INFO("%s skip connect! fw_state=0x%x\n",
+			__FUNCTION__, pmlmepriv->fw_state);
+		goto exit;
+	}
+
+	if (check_fwstate(pmlmepriv, _FW_UNDER_SURVEY) == _TRUE) {
+		ret = 0;
+		RTW_INFO("%s skip connect! under survey! fw_state=0x%x\n",
+			__FUNCTION__, pmlmepriv->fw_state);
+		goto exit;
+	}
+
+	if (check_fwstate(pmlmepriv, _FW_UNDER_LINKING) == _TRUE) {
+		ret = 0;
+		RTW_INFO("%s skip connect! under linking! fw_state=0x%x\n",
 			__FUNCTION__, pmlmepriv->fw_state);
 		goto exit;
 	}
@@ -3736,6 +3750,12 @@ static int cfg80211_rtw_connect(struct wiphy *wiphy, struct net_device *ndev,
 		goto cancel_ps_deny;
 	}
 #endif
+
+	if (check_fwstate(pmlmepriv, WIFI_UNDER_DISCONNTING)) {
+		RTW_INFO(FUNC_NDEV_FMT" WIFI_UNDER_DISCONNTING exit\n", FUNC_NDEV_ARG(ndev));
+		ret = -EBUSY;
+		goto cancel_ps_deny;
+	}
 
 	_rtw_memset(&ndis_ssid, 0, sizeof(NDIS_802_11_SSID));
 	ndis_ssid.SsidLength = sme->ssid_len;
@@ -3914,14 +3934,22 @@ static int cfg80211_rtw_disconnect(struct wiphy *wiphy, struct net_device *ndev,
 {
 	_adapter *padapter = (_adapter *)rtw_netdev_priv(ndev);
 	struct rtw_wdev_priv *pwdev_priv = adapter_wdev_data(padapter);
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
 
 	RTW_INFO(FUNC_NDEV_FMT" - Start to Disconnect\n", FUNC_NDEV_ARG(ndev));
+
+	if (MLME_IS_STA(padapter) && check_fwstate(pmlmepriv, WIFI_UNDER_DISCONNTING) ) {
+		RTW_INFO(FUNC_NDEV_FMT" WIFI_UNDER_DISCONNTING exit\n", FUNC_NDEV_ARG(ndev));
+		goto exit;
+	}
+
+	set_fwstate(pmlmepriv, WIFI_UNDER_DISCONNTING);
 
 #ifdef LGE_PRIVATE
 	if (adapter_wdev_data(padapter)->wowl == 1 ||
 		adapter_to_pwrctl(padapter)->bInSuspend == _TRUE) {
 		RTW_INFO(FUNC_NDEV_FMT" In suspend mode, ignore it.\n", FUNC_NDEV_ARG(ndev));
-		return 0;
+		goto exit;
 	}
 #endif /* LGE_PRIVATE */
 
@@ -3951,6 +3979,7 @@ static int cfg80211_rtw_disconnect(struct wiphy *wiphy, struct net_device *ndev,
 
 	rtw_wdev_set_not_indic_disco(pwdev_priv, 0);
 
+exit:
 	RTW_INFO(FUNC_NDEV_FMT" return 0\n", FUNC_NDEV_ARG(ndev));
 	return 0;
 }
