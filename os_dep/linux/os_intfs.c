@@ -1403,18 +1403,18 @@ static int rtw_ndev_notifier_call(struct notifier_block *nb, unsigned long state
 	RTW_INFO(FUNC_NDEV_FMT" state:%lu\n", FUNC_NDEV_ARG(ndev), state);
 
 	switch (state) {
-	case NETDEV_DOWN:
+	case NETDEV_DOWN:	/* 2 */
 		#ifdef LGE_PRIVATE
 		rtw_cfg80211_update_p2p_wiphy(ndev, _TRUE);
 		#endif /* LGE_PRIVATE */
 		break;
-	case NETDEV_UP:
-	case NETDEV_PRE_UP:
+	case NETDEV_UP:		/* 1 */
+	case NETDEV_PRE_UP:	/* 13 */
 		#ifdef LGE_PRIVATE
 		rtw_cfg80211_update_p2p_wiphy(ndev, _FALSE);
 		#endif /* LGE_PRIVATE */
 		break;
-	case NETDEV_CHANGENAME:
+	case NETDEV_CHANGENAME:	/* 4 */
 		rtw_adapter_proc_replace(ndev);
 		break;
 	}
@@ -3116,9 +3116,10 @@ int rtw_os_ndevs_register(struct dvobj_priv *dvobj)
 
 			if (adapter->iface_id == IFACE_ID0)
 				name = regsty->ifname;
-			else if (adapter->iface_id == IFACE_ID1)
+			else if (adapter->iface_id == IFACE_ID1) {
+				rtw_msleep_os(500);
 				name = regsty->if2name;
-			else
+			} else
 				name = "wlan%d";
 
 			status = rtw_os_ndev_register(adapter, name);

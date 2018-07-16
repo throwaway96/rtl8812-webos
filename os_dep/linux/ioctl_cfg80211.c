@@ -9129,7 +9129,7 @@ void rtw_cfg80211_update_p2p_wiphy(struct net_device *dev, int isdown)
 	} else if (padapter->iface_id == IFACE_ID1) {
 		if (isdown == _TRUE) {
 			/* remove P2P */
-			wiphy->interface_modes &= ~(BIT(NL80211_IFTYPE_P2P_GO) | BIT(NL80211_IFTYPE_P2P_CLIENT));
+			//wiphy->interface_modes &= ~(BIT(NL80211_IFTYPE_P2P_GO) | BIT(NL80211_IFTYPE_P2P_CLIENT));
 		} else {
 			/* apply P2P */
 			wiphy->interface_modes |= (BIT(NL80211_IFTYPE_P2P_GO) | BIT(NL80211_IFTYPE_P2P_CLIENT));
