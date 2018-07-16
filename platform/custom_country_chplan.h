@@ -19,38 +19,67 @@
 #else
 static const struct country_chplan CUSTOMIZED_country_chplan_map[] = {
 	COUNTRY_CHPLAN_ENT2("AU", 0x22, 1, 0x1FB, 0), /* Australia */
+	COUNTRY_CHPLAN_ENT2("AU", 0x22, 1, 0x1FB, 1), /* Australia */
 	COUNTRY_CHPLAN_ENT2("BO", 0x23, 1, 0x1F1, 0), /* Bolivia */
+	COUNTRY_CHPLAN_ENT2("BO", 0x23, 1, 0x1F1, 1), /* Bolivia */
 	COUNTRY_CHPLAN_ENT2("BZ", 0x24, 1, 0x000, 0), /* Brazil, Peru, Philippines */
+	COUNTRY_CHPLAN_ENT2("BZ", 0x24, 1, 0x000, 1), /* Brazil, Peru, Philippines */
 	COUNTRY_CHPLAN_ENT2("CH", 0x25, 1, 0x1FB, 0), /* Hong Kong, China */
+	COUNTRY_CHPLAN_ENT2("CH", 0x25, 1, 0x1FB, 1), /* Hong Kong, China */
 	COUNTRY_CHPLAN_ENT2("CL", 0x26, 1, 0x1F1, 0), /* Chile, Paraguay, Uruguay */
+	COUNTRY_CHPLAN_ENT2("CL", 0x26, 1, 0x1F1, 1), /* Chile, Paraguay, Uruguay */
 	COUNTRY_CHPLAN_ENT2("DC", 0x27, 1, 0x1FB, 0), /* LGE Default CE */
-	COUNTRY_CHPLAN_ENT2("DC", 0x28, 1, 0x1FB, 1), /* LGE Default v1 FCC */
+	COUNTRY_CHPLAN_ENT2("DC", 0x27, 1, 0x1FB, 1), /* LGE Default CE */
+	COUNTRY_CHPLAN_ENT2("DC", 0x28, 1, 0x1FB, 2), /* LGE Default v1 FCC */
 	COUNTRY_CHPLAN_ENT2("EC", 0x29, 1, 0x1F1, 0), /* Ecuador */
+	COUNTRY_CHPLAN_ENT2("EC", 0x29, 1, 0x1F1, 1), /* Ecuador */
 	COUNTRY_CHPLAN_ENT2("EG", 0x25, 0, 0x1F1, 0), /* Egypt */
+	COUNTRY_CHPLAN_ENT2("EG", 0x25, 0, 0x1F1, 1), /* Egypt */
 	COUNTRY_CHPLAN_ENT2("EU", 0x2a, 1, 0x1FB, 0), /* Germany */
+	COUNTRY_CHPLAN_ENT2("EU", 0x2a, 1, 0x1FB, 1), /* Germany */
 	COUNTRY_CHPLAN_ENT2("HK", 0x2b, 1, 0x1FB, 0), /* Lebanon, Jordan, Srilanka */
+	COUNTRY_CHPLAN_ENT2("HK", 0x2b, 1, 0x1FB, 1), /* Lebanon, Jordan, Srilanka */
 	COUNTRY_CHPLAN_ENT2("HN", 0x19, 1, 0x1F1, 0), /* Honduras */
+	COUNTRY_CHPLAN_ENT2("HN", 0x19, 1, 0x1F1, 1), /* Honduras */
 	COUNTRY_CHPLAN_ENT2("ID", 0x2c, 0, 0x1F3, 0), /* Indonesia */
+	COUNTRY_CHPLAN_ENT2("ID", 0x2c, 0, 0x1F3, 1), /* Indonesia */
 	COUNTRY_CHPLAN_ENT2("IR", 0x2d, 1, 0x1F3, 0), /* Iran */
+	COUNTRY_CHPLAN_ENT2("IR", 0x2d, 1, 0x1F3, 1), /* Iran */
 	COUNTRY_CHPLAN_ENT2("JP", 0x2e, 1, 0x1FF, 0), /* Japan- Telec */
+	COUNTRY_CHPLAN_ENT2("JP", 0x2e, 1, 0x1FF, 1), /* Japan- Telec */
 	COUNTRY_CHPLAN_ENT2("KR", 0x3a, 1, 0x1FB, 0), /* South Korea */
 	COUNTRY_CHPLAN_ENT2("KR", 0x3a, 1, 0x1FB, 1), /* South Korea v1 */
+	COUNTRY_CHPLAN_ENT2("KR", 0x3a, 1, 0x1FB, 2), /* South Korea */
 	COUNTRY_CHPLAN_ENT2("KZ", 0x21, 1, 0x100, 0), /* Kazakhstan */
+	COUNTRY_CHPLAN_ENT2("KZ", 0x21, 1, 0x100, 1), /* Kazakhstan */
 	COUNTRY_CHPLAN_ENT2("MM", 0x20, 1, 0x000, 0), /* Burma (Myanmar) */
+	COUNTRY_CHPLAN_ENT2("MM", 0x20, 1, 0x000, 1), /* Burma (Myanmar) */
 	COUNTRY_CHPLAN_ENT2("MR", 0x31, 1, 0x1F1, 0), /* Morocco */
+	COUNTRY_CHPLAN_ENT2("MR", 0x31, 1, 0x1F1, 1), /* Morocco */
 	COUNTRY_CHPLAN_ENT2("MX", 0x32, 1, 0x1F1, 0), /* Mexico */
+	COUNTRY_CHPLAN_ENT2("MX", 0x32, 1, 0x1F1, 1), /* Mexico */
 	COUNTRY_CHPLAN_ENT2("MY", 0x25, 1, 0x1F1, 0), /* Malaysia */
+	COUNTRY_CHPLAN_ENT2("MY", 0x25, 1, 0x1F1, 1), /* Malaysia */
 	COUNTRY_CHPLAN_ENT2("NP", 0x33, 1, 0x1FB, 0), /* Nepal */
+	COUNTRY_CHPLAN_ENT2("NP", 0x33, 1, 0x1FB, 1), /* Nepal */
 	COUNTRY_CHPLAN_ENT2("NZ", 0x30, 1, 0x1FB, 0), /* New Zealand */
+	COUNTRY_CHPLAN_ENT2("NZ", 0x30, 1, 0x1FB, 1), /* New Zealand */
 	COUNTRY_CHPLAN_ENT2("PK", 0x34, 1, 0x1F1, 0), /* Pakistan */
+	COUNTRY_CHPLAN_ENT2("PK", 0x34, 1, 0x1F1, 1), /* Pakistan */
 	COUNTRY_CHPLAN_ENT2("RU", 0x35, 1, 0x1FB, 0), /* Russia(fac/gost), Kaliningrad */
 	COUNTRY_CHPLAN_ENT2("RU", 0x35, 1, 0x1FB, 1), /* Russia(fac/gost), Kaliningrad v1 */
 	COUNTRY_CHPLAN_ENT2("RU", 0x3b, 1, 0x1FB, 2), /* Russia(fac/gost), Kaliningrad v2 */
+	COUNTRY_CHPLAN_ENT2("RU", 0x3b, 1, 0x1FB, 3), /* Russia(fac/gost), Kaliningrad */
 	COUNTRY_CHPLAN_ENT2("SA", 0x02, 1, 0x1F1, 0), /* South Africa */
+	COUNTRY_CHPLAN_ENT2("SA", 0x02, 1, 0x1F1, 1), /* South Africa */
 	COUNTRY_CHPLAN_ENT2("SU", 0x36, 1, 0x1FB, 0), /* Saudi Arabia */
+	COUNTRY_CHPLAN_ENT2("SU", 0x36, 1, 0x1FB, 1), /* Saudi Arabia */
 	COUNTRY_CHPLAN_ENT2("TW", 0x37, 1, 0x1FF, 0), /* Taiwan */
+	COUNTRY_CHPLAN_ENT2("TW", 0x37, 1, 0x1FF, 1), /* Taiwan */
 	COUNTRY_CHPLAN_ENT2("UA", 0x38, 1, 0x1FB, 0), /* Ukraine */
+	COUNTRY_CHPLAN_ENT2("UA", 0x38, 1, 0x1FB, 1), /* Ukraine */
 	COUNTRY_CHPLAN_ENT2("US", 0x39, 1, 0x1FF, 0), /* United States of America (USA) */
+	COUNTRY_CHPLAN_ENT2("US", 0x39, 1, 0x1FF, 1), /* United States of America (USA) */
 };
 #endif /* LGE_PRIVATE */
 
