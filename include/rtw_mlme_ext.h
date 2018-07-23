@@ -738,7 +738,7 @@ void sitesurvey_set_offch_state(_adapter *adapter, u8 scan_state);
 #define mlmeext_assign_scan_backop_flags(mlmeext, flags) \
 	do { \
 		((mlmeext)->sitesurvey_res.backop_flags = (flags)); \
-		RTW_INFO("assign_scan_backop_flags:0x%02x\n", (mlmeext)->sitesurvey_res.backop_flags); \
+		RTW_DBG("assign_scan_backop_flags:0x%02x\n", (mlmeext)->sitesurvey_res.backop_flags); \
 	} while (0)
 
 #define mlmeext_scan_backop_flags_sta(mlmeext) ((mlmeext)->sitesurvey_res.backop_flags_sta)

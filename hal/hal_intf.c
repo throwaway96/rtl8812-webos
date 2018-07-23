@@ -1044,7 +1044,7 @@ static s32 _rtw_hal_macid_sleep(_adapter *adapter, u8 macid, u8 sleep)
 	}
 
 	val32 = rtw_read32(adapter, reg_sleep);
-	RTW_INFO(ADPT_FMT" %s macid=%d, ori reg_0x%03x=0x%08x\n"
+	RTW_DBG(ADPT_FMT" %s macid=%d, ori reg_0x%03x=0x%08x\n"
 		, ADPT_ARG(adapter), sleep ? "sleep" : "wakeup"
 		, macid, reg_sleep, val32);
 
@@ -1113,7 +1113,7 @@ static s32 _rtw_hal_macid_bmp_sleep(_adapter *adapter, struct macid_bmp *bmp, u8
 		}
 
 		val32 = rtw_read32(adapter, reg_sleep);
-		RTW_INFO(ADPT_FMT" %s m%u=0x%08x, ori reg_0x%03x=0x%08x\n"
+		RTW_DBG(ADPT_FMT" %s m%u=0x%08x, ori reg_0x%03x=0x%08x\n"
 			, ADPT_ARG(adapter), sleep ? "sleep" : "wakeup"
 			, mid, *m, reg_sleep, val32);
 

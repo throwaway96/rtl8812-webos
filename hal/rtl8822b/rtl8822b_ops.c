@@ -2381,7 +2381,7 @@ u8 rtl8822b_sethwreg(PADAPTER adapter, u8 variable, u8 *val)
 		passtime = rtw_get_passing_time_ms(start);
 
 		if (_TRUE == empty)
-			RTW_INFO("[HW_VAR_CHECK_TXBUF] Empty in %d ms\n", passtime);
+			RTW_DBG("[HW_VAR_CHECK_TXBUF] Empty in %d ms\n", passtime);
 		else if (RTW_CANNOT_RUN(adapter))
 			RTW_WARN("[HW_VAR_CHECK_TXBUF] bDriverStopped or bSurpriseRemoved\n");
 		else {

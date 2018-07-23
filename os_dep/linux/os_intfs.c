@@ -1405,16 +1405,16 @@ static int rtw_ndev_notifier_call(struct notifier_block *nb, unsigned long state
 	switch (state) {
 	case NETDEV_DOWN:	/* 2 */
 		#ifdef LGE_PRIVATE
-		rtw_cfg80211_update_p2p_wiphy(ndev, _TRUE);
+		/* rtw_cfg80211_update_p2p_wiphy(ndev, _TRUE); */
 		#endif /* LGE_PRIVATE */
 		break;
-	case NETDEV_UP:		/* 1 */
+	/* case NETDEV_UP: */		/* 1 */
 	case NETDEV_PRE_UP:	/* 13 */
 		#ifdef LGE_PRIVATE
 		rtw_cfg80211_update_p2p_wiphy(ndev, _FALSE);
 		#endif /* LGE_PRIVATE */
 		break;
-	case NETDEV_CHANGENAME:	/* 4 */
+	case NETDEV_CHANGENAME: /* 10 */
 		rtw_adapter_proc_replace(ndev);
 		break;
 	}
@@ -1646,6 +1646,7 @@ int rtw_os_ndev_register(_adapter *adapter, const char *name)
 	int ret = _SUCCESS;
 	struct net_device *ndev = adapter->pnetdev;
 	u8 rtnl_lock_needed = rtw_rtnl_lock_needed(dvobj);
+	struct registry_priv *regsty = dvobj_to_regsty(dvobj);
 
 #ifdef CONFIG_RTW_NAPI
 	netif_napi_add(ndev, &adapter->napi, rtw_recv_napi_poll, RTL_NAPI_WEIGHT);
@@ -1666,7 +1667,12 @@ int rtw_os_ndev_register(_adapter *adapter, const char *name)
 
 	/* Tell the network stack we exist */
 
+#ifdef LGE_PRIVATE
+	if (rtnl_lock_needed &&
+		((regsty->wifi_spec == 1) || (adapter->iface_id == IFACE_ID0)))
+#else
 	if (rtnl_lock_needed)
+#endif
 		ret = (register_netdev(ndev) == 0) ? _SUCCESS : _FAIL;
 	else
 		ret = (register_netdevice(ndev) == 0) ? _SUCCESS : _FAIL;
@@ -3117,7 +3123,10 @@ int rtw_os_ndevs_register(struct dvobj_priv *dvobj)
 			if (adapter->iface_id == IFACE_ID0)
 				name = regsty->ifname;
 			else if (adapter->iface_id == IFACE_ID1) {
-				rtw_msleep_os(500);
+				#ifdef LGE_PRIVATE
+				if (regsty->wifi_spec == 0) 
+					continue;
+				#endif
 				name = regsty->if2name;
 			} else
 				name = "wlan%d";
@@ -3152,7 +3161,8 @@ void rtw_os_ndevs_unregister(struct dvobj_priv *dvobj)
 	int i;
 	_adapter *adapter = NULL;
 
-	for (i = 0; i < dvobj->iface_nums; i++) {
+	for (i = (dvobj->iface_nums - 1); i >= 0; i--) {
+	/* for (i = 0; i < dvobj->iface_nums; i++) { */
 		adapter = dvobj->padapters[i];
 
 		if (adapter == NULL)
@@ -3432,6 +3442,23 @@ int netdev_open(struct net_device *pnetdev)
 #endif
 	_exit_critical_mutex(&(adapter_to_dvobj(padapter)->hw_init_mutex), NULL);
 
+#ifdef LGE_PRIVATE
+	{
+		_adapter *padapter_p2p = GET_ADAPTER(padapter, IFACE_ID1);
+		u8 rtnl_lock_needed;
+
+		_enter_critical_mutex(&(adapter_to_dvobj(padapter_p2p)->hw_init_mutex), NULL);
+
+		if (padapter_p2p->registered == 0) {
+			if (rtw_os_ndev_register(padapter_p2p, "p2p0") != _SUCCESS) {
+				RTW_WARN("ndev init fail!\n");
+			}
+			rtw_p2p_enable(padapter_p2p, P2P_ROLE_DEVICE);
+		}
+
+		_exit_critical_mutex(&(adapter_to_dvobj(padapter_p2p)->hw_init_mutex), NULL);
+	}
+#endif
 
 #ifdef CONFIG_AUTO_AP_MODE
 	if (padapter->iface_id == IFACE_ID2)
