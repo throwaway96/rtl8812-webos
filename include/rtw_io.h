@@ -321,6 +321,9 @@ struct reg_protocol_wt {
 
 
 int rtw_inc_and_chk_continual_io_error(struct dvobj_priv *dvobj);
+#ifdef LGE_PRIVATE
+int rtw_inc_and_chk_continual_io_error_status(struct dvobj_priv *dvobj, int status);
+#endif
 void rtw_reset_continual_io_error(struct dvobj_priv *dvobj);
 
 /*

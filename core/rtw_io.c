@@ -475,6 +475,28 @@ int rtw_inc_and_chk_continual_io_error(struct dvobj_priv *dvobj)
 	return ret;
 }
 
+#ifdef LGE_PRIVATE
+int rtw_inc_and_chk_continual_io_error_status(struct dvobj_priv *dvobj, int status)
+{
+	int ret = _FALSE;
+	int value;
+	int limit_value  = MAX_CONTINUAL_IO_ERR;
+
+	value = ATOMIC_INC_RETURN(&dvobj->continual_io_error);
+
+	if (status == -EPROTO) 
+		limit_value = 200;
+
+	if (value > limit_value) {
+		RTW_INFO("[dvobj:%p][ERROR] continual_io_error:%d > %d\n", dvobj, value, limit_value);
+		ret = _TRUE;
+	} else {
+		/* RTW_INFO("[dvobj:%p] status(%d) continual_io_error:%d/%d\n", dvobj, status, value, limit_value); */
+	}
+	return ret;
+}
+#endif /* LGE_PRIVATE */
+
 /*
 * Set the continual_io_error of this @param dvobjprive to 0
 */

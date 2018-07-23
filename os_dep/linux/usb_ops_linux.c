@@ -135,10 +135,17 @@ int usbctrl_vendorreq(struct intf_hdl *pintfhdl, u8 request, u16 value, u16 inde
 				}
 			}
 
+#ifdef LGE_PRIVATE
+			if (rtw_inc_and_chk_continual_io_error_status(pdvobjpriv, status) == _TRUE) {
+				rtw_set_surprise_removed(padapter);
+				break;
+			}
+#else
 			if (rtw_inc_and_chk_continual_io_error(pdvobjpriv) == _TRUE) {
 				rtw_set_surprise_removed(padapter);
 				break;
 			}
+#endif /* LGE_PRIVATE */
 
 		}
 
@@ -781,8 +788,14 @@ void usb_read_port_complete(struct urb *purb, struct pt_regs *regs)
 
 		RTW_INFO("###=> usb_read_port_complete => urb.status(%d)\n", purb->status);
 
+#ifdef LGE_PRIVATE
+		if (rtw_inc_and_chk_continual_io_error_status(
+				adapter_to_dvobj(padapter), purb->status) == _TRUE)
+			rtw_set_surprise_removed(padapter);
+#else
 		if (rtw_inc_and_chk_continual_io_error(adapter_to_dvobj(padapter)) == _TRUE)
 			rtw_set_surprise_removed(padapter);
+#endif /* LGE_PRIVATE */
 
 		switch (purb->status) {
 		case -EINVAL:
@@ -940,8 +953,14 @@ void usb_read_port_complete(struct urb *purb, struct pt_regs *regs)
 
 		RTW_INFO("###=> usb_read_port_complete => urb.status(%d)\n", purb->status);
 
+#ifdef LGE_PRIVATE
+		if (rtw_inc_and_chk_continual_io_error_status(
+				adapter_to_dvobj(padapter), purb->status) == _TRUE)
+			rtw_set_surprise_removed(padapter);
+#else
 		if (rtw_inc_and_chk_continual_io_error(adapter_to_dvobj(padapter)) == _TRUE)
 			rtw_set_surprise_removed(padapter);
+#endif /* LGE_PRIVATE */
 
 		switch (purb->status) {
 		case -EINVAL:
