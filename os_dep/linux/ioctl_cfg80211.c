@@ -3649,6 +3649,9 @@ bool rtw_cfg80211_is_connect_requested(_adapter *adapter)
 	return requested;
 }
 
+static int cfg80211_rtw_disconnect(struct wiphy *wiphy, struct net_device *ndev,
+	u16 reason_code);
+
 static int cfg80211_rtw_connect(struct wiphy *wiphy, struct net_device *ndev,
 				struct cfg80211_connect_params *sme)
 {
@@ -3693,6 +3696,9 @@ static int cfg80211_rtw_connect(struct wiphy *wiphy, struct net_device *ndev,
 		ret = -EALREADY;
 		RTW_INFO("%s skip connect! fw_state=0x%x\n",
 			__FUNCTION__, pmlmepriv->fw_state);
+
+		/* driver trigger disconnect to change status */
+		cfg80211_rtw_disconnect(wiphy, ndev, WLAN_REASON_UNSPECIFIED);
 		goto exit;
 	}
 
