@@ -47,19 +47,26 @@ static u8 sethwreg(PADAPTER padapter, u8 variable, u8 *val)
 	case HW_VAR_RXDMA_AGG_PG_TH:
 #ifdef CONFIG_USB_RX_AGGREGATION
 #ifdef LGE_PRIVATE
-		if (pdvobjpriv->traffic_stat.cur_rx_tp > 50
-			&& pHalData->rxagg_usb_stage == RXAGG_DEFAULT) {
-			pHalData->rxagg_usb_timeout = 0x10;
-			pHalData->rxagg_usb_size = 0x05;
-			pHalData->rxagg_usb_stage = RXAGG_RX_HIGH;
-			change = _TRUE;
-		} else if (pdvobjpriv->traffic_stat.cur_rx_tp < 40
-			&& pHalData->rxagg_usb_stage != RXAGG_DEFAULT) {
+		if (pdvobjpriv->traffic_stat.cur_rx_tp < 40) {
 			/* default 8K */
-			pHalData->rxagg_usb_timeout = 0x10;
-			pHalData->rxagg_usb_size = 0x1;
-			pHalData->rxagg_usb_stage = RXAGG_DEFAULT;
-			change = _TRUE;
+			if (pHalData->rxagg_usb_size != 0x01) {
+				pHalData->rxagg_usb_timeout = 0x10;
+				pHalData->rxagg_usb_size = 0x01;
+				change = _TRUE;
+			}
+		} else if (pdvobjpriv->traffic_stat.cur_rx_tp > 80) {
+			if (pHalData->rxagg_usb_timeout != 0x20) {
+				pHalData->rxagg_usb_timeout = 0x20;
+				pHalData->rxagg_usb_size = 0x05;
+				change = _TRUE;
+			}
+		} else if (pdvobjpriv->traffic_stat.cur_rx_tp > 50) {
+			if (!((pHalData->rxagg_usb_timeout == 0x10) &&
+					(pHalData->rxagg_usb_size == 0x05))) {
+				pHalData->rxagg_usb_timeout = 0x10;
+				pHalData->rxagg_usb_size = 0x05;
+				change = _TRUE;
+			}
 		}
 
 		if (change)
