@@ -13392,6 +13392,9 @@ void hw_var_set_opmode_mbid(_adapter *Adapter, u8 mode)
 		/*enable to rx data frame*/
 		rtw_write16(Adapter, REG_RXFLTMAP2, 0xFFFF);
 
+		/* enable to rx ps-poll */
+		rtw_write16(Adapter, REG_RXFLTMAP1, rtw_read16(Adapter, REG_RXFLTMAP1) | BIT(10));
+
 		/*Beacon Control related register for first time*/
 		rtw_write8(Adapter, REG_BCNDMATIM, 0x02); /* 2ms */
 
