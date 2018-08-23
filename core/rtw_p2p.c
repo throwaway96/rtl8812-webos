@@ -3444,6 +3444,7 @@ static int cancel_ro_ch_handler(_adapter *padapter, u8 *buf)
 
 #if defined(RTW_ROCH_BACK_OP) && defined(CONFIG_CONCURRENT_MODE)
 	_cancel_timer_ex(&pwdinfo->ap_p2p_switch_timer);
+	ATOMIC_SET(&pwdev_priv->switch_ch_to, 1);
 #endif
 
 	if (rtw_mi_get_ch_setting_union(padapter, &ch, &bw, &offset) != 0) {

@@ -2427,6 +2427,7 @@ unsigned int OnBeacon(_adapter *padapter, union recv_frame *precv_frame)
 		if ((pmlmeinfo->state & WIFI_FW_AUTH_NULL)
 			&& (rtw_sta_linking_test_wait_done() || pmlmeext->join_abort)
 		) {
+			static int recv_beacon_count = 0;
 			if (rtw_sta_linking_test_force_fail() || pmlmeext->join_abort) {
 				set_link_timer(pmlmeext, 1);
 				return _SUCCESS;
@@ -2440,6 +2441,7 @@ unsigned int OnBeacon(_adapter *padapter, union recv_frame *precv_frame)
 
 					update_network(&(pmlmepriv->cur_network.network), pbss, padapter, _TRUE);
 					rtw_get_bcn_info(&(pmlmepriv->cur_network));
+					recv_beacon_count++;
 
 					/* update bcn keys */
 					if (rtw_get_bcn_keys(padapter, pframe, len, &recv_beacon) == _TRUE) {
@@ -2486,8 +2488,11 @@ unsigned int OnBeacon(_adapter *padapter, union recv_frame *precv_frame)
 			}
 #endif /* CONFIG_P2P CONFIG_P2P and CONFIG_CONCURRENT_MODE */
 
-			/* start auth */
-			start_clnt_auth(padapter);
+			if (recv_beacon_count > 2) {
+				/* start auth */
+				recv_beacon_count = 0;
+				start_clnt_auth(padapter);
+			}
 
 			return _SUCCESS;
 		}
