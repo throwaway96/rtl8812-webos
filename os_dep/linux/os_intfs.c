@@ -3443,7 +3443,7 @@ int netdev_open(struct net_device *pnetdev)
 	_exit_critical_mutex(&(adapter_to_dvobj(padapter)->hw_init_mutex), NULL);
 
 #ifdef LGE_PRIVATE
-	{
+	if (!RTW_CANNOT_RUN(padapter)) {
 		_adapter *padapter_p2p = GET_ADAPTER(padapter, IFACE_ID1);
 		u8 rtnl_lock_needed;
 
