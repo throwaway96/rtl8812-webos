@@ -640,6 +640,13 @@ u8 rtl8822b_read_efuse(PADAPTER adapter)
 	else
 		hal->bautoload_fail_flag = _TRUE;
 
+#ifdef LGE_PRIVATE
+	if (hal->bautoload_fail_flag) {
+		RTW_INFO(CLR_LT_RED "%s: <WARN> no valid efuse data" CLR_NONEN , __func__);
+		return _FAIL;
+	}
+#endif
+
 	Hal_EfuseParseEEPROMVer(adapter, efuse_map, valid);
 	hal_config_macaddr(adapter, hal->bautoload_fail_flag);
 	Hal_EfuseParseTxPowerInfo(adapter, efuse_map, valid);
