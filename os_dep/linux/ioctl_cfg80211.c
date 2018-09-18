@@ -2909,8 +2909,13 @@ static int cfg80211_rtw_scan(struct wiphy *wiphy
 	rtw_ps_deny(padapter, PS_DENY_SCAN);
 	ps_denied = _TRUE;
 	if (_FAIL == rtw_pwr_wakeup(padapter)) {
+#if LGE_PRIVATE
+		ret = -EBUSY;
+		goto exit;
+#else
 		need_indicate_scan_done = _TRUE;
 		goto check_need_indicate_scan_done;
+#endif
 	}
 
 #ifdef CONFIG_P2P

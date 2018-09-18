@@ -2555,6 +2555,7 @@ int _rtw_pwr_wakeup(_adapter *padapter, u32 ips_deffer_ms, const char *caller)
 
 	if (pwrpriv->bInSuspend) {
 		RTW_INFO("%s: ignore it in suspend\n", __func__);
+		ret = _FAIL;
 		goto exit;
 	}
 
