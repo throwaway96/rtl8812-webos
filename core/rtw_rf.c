@@ -567,6 +567,8 @@ const u8 _rf_type_to_rf_rx_cnt[] = {
 	1, /*RF_TYPE_MAX*/
 };
 
+#define COUNTRY_CHPLAN_ASSIGN_BW(_val) , .bandwidth = (_val)
+
 #ifdef CONFIG_80211AC_VHT
 #define COUNTRY_CHPLAN_ASSIGN_EN_11AC(_val) , .en_11ac = (_val)
 #else
@@ -581,8 +583,9 @@ const u8 _rf_type_to_rf_rx_cnt[] = {
 
 #ifdef LGE_PRIVATE
 /* has def_module_flags specified, used by common map and HAL dfference map */
-#define COUNTRY_CHPLAN_ENT2(_alpha2, _chplan, _en_11ac, _def_module_flags, _ver) \
+#define COUNTRY_CHPLAN_ENT2(_alpha2, _chplan, _bw, _en_11ac, _def_module_flags, _ver) \
 	{.alpha2 = (_alpha2), .chplan = (_chplan) \
+		COUNTRY_CHPLAN_ASSIGN_BW(_bw) \
 		COUNTRY_CHPLAN_ASSIGN_EN_11AC(_en_11ac) \
 		COUNTRY_CHPLAN_ASSIGN_DEF_MODULE_FLAGS(_def_module_flags) \
 		, .version = (_ver) \

@@ -1696,6 +1696,7 @@ static void bwmode_update_check(_adapter *padapter, PNDIS_802_11_VARIABLE_IEs pI
 	struct mlme_ext_info	*pmlmeinfo = &(pmlmeext->mlmext_info);
 	struct registry_priv *pregistrypriv = &padapter->registrypriv;
 	struct ht_priv			*phtpriv = &pmlmepriv->htpriv;
+	struct rf_ctl_t *rfctl = adapter_to_rfctl(padapter);
 	u8	cbw40_enable = 0;
 
 	if (!pIE)
@@ -1714,11 +1715,21 @@ static void bwmode_update_check(_adapter *padapter, PNDIS_802_11_VARIABLE_IEs pI
 
 	if (hal_chk_bw_cap(padapter, BW_CAP_40M)) {
 		if (pmlmeext->cur_channel > 14) {
+			#ifdef CONFIG_CUSTOMIZED_COUNTRY_CHPLAN_MAP
+			if (COUNTRY_IS_BW_5G_SUPPORT(rfctl->country_ent, CHANNEL_WIDTH_40))
+				cbw40_enable = 1;
+			#else
 			if (REGSTY_IS_BW_5G_SUPPORT(pregistrypriv, CHANNEL_WIDTH_40))
 				cbw40_enable = 1;
+			#endif
 		} else {
+			#ifdef CONFIG_CUSTOMIZED_COUNTRY_CHPLAN_MAP
+			if (COUNTRY_IS_BW_2G_SUPPORT(rfctl->country_ent, CHANNEL_WIDTH_40))
+				cbw40_enable = 1;
+			#else
 			if (REGSTY_IS_BW_2G_SUPPORT(pregistrypriv, CHANNEL_WIDTH_40))
 				cbw40_enable = 1;
+			#endif
 		}
 	}
 

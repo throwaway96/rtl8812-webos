@@ -166,6 +166,7 @@ bool rtw_chbw_to_freq_range(u8 ch, u8 bw, u8 offset, u32 *hi, u32 *lo);
 struct country_chplan {
 	char alpha2[2];
 	u8 chplan;
+	u8 bandwidth; /* reference rtw_bw_mode */
 #ifdef CONFIG_80211AC_VHT
 	u8 en_11ac;
 #endif

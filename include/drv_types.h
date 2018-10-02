@@ -476,6 +476,10 @@ struct registry_priv {
 #define REGSTY_BW_5G(regsty) BW_MODE_5G((regsty)->bw_mode)
 #define REGSTY_IS_BW_2G_SUPPORT(regsty, bw) (REGSTY_BW_2G((regsty)) >= (bw))
 #define REGSTY_IS_BW_5G_SUPPORT(regsty, bw) (REGSTY_BW_5G((regsty)) >= (bw))
+#define COUNTRY_BW_2G(country) BW_MODE_2G((country)->bandwidth)
+#define COUNTRY_BW_5G(country) BW_MODE_5G((country)->bandwidth)
+#define COUNTRY_IS_BW_2G_SUPPORT(country, bw) (COUNTRY_BW_2G((country)) >= (bw))
+#define COUNTRY_IS_BW_5G_SUPPORT(country, bw) (COUNTRY_BW_5G((country)) >= (bw))
 
 #define REGSTY_IS_11AC_ENABLE(regsty) ((regsty)->vht_enable != 0)
 #define REGSTY_IS_11AC_AUTO(regsty) ((regsty)->vht_enable == 2)

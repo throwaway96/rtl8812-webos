@@ -4453,6 +4453,7 @@ unsigned int rtw_restructure_ht_ie(_adapter *padapter, u8 *in_ie, u8 *out_ie, ui
 	struct ht_priv		*phtpriv = &pmlmepriv->htpriv;
 	struct mlme_ext_priv	*pmlmeext = &padapter->mlmeextpriv;
 	struct hal_spec_t *hal_spec = GET_HAL_SPEC(padapter);
+	struct rf_ctl_t *rfctl = adapter_to_rfctl(padapter);
 #ifdef CONFIG_80211AC_VHT
 	struct mlme_ext_info	*pmlmeinfo = &(pmlmeext->mlmext_info);
 	struct vht_priv	*pvhtpriv = &pmlmepriv->vhtpriv;
@@ -4472,11 +4473,21 @@ unsigned int rtw_restructure_ht_ie(_adapter *padapter, u8 *in_ie, u8 *out_ie, ui
 	/* check if 40MHz is allowed according to hal cap and registry */
 	if (hal_chk_bw_cap(padapter, BW_CAP_40M)) {
 		if (channel > 14) {
+			#ifdef CONFIG_CUSTOMIZED_COUNTRY_CHPLAN_MAP
+			if (COUNTRY_IS_BW_5G_SUPPORT(rfctl->country_ent, CHANNEL_WIDTH_40))
+				cbw40_enable = 1;
+			#else
 			if (REGSTY_IS_BW_5G_SUPPORT(pregistrypriv, CHANNEL_WIDTH_40))
 				cbw40_enable = 1;
+			#endif
 		} else {
+			#ifdef CONFIG_CUSTOMIZED_COUNTRY_CHPLAN_MAP
+			if (COUNTRY_IS_BW_2G_SUPPORT(rfctl->country_ent, CHANNEL_WIDTH_40))
+				cbw40_enable = 1;
+			#else
 			if (REGSTY_IS_BW_2G_SUPPORT(pregistrypriv, CHANNEL_WIDTH_40))
 				cbw40_enable = 1;
+			#endif
 		}
 	}
 
@@ -4696,6 +4707,7 @@ void rtw_update_ht_cap(_adapter *padapter, u8 *pie, uint ie_len, u8 channel)
 	/* struct wlan_network *pcur_network = &(pmlmepriv->cur_network);; */
 	struct mlme_ext_priv	*pmlmeext = &padapter->mlmeextpriv;
 	struct mlme_ext_info	*pmlmeinfo = &(pmlmeext->mlmext_info);
+	struct rf_ctl_t *rfctl = adapter_to_rfctl(padapter);
 	u8 cbw40_enable = 0;
 
 
@@ -4741,11 +4753,21 @@ void rtw_update_ht_cap(_adapter *padapter, u8 *pie, uint ie_len, u8 channel)
 
 	if (hal_chk_bw_cap(padapter, BW_CAP_40M)) {
 		if (channel > 14) {
+			#ifdef CONFIG_CUSTOMIZED_COUNTRY_CHPLAN_MAP
+			if (COUNTRY_IS_BW_5G_SUPPORT(rfctl->country_ent, CHANNEL_WIDTH_40))
+				cbw40_enable = 1;
+			#else
 			if (REGSTY_IS_BW_5G_SUPPORT(pregistrypriv, CHANNEL_WIDTH_40))
 				cbw40_enable = 1;
+			#endif
 		} else {
+			#ifdef CONFIG_CUSTOMIZED_COUNTRY_CHPLAN_MAP
+			if (COUNTRY_IS_BW_2G_SUPPORT(rfctl->country_ent, CHANNEL_WIDTH_40))
+				cbw40_enable = 1;
+			#else
 			if (REGSTY_IS_BW_2G_SUPPORT(pregistrypriv, CHANNEL_WIDTH_40))
 				cbw40_enable = 1;
+			#endif
 		}
 	}
 

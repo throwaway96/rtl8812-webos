@@ -1322,11 +1322,12 @@ bool rtw_choose_shortest_waiting_ch(_adapter *adapter, u8 sel_ch, u8 max_bw, u8 
 void dump_country_chplan(void *sel, const struct country_chplan *ent)
 {
 #ifdef LGE_PRIVATE
-	_RTW_PRINT_SEL(sel, "\"%c%c/%d\", 0x%02X%s\n"
+	_RTW_PRINT_SEL(sel, "\"%c%c/%d\", 0x%02X%s, bw:0x%02X\n"
 		, ent->alpha2[0], ent->alpha2[1]
 		, ent->version
 		, ent->chplan
-		, COUNTRY_CHPLAN_EN_11AC(ent) ? " ac" : ""
+		, COUNTRY_CHPLAN_EN_11AC(ent) ? " ac" : "   "
+		, ent->bandwidth
 		);
 #else
 	_RTW_PRINT_SEL(sel, "\"%c%c\", 0x%02X%s\n"
