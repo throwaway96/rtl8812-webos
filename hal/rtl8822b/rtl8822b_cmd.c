@@ -592,13 +592,22 @@ void rtl8822b_set_FwPwrModeInIPS_cmd(PADAPTER adapter, u8 cmd_param)
 void rtl8822b_set_FwPwrModeInIPS_cmd_wowlan(PADAPTER padapter, u8 ps_mode)
 {
 	u8 param[H2C_INACTIVE_PS_LEN] = {0};
+	struct pwrctrl_priv *pwrpriv = adapter_to_pwrctl(padapter);
 
 	RTW_INFO("%s, ps_mode: %d\n", __func__, ps_mode);
-	if (ps_mode == PS_MODE_ACTIVE)
+	if (ps_mode == PS_MODE_ACTIVE) {
 		SET_H2CCMD_INACTIVE_PS_EN(param, 0);
+#ifdef CONFIG_FW_MULTI_PORT_SUPPORT
+		SET_H2CCMD_INACTIVE_PORT_NUM(param, pwrpriv->current_lps_hw_port_id);
+#endif /* CONFIG_FW_MULTI_PORT_SUPPORT*/
+	}
 	else {
+#ifdef CONFIG_FW_MULTI_PORT_SUPPORT
+		SET_H2CCMD_INACTIVE_PORT_NUM(param, get_hw_port(padapter));
+		pwrpriv->current_lps_hw_port_id = get_hw_port(padapter);
+#endif /* CONFIG_FW_MULTI_PORT_SUPPORT*/
 		SET_H2CCMD_INACTIVE_PS_EN(param, 1);
-		//SET_H2CCMD_INACTIVE_DISBBRF(param, 1);
+		SET_H2CCMD_INACTIVE_DISBBRF(param, 1);
 	}
 
 	rtl8822b_fillh2ccmd(padapter, H2C_INACTIVE_PS_, sizeof(param), param);

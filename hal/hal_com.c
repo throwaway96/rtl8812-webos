@@ -8949,6 +8949,13 @@ static void rtw_hal_wow_enable(_adapter *adapter)
 #endif /* LGE_PRIVATE */
 		}
 	}
+	
+	if (!check_fwstate(pmlmepriv, _FW_LINKED)) {
+#ifdef CONFIG_FW_MULTI_PORT_SUPPORT
+			rtw_hal_set_default_port_id_cmd(adapter, 0);
+#endif
+	}
+		
 
 #if defined(CONFIG_SDIO_HCI) || defined(CONFIG_GSPI_HCI)
 	/* Enable CPWM2 only. */

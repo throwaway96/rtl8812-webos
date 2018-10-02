@@ -598,6 +598,9 @@ static struct dvobj_priv *usb_dvobj_init(struct usb_interface *usb_intf, const s
 		goto free_dvobj;
 	}
 
+	pdvobjpriv->lifetime_en = 0;
+	pdvobjpriv->pkt_lifetime = 0;
+
 	/*step 1-1., decide the chip_type via driver_info*/
 	pdvobjpriv->interface_type = RTW_USB;
 	rtw_decide_chip_type_by_usb_info(pdvobjpriv, pdid);

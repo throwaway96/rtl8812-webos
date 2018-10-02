@@ -4198,6 +4198,13 @@ int rtw_suspend_wow(_adapter *padapter)
 		/* 2.1 clean interrupt */
 		rtw_hal_clear_interrupt(padapter);
 #endif /* CONFIG_SDIO_HCI */
+		/* enable ac lifetime during scan to avoid txfifo not empty. */
+		dvobj->lifetime_en = rtw_read8(padapter, 0x426);
+		dvobj->pkt_lifetime = rtw_read32(padapter, 0x4c0);
+		rtw_write8(padapter, 0x426, rtw_read8(padapter, 0x426) | 0x0f);
+		rtw_write16(padapter, 0x4c0, 0x0400);	// unit: 256us. 256ms 
+		rtw_write16(padapter, 0x4c0 + 2 , 0x0400);	// unit: 256us. 256ms
+
 #ifdef LGE_PRIVATE
 	if(adapter_wdev_data(padapter)->wowl) {
 		
@@ -4592,7 +4599,9 @@ int rtw_resume_process_wow(_adapter *padapter)
 		}
 #endif /* CONFIG_LPS */
 
-		
+		rtw_write8(padapter, 0x426, psdpriv->lifetime_en);
+		rtw_write32(padapter, 0x4c0, psdpriv->pkt_lifetime);
+
 		pwrpriv->bFwCurrentInPSMode = _FALSE;
 
 #if defined(CONFIG_SDIO_HCI) || defined(CONFIG_PCI_HCI)
@@ -4971,6 +4980,7 @@ int rtw_resume_common(_adapter *padapter)
 #ifdef LGE_PRIVATE
 	if (adapter_wdev_data(padapter)->idle_mode) {
 		rtw_hal_sreset_reset(padapter);
+		rtw_init_pwrctrl_priv_reset(padapter);
 
 	}
 	adapter_wdev_data(padapter)->wowl = _FALSE;

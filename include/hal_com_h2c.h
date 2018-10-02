@@ -357,6 +357,8 @@ s32 rtw_hal_customer_str_write(_adapter *adapter, const u8 *cs);
 /* INACTIVE_PS 0x27, duration unit is TBTT */
 #define SET_H2CCMD_INACTIVE_PS_EN(__pH2CCmd, __Value) \
 	SET_BITS_TO_LE_1BYTE(__pH2CCmd, 0, 1, __Value)
+#define SET_H2CCMD_INACTIVE_PORT_NUM(__pH2CCmd, __Value) \
+	SET_BITS_TO_LE_1BYTE(__pH2CCmd, 5, 3, __Value)	
 #define SET_H2CCMD_INACTIVE_IGNORE_PS(__pH2CCmd, __Value) \
 	SET_BITS_TO_LE_1BYTE(__pH2CCmd, 1, 1, __Value)
 #define SET_H2CCMD_INACTIVE_PERIOD_SCAN_EN(__pH2CCmd, __Value) \

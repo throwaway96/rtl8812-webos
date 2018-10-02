@@ -15428,6 +15428,12 @@ operation_by_state:
 		/*
 		* prepare to leave operating channel
 		*/
+		/* enable ac lifetime during scan to avoid txfifo not empty. */
+		dvobj->lifetime_en = rtw_read8(padapter, 0x426);
+		dvobj->pkt_lifetime = rtw_read32(padapter, 0x4c0);
+		rtw_write8(padapter, 0x426, rtw_read8(padapter, 0x426) | 0x0f);
+		rtw_write16(padapter, 0x4c0, 0x0400);	// unit: 256us. 256ms 
+		rtw_write16(padapter, 0x4c0 + 2 , 0x0400);	// unit: 256us. 256ms 
 
 #ifdef CONFIG_MCC_MODE
 		rtw_hal_set_mcc_setting_scan_start(padapter);
@@ -15700,6 +15706,9 @@ operation_by_state:
 #endif /* CONFIG_P2P */
 
 	case SCAN_COMPLETE:
+		rtw_write8(padapter, 0x426, dvobj->lifetime_en);
+		rtw_write32(padapter, 0x4c0, dvobj->pkt_lifetime);
+
 #ifdef CONFIG_P2P
 		if (rtw_p2p_chk_state(pwdinfo, P2P_STATE_SCAN)
 		    || rtw_p2p_chk_state(pwdinfo, P2P_STATE_FIND_PHASE_SEARCH)

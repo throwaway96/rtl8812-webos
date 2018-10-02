@@ -1196,6 +1196,8 @@ struct dvobj_priv {
 #ifdef CONFIG_MCC_MODE
 	struct mcc_obj_priv mcc_objpriv;
 #endif /*CONFIG_MCC_MODE */
+	u8	lifetime_en;
+	u32	pkt_lifetime;
 };
 
 #define DEV_STA_NUM(_dvobj)			MSTATE_STA_NUM(&((_dvobj)->iface_state))
