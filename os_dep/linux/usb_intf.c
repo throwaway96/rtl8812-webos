@@ -1368,8 +1368,9 @@ static void rtw_usb_primary_adapter_deinit(_adapter *padapter)
 
 	RTW_INFO(FUNC_ADPT_FMT"\n", FUNC_ADPT_ARG(padapter));
 
-	if (check_fwstate(pmlmepriv, _FW_LINKED))
-		rtw_disassoc_cmd(padapter, 0, RTW_CMDF_DIRECTLY);
+	if (!RTW_CANNOT_RUN(padapter))
+		if (check_fwstate(pmlmepriv, _FW_LINKED))
+			rtw_disassoc_cmd(padapter, 0, RTW_CMDF_DIRECTLY);
 
 #ifdef CONFIG_AP_MODE
 	if (MLME_IS_AP(padapter) || MLME_IS_MESH(padapter)) {

@@ -3635,19 +3635,21 @@ static int netdev_close(struct net_device *pnetdev)
 		if (pnetdev)
 			rtw_netif_stop_queue(pnetdev);
 
-		if (pwrctl->bInSuspend) {
-			RTW_INFO("%s: in suspend, skip s2~s4\n",__func__);
+		if (RTW_CANNOT_RUN(padapter)) {
+			RTW_INFO("%s: cannot running, skip s2~s4\n", __func__);
+		} else if (pwrctl->bInSuspend) {
+			RTW_INFO("%s: in suspend, skip s2~s4\n", __func__);
 		} else {
 #ifndef CONFIG_ANDROID
-		/* s2. */
-		LeaveAllPowerSaveMode(padapter);
-		rtw_disassoc_cmd(padapter, 500, RTW_CMDF_DIRECTLY);
-		/* s2-2.  indicate disconnect to os */
-		rtw_indicate_disconnect(padapter, 0, _FALSE);
-		/* s2-3. */
-		rtw_free_assoc_resources(padapter, 1);
-		/* s2-4. */
-		rtw_free_network_queue(padapter, _TRUE);
+			/* s2. */
+			LeaveAllPowerSaveMode(padapter);
+			rtw_disassoc_cmd(padapter, 500, RTW_CMDF_DIRECTLY);
+			/* s2-2.  indicate disconnect to os */
+			rtw_indicate_disconnect(padapter, 0, _FALSE);
+			/* s2-3. */
+			rtw_free_assoc_resources(padapter, 1);
+			/* s2-4. */
+			rtw_free_network_queue(padapter, _TRUE);
 #endif
 		}
 	}
