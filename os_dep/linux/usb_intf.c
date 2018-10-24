@@ -1079,6 +1079,9 @@ static int rtw_resume(struct usb_interface *pusb_intf)
 	}
 
 	pmlmeext->last_scan_time = rtw_get_current_time();
+	#ifdef LGE_PRIVATE
+	rtw_cfg80211_indicate_scan_done(padapter, _TRUE);
+	#endif
 	RTW_INFO("<========  %s return %d\n", __FUNCTION__, ret);
 
 	return ret;
