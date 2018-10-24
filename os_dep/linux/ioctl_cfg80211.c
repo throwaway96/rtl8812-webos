@@ -2875,6 +2875,14 @@ static int cfg80211_rtw_scan(struct wiphy *wiphy
 	RTW_DBG(FUNC_ADPT_FMT"%s\n", FUNC_ADPT_ARG(padapter)
 		, wdev == wiphy_to_pd_wdev(wiphy) ? " PD" : "");
 
+#ifdef LGE_PRIVATE
+	if (adapter_to_pwrctl(padapter)->bInSuspend == _TRUE) {
+		RTW_INFO("%s: ignore it in suspend\n", __func__);
+		ret = -EBUSY;
+		goto exit;
+	}
+#endif
+
 #ifdef CONFIG_MP_INCLUDED
 	if (rtw_mp_mode_check(padapter)) {
 		RTW_INFO("MP mode block Scan request\n");
