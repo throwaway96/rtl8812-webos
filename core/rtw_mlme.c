@@ -2904,6 +2904,8 @@ void rtw_join_timeout_handler(void *ctx)
 	_adapter *adapter = (_adapter *)ctx;
 	_irqL irqL;
 	struct	mlme_priv *pmlmepriv = &adapter->mlmepriv;
+	struct mlme_ext_priv *pmlmeext = &adapter->mlmeextpriv;
+	struct mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
 
 #if 0
 	if (rtw_is_drv_stopped(adapter)) {
@@ -2949,6 +2951,9 @@ void rtw_join_timeout_handler(void *ctx)
 				rtw_ft_reset_status(adapter);
 #endif
 				rtw_indicate_disconnect(adapter, 0, _FALSE);
+				pmlmeinfo->disconnect_occurred_time = rtw_systime_to_ms(rtw_get_current_time());
+				pmlmeinfo->disconnect_code = DISCONNECTION_BY_DRIVER_DUE_TO_JOINBSS_TIMEOUT;
+				pmlmeinfo->wifi_reason_code = WLAN_REASON_UNSPECIFIED;
 				break;
 			}
 		}
@@ -2957,6 +2962,9 @@ void rtw_join_timeout_handler(void *ctx)
 #endif
 	{
 		rtw_indicate_disconnect(adapter, 0, _FALSE);
+		pmlmeinfo->disconnect_occurred_time = rtw_systime_to_ms(rtw_get_current_time());
+		pmlmeinfo->disconnect_code = DISCONNECTION_BY_DRIVER_DUE_TO_JOINBSS_TIMEOUT;
+		pmlmeinfo->wifi_reason_code = WLAN_REASON_UNSPECIFIED;
 		free_scanqueue(pmlmepriv);/* ??? */
 
 #ifdef CONFIG_IOCTL_CFG80211
@@ -3664,9 +3672,14 @@ int rtw_select_and_join_from_scanned_queue(struct mlme_priv *pmlmepriv)
 	struct	wlan_network	*pnetwork = NULL;
 	struct	wlan_network	*candidate = NULL;
 	u8		bSupportAntDiv = _FALSE;
+	struct mlme_ext_priv *pmlmeext;
+	struct mlme_ext_info *pmlmeinfo;
 
 
 	adapter = (_adapter *)pmlmepriv->nic_hdl;
+
+	pmlmeext = &adapter->mlmeextpriv;
+	pmlmeinfo = &(pmlmeext->mlmext_info);
 
 	_enter_critical_bh(&(pmlmepriv->scanned_queue.lock), &irqL);
 
@@ -3736,6 +3749,10 @@ candidate_exist:
 			rtw_disassoc_cmd(adapter, 0, 0);
 			rtw_indicate_disconnect(adapter, 0, _FALSE);
 			rtw_free_assoc_resources(adapter, 0);
+
+			pmlmeinfo->disconnect_occurred_time = rtw_systime_to_ms(rtw_get_current_time());
+			pmlmeinfo->disconnect_code = DISCONNECTION_BY_DRIVER_DUE_TO_CONNECTION_EXIST;
+			pmlmeinfo->wifi_reason_code = WLAN_REASON_DEAUTH_LEAVING;
 		}
 	}
 
@@ -4993,6 +5010,8 @@ void _rtw_roaming(_adapter *padapter, struct wlan_network *tgt_network)
 	struct mlme_priv	*pmlmepriv = &padapter->mlmepriv;
 	struct wlan_network *cur_network = &pmlmepriv->cur_network;
 	int do_join_r;
+	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
+	struct mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
 
 	if (0 < rtw_to_roam(padapter)) {
 		RTW_INFO("roaming from %s("MAC_FMT"), length:%d\n",
@@ -5023,6 +5042,9 @@ void _rtw_roaming(_adapter *padapter, struct wlan_network *tgt_network)
 					rtw_ft_reset_status(padapter);
 #endif
 					rtw_indicate_disconnect(padapter, 0, _FALSE);
+					pmlmeinfo->disconnect_occurred_time = rtw_systime_to_ms(rtw_get_current_time());
+					pmlmeinfo->disconnect_code = DISCONNECTION_BY_DRIVER_DUE_TO_LAYER2_ROAMING_TERMINATE;
+					pmlmeinfo->wifi_reason_code = WLAN_REASON_UNSPECIFIED;
 					break;
 				}
 			}

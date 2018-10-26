@@ -3037,7 +3037,7 @@ static int cfg80211_rtw_scan(struct wiphy *wiphy
 #ifdef LGE_PRIVATE
 	ssid_exist = _FALSE;
 	is_wildcard_ssid = _FALSE;
-#endif /*ÅLGE_PRIVATEÅ*/
+#endif /*ÅLGE_PRIVATE */
 	/* parsing request ssids, n_ssids */
 	for (i = 0; i < request->n_ssids && i < RTW_SSID_SCAN_AMOUNT; i++) {
 		#ifdef CONFIG_DEBUG_CFG80211
@@ -3954,7 +3954,8 @@ static int cfg80211_rtw_disconnect(struct wiphy *wiphy, struct net_device *ndev,
 	_adapter *padapter = (_adapter *)rtw_netdev_priv(ndev);
 	struct rtw_wdev_priv *pwdev_priv = adapter_wdev_data(padapter);
 	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
-
+	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
+	struct mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
 	RTW_INFO(FUNC_NDEV_FMT" - Start to Disconnect\n", FUNC_NDEV_ARG(ndev));
 
 	if (MLME_IS_STA(padapter) && check_fwstate(pmlmepriv, WIFI_UNDER_DISCONNTING) ) {
@@ -3992,6 +3993,10 @@ static int cfg80211_rtw_disconnect(struct wiphy *wiphy, struct net_device *ndev,
 
 		rtw_free_assoc_resources(padapter, 1);
 		rtw_indicate_disconnect(padapter, 0, wiphy->dev.power.is_prepared ? _FALSE : _TRUE);
+
+		pmlmeinfo->disconnect_occurred_time = rtw_systime_to_ms(rtw_get_current_time());
+		pmlmeinfo->disconnect_code = DISCONNECTION_BY_SYSTEM_DUE_TO_HIGH_LAYER_COMMAND;
+		pmlmeinfo->wifi_reason_code = WLAN_REASON_DEAUTH_LEAVING;
 
 		rtw_pwr_wakeup(padapter);
 	}

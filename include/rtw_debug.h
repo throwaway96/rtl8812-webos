@@ -584,6 +584,8 @@ int proc_get_lck_info(struct seq_file *m, void *v);
 ssize_t proc_set_lck(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data);
 #endif /*CONFIG_DBG_RF_CAL*/
 
+int proc_get_disconnect_info(struct seq_file *m, void *v);
+
 #define _drv_always_		1
 #define _drv_emerg_			2
 #define _drv_alert_			3

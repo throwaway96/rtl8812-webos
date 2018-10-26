@@ -6230,6 +6230,97 @@ ssize_t proc_set_lck(struct file *file, const char __user *buffer, size_t count,
 }
 #endif /* CONFIG_DBG_RF_CAL */
 
+int proc_get_disconnect_info(struct seq_file *m, void *v)
+{
+	struct net_device *dev = m->private;
+	_adapter *padapter = (_adapter *)rtw_netdev_priv(dev);
+	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
+	struct mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
+	char *disconnect_reason = "";
+	char *illegal_beacon_reason = "";
+
+	if (pmlmeinfo){
+		switch(pmlmeinfo->disconnect_code) {
+			case DISCONNECTION_NOT_YET_OCCUR:
+				disconnect_reason = "Disconnection has not yet occurred.";
+				break;
+			case DISCONNECTION_BY_SYSTEM_DUE_TO_HIGH_LAYER_COMMAND:
+				disconnect_reason = "System requests to disconnect by command.";
+				break;
+			case DISCONNECTION_BY_SYSTEM_DUE_TO_NET_DEVICE_DOWN:
+				disconnect_reason = "System makes net_device down to cause disconnection.";
+				break;
+			case DISCONNECTION_BY_SYSTEM_DUE_TO_SYSTEM_IN_SUSPEND:
+				disconnect_reason = "System enters suspend state to cause disconnection.";
+				break;
+			case DISCONNECTION_BY_DRIVER_DUE_TO_CONNECTION_EXIST:
+				disconnect_reason = "The connection is exist so it triggers disconnection when joinbss.";
+				break;
+			case DISCONNECTION_BY_DRIVER_DUE_TO_EACH_IFACE_CHBW_NOT_SYNC:
+				disconnect_reason = "Multiple interfaces do not synchronize channel and bandwidth when joinbss.";
+				break;
+			case DISCONNECTION_BY_DRIVER_DUE_TO_DFS_DETECTION:
+				disconnect_reason = "DFS Slave mechanism detects radar to cause disconnection.";
+				break;
+			case DISCONNECTION_BY_DRIVER_DUE_TO_IOCTL_DBG_PORT:
+				disconnect_reason = "Using ioctl dbg port command to accomplish disconnection.";
+				break;
+			case DISCONNECTION_BY_DRIVER_DUE_TO_AP_BEACON_CHANGED:
+				disconnect_reason = "AP's beacon content was changed to cause disconnection.";
+				break;
+			case DISCONNECTION_BY_DRIVER_DUE_TO_KEEPALIVE_TIMEOUT:
+				disconnect_reason = "Maybe AP disappears to trigger station keepalive timeout and connection break.";
+				break;
+			case DISCONNECTION_BY_DRIVER_DUE_TO_LAYER2_ROAMING_TERMINATE:
+				disconnect_reason = "Layer2 roaming terminated to trigger disconnection.";
+				break;
+			case DISCONNECTION_BY_DRIVER_DUE_TO_JOINBSS_TIMEOUT:
+				disconnect_reason = "Station joinbss process is timeout to trigger disconnection.";
+				break;
+			case DISCONNECTION_BY_FW_DUE_TO_FW_DECISION_IN_WOW_RESUME:
+				disconnect_reason = "FW decides to disconnect in WOW resume flow.";
+				break;
+			case DISCONNECTION_BY_AP_DUE_TO_RECEIVE_DISASSOC_IN_WOW_RESUME:
+				disconnect_reason = "Receiving Disassociation frame from AP to cause disconnection in WOW resume flow.";
+				break;
+			case DISCONNECTION_BY_AP_DUE_TO_RECEIVE_DEAUTH_IN_WOW_RESUME:
+				disconnect_reason = "Receiving Deauth frame from AP to cause disconnection in WOW resume flow.";
+				break;
+			case DISCONNECTION_BY_AP_DUE_TO_RECEIVE_DEAUTH:
+				disconnect_reason = "Receiving Deauth frame from AP to cause disconnection.";
+				break;
+			case DISCONNECTION_BY_AP_DUE_TO_RECEIVE_DISASSOC:
+				disconnect_reason = "Receiving Disassociation frame from AP to cause disconnection.";
+				break;
+			default:
+				disconnect_reason = "Unspecified";
+				break;
+		}
+		
+		RTW_PRINT_SEL(m, "disconnect code = %d\n", pmlmeinfo->disconnect_code);
+		RTW_PRINT_SEL(m, "last disconnect reason: %s\n", disconnect_reason);
+		if (pmlmeinfo->disconnect_code == DISCONNECTION_BY_DRIVER_DUE_TO_AP_BEACON_CHANGED) {
+			if(pmlmeinfo->illegal_beacon_code & SSID_CHANGED)
+				RTW_PRINT_SEL(m, "illegal beacon reason: The SSID of beacon is changed.\n");
+			if(pmlmeinfo->illegal_beacon_code & SSID_LENGTH_CHANGED)
+				RTW_PRINT_SEL(m, "illegal beacon reason: The SSID length of beacon is changed.\n");
+			if(pmlmeinfo->illegal_beacon_code & BEACON_CHANNEL_CHANGED)
+				RTW_PRINT_SEL(m, "illegal beacon reason: The Beacon channel of beacon is changed.\n");
+			if(pmlmeinfo->illegal_beacon_code & ENCRYPT_PROTOCOL_CHANGED)
+				RTW_PRINT_SEL(m, "illegal beacon reason: The Encrypt protocol of beacon is changed.\n");
+			if(pmlmeinfo->illegal_beacon_code & PAIRWISE_CIPHER_CHANGED)
+				RTW_PRINT_SEL(m, "illegal beacon reason: The Pairwise cipheris of beacon changed.\n");
+			if(pmlmeinfo->illegal_beacon_code & GROUP_CIPHER_CHANGED)
+				RTW_PRINT_SEL(m, "illegal beacon reason: The Group cipher of beacon is changed.\n");
+			if(pmlmeinfo->illegal_beacon_code & IS_8021X_CHANGED)
+				RTW_PRINT_SEL(m, "illegal beacon reason: The 802.1x of beacon is changed.\n");
+		}
+		RTW_PRINT_SEL(m, "Wi-Fi reason code: %d\n", (pmlmeinfo->disconnect_code)?pmlmeinfo->wifi_reason_code:0);
+	}
+	
+	return 0;
+}
+
 #endif /* CONFIG_PROC_DEBUG */
 #define RTW_BUFDUMP_BSIZE		16
 #if 1

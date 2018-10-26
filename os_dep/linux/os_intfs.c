@@ -3599,6 +3599,8 @@ static int netdev_close(struct net_device *pnetdev)
 	_adapter *padapter = (_adapter *)rtw_netdev_priv(pnetdev);
 	struct pwrctrl_priv *pwrctl = adapter_to_pwrctl(padapter);
 	struct mlme_priv	*pmlmepriv = &padapter->mlmepriv;
+	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
+	struct mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
 #ifdef CONFIG_BT_COEXIST_SOCKET_TRX
 	HAL_DATA_TYPE		*pHalData = GET_HAL_DATA(padapter);
 #endif /* CONFIG_BT_COEXIST_SOCKET_TRX */
@@ -3650,6 +3652,10 @@ static int netdev_close(struct net_device *pnetdev)
 			rtw_free_assoc_resources(padapter, 1);
 			/* s2-4. */
 			rtw_free_network_queue(padapter, _TRUE);
+
+		pmlmeinfo->disconnect_occurred_time = rtw_systime_to_ms(rtw_get_current_time());
+		pmlmeinfo->disconnect_code = DISCONNECTION_BY_SYSTEM_DUE_TO_NET_DEVICE_DOWN;
+		pmlmeinfo->wifi_reason_code = WLAN_REASON_DEAUTH_LEAVING;
 #endif
 		}
 	}
@@ -4102,6 +4108,8 @@ int rtw_suspend_free_assoc_resource(_adapter *padapter)
 {
 	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
 	struct net_device *pnetdev = padapter->pnetdev;
+	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
+	struct mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
 #ifdef CONFIG_P2P
 	struct wifidirect_info	*pwdinfo = &padapter->wdinfo;
 #endif /* CONFIG_P2P */
@@ -4132,6 +4140,10 @@ int rtw_suspend_free_assoc_resource(_adapter *padapter)
 		rtw_disassoc_cmd(padapter, 0, RTW_CMDF_DIRECTLY);
 		/* s2-2.  indicate disconnect to os */
 		rtw_indicate_disconnect(padapter, 0, _FALSE);
+		
+		pmlmeinfo->disconnect_occurred_time = rtw_systime_to_ms(rtw_get_current_time());
+		pmlmeinfo->disconnect_code = DISCONNECTION_BY_SYSTEM_DUE_TO_SYSTEM_IN_SUSPEND;
+		pmlmeinfo->wifi_reason_code = WLAN_REASON_DEAUTH_LEAVING;
 	}
 #ifdef CONFIG_AP_MODE
 	else if (MLME_IS_AP(padapter) || MLME_IS_MESH(padapter))
@@ -4156,6 +4168,10 @@ int rtw_suspend_free_assoc_resource(_adapter *padapter)
 	if (check_fwstate(pmlmepriv, _FW_UNDER_LINKING) == _TRUE) {
 		RTW_PRINT("%s: fw_under_linking\n", __FUNCTION__);
 		rtw_indicate_disconnect(padapter, 0, _FALSE);
+
+		pmlmeinfo->disconnect_occurred_time = rtw_systime_to_ms(rtw_get_current_time());
+		pmlmeinfo->disconnect_code = DISCONNECTION_BY_SYSTEM_DUE_TO_SYSTEM_IN_SUSPEND;
+		pmlmeinfo->wifi_reason_code = WLAN_REASON_DEAUTH_LEAVING;
 	}
 
 	RTW_INFO("<== "FUNC_ADPT_FMT" exit....\n", FUNC_ADPT_ARG(padapter));
@@ -4667,6 +4683,16 @@ int rtw_resume_process_wow(_adapter *padapter)
 				 pwrpriv->wowlan_wake_reason);
 			rtw_indicate_disconnect(padapter, 0, _FALSE);
 
+			pmlmeinfo->disconnect_occurred_time = rtw_systime_to_ms(rtw_get_current_time());
+			if (pwrpriv->wowlan_wake_reason == FW_DECISION_DISCONNECT)
+				pmlmeinfo->disconnect_code = DISCONNECTION_BY_FW_DUE_TO_FW_DECISION_IN_WOW_RESUME;
+			else if (pwrpriv->wowlan_wake_reason == RX_DISASSOC)
+				pmlmeinfo->disconnect_code = DISCONNECTION_BY_AP_DUE_TO_RECEIVE_DISASSOC_IN_WOW_RESUME;
+			else if (pwrpriv->wowlan_wake_reason == RX_DEAUTH)	
+				pmlmeinfo->disconnect_code = DISCONNECTION_BY_AP_DUE_TO_RECEIVE_DEAUTH_IN_WOW_RESUME;
+
+			pmlmeinfo->wifi_reason_code = WLAN_REASON_UNSPECIFIED;
+				
 			rtw_sta_media_status_rpt(padapter,
 					 rtw_get_stainfo(&padapter->stapriv,
 					 get_bssid(&padapter->mlmepriv)), 0);

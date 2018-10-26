@@ -6164,6 +6164,9 @@ static int rtw_dbg_port(struct net_device *dev,
 	case 0x7a:
 		receive_disconnect(padapter, pmlmeinfo->network.MacAddress
 				   , WLAN_REASON_EXPIRATION_CHK, _FALSE);
+		pmlmeinfo->disconnect_occurred_time = rtw_systime_to_ms(rtw_get_current_time());
+		pmlmeinfo->disconnect_code = DISCONNECTION_BY_DRIVER_DUE_TO_IOCTL_DBG_PORT;
+		pmlmeinfo->wifi_reason_code = WLAN_REASON_UNSPECIFIED;
 		break;
 	case 0x7F:
 		switch (minor_cmd) {

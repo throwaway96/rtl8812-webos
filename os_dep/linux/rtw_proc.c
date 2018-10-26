@@ -3377,7 +3377,8 @@ const struct rtw_proc_hdl adapter_proc_hdls[] = {
 	RTW_PROC_HDL_SSEQ("dynamic_agg_enable", proc_get_dynamic_agg_enable, proc_set_dynamic_agg_enable),
 	RTW_PROC_HDL_SSEQ("fw_offload", proc_get_fw_offload, proc_set_fw_offload),
 
-#ifdef CONFIG_RTW_MESH
+	RTW_PROC_HDL_SSEQ("disconnect_info", proc_get_disconnect_info , NULL),
+	#ifdef CONFIG_RTW_MESH
 	#if CONFIG_RTW_MESH_PEER_BLACKLIST
 	RTW_PROC_HDL_SSEQ("mesh_peer_blacklist", proc_get_mesh_peer_blacklist, proc_set_mesh_peer_blacklist),
 	#endif

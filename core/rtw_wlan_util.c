@@ -2336,6 +2336,8 @@ int rtw_check_bcn_info(ADAPTER *Adapter, u8 *pframe, u32 packet_len)
 	struct mlme_priv *pmlmepriv = &Adapter->mlmepriv;
 	struct wlan_network *cur_network = &(Adapter->mlmepriv.cur_network);
 	struct beacon_keys recv_beacon;
+	struct mlme_ext_priv	*pmlmeext = &Adapter->mlmeextpriv;
+	struct mlme_ext_info	*pmlmeinfo = &(pmlmeext->mlmext_info);
 
 	if (is_client_associated_to_ap(Adapter) == _FALSE)
 		return _TRUE;
@@ -2393,6 +2395,22 @@ int rtw_check_bcn_info(ADAPTER *Adapter, u8 *pframe, u32 packet_len)
 				sizeof(recv_beacon)) == _FALSE) {
 			/* beacon is changed, have to do disconnect/connect */
 			RTW_WARN("%s: new beacon occur!!\n", __func__);
+
+			if ((_rtw_memcmp(recv_beacon.ssid, pmlmepriv->cur_beacon_keys.ssid, 32) == _FALSE))
+				pmlmeinfo->illegal_beacon_code |= SSID_CHANGED;
+			if (recv_beacon.ssid_len != pmlmepriv->cur_beacon_keys.ssid_len)
+				pmlmeinfo->illegal_beacon_code |= SSID_LENGTH_CHANGED;
+			if (recv_beacon.bcn_channel != pmlmepriv->cur_beacon_keys.bcn_channel)
+				pmlmeinfo->illegal_beacon_code |= BEACON_CHANNEL_CHANGED;
+			if (recv_beacon.encryp_protocol != pmlmepriv->cur_beacon_keys.encryp_protocol)
+				pmlmeinfo->illegal_beacon_code |= ENCRYPT_PROTOCOL_CHANGED;
+			if (recv_beacon.pairwise_cipher != pmlmepriv->cur_beacon_keys.pairwise_cipher)
+				pmlmeinfo->illegal_beacon_code |= PAIRWISE_CIPHER_CHANGED;
+			if (recv_beacon.group_cipher != pmlmepriv->cur_beacon_keys.group_cipher)
+				pmlmeinfo->illegal_beacon_code |= GROUP_CIPHER_CHANGED;
+			if (recv_beacon.is_8021x != pmlmepriv->cur_beacon_keys.is_8021x)
+				pmlmeinfo->illegal_beacon_code |= IS_8021X_CHANGED;
+
 			return _FAIL;
 		}
 

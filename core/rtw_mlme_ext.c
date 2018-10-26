@@ -1769,6 +1769,10 @@ int	init_mlme_ext_priv(_adapter *padapter)
 	pmlmeext->fixed_chan = 0xFF;
 #endif
 
+	pmlmeinfo->disconnect_occurred_time = rtw_systime_to_ms(rtw_get_current_time());
+	pmlmeinfo->disconnect_code = DISCONNECTION_NOT_YET_OCCUR;
+	pmlmeinfo->wifi_reason_code = WLAN_REASON_UNSPECIFIED;
+	
 	return res;
 
 }
@@ -2521,6 +2525,9 @@ unsigned int OnBeacon(_adapter *padapter, union recv_frame *precv_frame)
 				if (!ret) {
 					RTW_PRINT("ap has changed, disconnect now\n ");
 					receive_disconnect(padapter, pmlmeinfo->network.MacAddress , 0, _FALSE);
+					pmlmeinfo->disconnect_occurred_time = rtw_systime_to_ms(rtw_get_current_time());
+					pmlmeinfo->disconnect_code = DISCONNECTION_BY_DRIVER_DUE_TO_AP_BEACON_CHANGED;
+					pmlmeinfo->wifi_reason_code = WLAN_REASON_UNSPECIFIED;
 					return _SUCCESS;
 				}
 				/* update WMM, ERP in the beacon */
@@ -3521,8 +3528,12 @@ unsigned int OnDeAuth(_adapter *padapter, union recv_frame *precv_frame)
 			, FUNC_ADPT_ARG(padapter), reason, get_addr2_ptr(pframe)
 			, ignore_received_deauth, get_fwstate(pmlmepriv));
 
-		if (0 == ignore_received_deauth)
+		if (0 == ignore_received_deauth) {
 			receive_disconnect(padapter, get_addr2_ptr(pframe), reason, _FALSE);
+			pmlmeinfo->disconnect_occurred_time = rtw_systime_to_ms(rtw_get_current_time());
+			pmlmeinfo->disconnect_code = DISCONNECTION_BY_AP_DUE_TO_RECEIVE_DEAUTH;
+			pmlmeinfo->wifi_reason_code = reason;
+		}
 	}
 	pmlmepriv->LinkDetectInfo.bBusyTraffic = _FALSE;
 	return _SUCCESS;
@@ -3592,6 +3603,9 @@ unsigned int OnDisassoc(_adapter *padapter, union recv_frame *precv_frame)
 			, FUNC_ADPT_ARG(padapter), reason, get_addr2_ptr(pframe));
 
 		receive_disconnect(padapter, get_addr2_ptr(pframe), reason, _FALSE);
+		pmlmeinfo->disconnect_occurred_time = rtw_systime_to_ms(rtw_get_current_time());
+		pmlmeinfo->disconnect_code = DISCONNECTION_BY_AP_DUE_TO_RECEIVE_DISASSOC;
+		pmlmeinfo->wifi_reason_code = reason;
 	}
 	pmlmepriv->LinkDetectInfo.bBusyTraffic = _FALSE;
 	return _SUCCESS;
@@ -13366,6 +13380,9 @@ bypass_active_keep_alive:
 						  FUNC_ADPT_ARG(padapter));
 					receive_disconnect(padapter, pmlmeinfo->network.MacAddress
 						, WLAN_REASON_EXPIRATION_CHK, _FALSE);
+					pmlmeinfo->disconnect_occurred_time = rtw_systime_to_ms(rtw_get_current_time());
+					pmlmeinfo->disconnect_code = DISCONNECTION_BY_DRIVER_DUE_TO_KEEPALIVE_TIMEOUT;
+					pmlmeinfo->wifi_reason_code = WLAN_REASON_UNSPECIFIED;
 					return;
 				}
 			} else
@@ -16504,6 +16521,7 @@ int rtw_chk_start_clnt_join(_adapter *adapter, u8 *ch, u8 *bw, u8 *offset)
 	struct mlme_ext_priv	*pmlmeext = &adapter->mlmeextpriv;
 	u8 cur_ch, cur_bw, cur_ch_offset;
 	u8 u_ch, u_offset, u_bw;
+	struct mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
 
 	u_ch = cur_ch = pmlmeext->cur_channel;
 	u_bw = cur_bw = pmlmeext->cur_bwmode;
@@ -16640,6 +16658,10 @@ connect_allow_hdl:
 					rtw_disassoc_cmd(iface, 500, RTW_CMDF_DIRECTLY);
 					rtw_indicate_disconnect(iface, 0, _FALSE);
 					rtw_free_assoc_resources(iface, 1);
+
+					pmlmeinfo->disconnect_occurred_time = rtw_systime_to_ms(rtw_get_current_time());
+					pmlmeinfo->disconnect_code = DISCONNECTION_BY_DRIVER_DUE_TO_EACH_IFACE_CHBW_NOT_SYNC;
+					pmlmeinfo->wifi_reason_code = WLAN_REASON_DEAUTH_LEAVING;
 				}
 			}
 		}
@@ -16737,6 +16759,8 @@ u8 set_csa_hdl(_adapter *padapter, unsigned char *pbuf)
 	struct SetChannelSwitch_param *setChannelSwitch_param;
 	u8 new_ch_no;
 	u8 gval8 = 0x00, sval8 = 0xff;
+	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
+	struct mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
 
 	if (!pbuf)
 		return H2C_PARAMETERS_ERROR;
@@ -16757,6 +16781,10 @@ u8 set_csa_hdl(_adapter *padapter, unsigned char *pbuf)
 	rtw_indicate_disconnect(padapter, 0, _FALSE);
 	rtw_free_assoc_resources(padapter, 1);
 	rtw_free_network_queue(padapter, _TRUE);
+
+	pmlmeinfo->disconnect_occurred_time = rtw_systime_to_ms(rtw_get_current_time());
+	pmlmeinfo->disconnect_code = DISCONNECTION_BY_DRIVER_DUE_TO_DFS_DETECTION;
+	pmlmeinfo->wifi_reason_code = WLAN_REASON_DEAUTH_LEAVING;
 
 	if (rtw_is_dfs_ch(new_ch_no))
 		RTW_INFO("Switched to DFS band (ch %u) again!!\n", new_ch_no);
