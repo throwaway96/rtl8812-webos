@@ -3615,7 +3615,7 @@ static int netdev_close(struct net_device *pnetdev)
 	padapter->net_closed = _TRUE;
 	padapter->netif_up = _FALSE;
 	pmlmepriv->LinkDetectInfo.bBusyTraffic = _FALSE;
-#ifdef CONFIG_CLIENT_PORT_CFG
+#if 0//def CONFIG_CLIENT_PORT_CFG
 	if (MLME_IS_STA(padapter))
 		rtw_hw_client_port_release(padapter);
 #endif

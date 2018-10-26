@@ -1890,9 +1890,6 @@ config_phydm_switch_bandwidth_8822b(
 	/* Modify RX DFIR parameters */
 	phydm_rxdfirpar_by_bw_8822b(dm, bandwidth);
 
-	/* Toggle IGI to let RF enter RX mode */
-	phydm_igi_toggle_8822b(dm);
-
 	/* Dynamic spur detection by PSD and NBI/CSI mask */
 	if (*dm->mp_mode)
 		phydm_dynamic_spur_det_eliminate(dm);
@@ -1903,6 +1900,9 @@ config_phydm_switch_bandwidth_8822b(
 	/* Toggle RX path to avoid RX dead zone issue */
 	odm_set_bb_reg(dm, 0x808, MASKBYTE0, 0x0);
 	odm_set_bb_reg(dm, 0x808, MASKBYTE0, (dm->rx_ant_status | (dm->rx_ant_status << 4)));
+
+	/* Toggle IGI to let RF enter RX mode */
+	phydm_igi_toggle_8822b(dm);
 
 	PHYDM_DBG(dm, ODM_PHY_CONFIG, "config_phydm_switch_bandwidth_8822b(): Success to switch bandwidth (bw: %d, primary ch: %d)\n", bandwidth, primary_ch_idx);
 	return true;
