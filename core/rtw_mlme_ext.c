@@ -11788,6 +11788,23 @@ void start_clnt_join(_adapter *padapter)
 		/* and enable a timer */
 		beacon_timeout = decide_wait_for_beacon_timeout(pmlmeinfo->bcn_interval);
 		set_link_timer(pmlmeext, beacon_timeout);
+#ifdef LGE_PRIVATE
+		{
+			u32 data32;
+
+			data32 = rtw_hal_read_rfreg(padapter, 0, 0x0, 0xffffffff);
+			if (((data32 & 0x000FF000) == 0x00015000) ||
+				((data32 & 0x000FF000) == 0x00030000)) {
+				printk(CLR_RED "%s: RF[0x18]=0x%08X RF[0x0]=0x%08X" CLR_NONEN,
+					__func__,
+					rtw_hal_read_rfreg(padapter, 0, 0x18, 0xffffffff),
+					rtw_hal_read_rfreg(padapter, 0, 0x0, 0xffffffff));
+
+				rtw_hal_write_bbreg(padapter, 0x0, 0x00010000, 0);
+				rtw_hal_write_bbreg(padapter, 0x0, 0x00010000, 1);
+			}
+		}
+#endif
 		_set_timer(&padapter->mlmepriv.assoc_timer,
 			(REAUTH_TO * REAUTH_LIMIT) + (REASSOC_TO * REASSOC_LIMIT) + beacon_timeout);
 
