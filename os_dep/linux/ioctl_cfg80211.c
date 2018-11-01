@@ -3963,8 +3963,6 @@ static int cfg80211_rtw_disconnect(struct wiphy *wiphy, struct net_device *ndev,
 		goto exit;
 	}
 
-	set_fwstate(pmlmepriv, WIFI_UNDER_DISCONNTING);
-
 #ifdef LGE_PRIVATE
 	if (adapter_wdev_data(padapter)->wowl == 1 ||
 		adapter_to_pwrctl(padapter)->bInSuspend == _TRUE) {
@@ -3972,6 +3970,8 @@ static int cfg80211_rtw_disconnect(struct wiphy *wiphy, struct net_device *ndev,
 		goto exit;
 	}
 #endif /* LGE_PRIVATE */
+
+	set_fwstate(pmlmepriv, WIFI_UNDER_DISCONNTING);
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 11, 0))
 	if (!wiphy->dev.power.is_prepared)
