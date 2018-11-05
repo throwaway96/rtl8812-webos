@@ -4495,6 +4495,12 @@ int rtw_suspend_common(_adapter *padapter)
 		receive_disconnect(padapter, pmlmeinfo->network.MacAddress, 0, _FALSE);
 		rtw_msleep_os(100);
 	}
+
+	if (is_client_associated_to_ap(padapter) == _FALSE) {
+		adapter_wdev_data(padapter)->idle_mode = _TRUE;
+		adapter_wdev_data(padapter)->wowl = _FALSE;
+		adapter_wdev_data(padapter)->wowl_activate = _FALSE;
+	}
 #endif /* LGE_PRIVATE */
 
 	while (pwrpriv->bips_processing == _TRUE)
@@ -5015,6 +5021,8 @@ int rtw_resume_common(_adapter *padapter)
 	adapter_wdev_data(padapter)->wowl_activate = _FALSE;
 	adapter_wdev_data(padapter)->idle_mode = _FALSE;
 	adapter_wdev_data(padapter)->block_scan = _FALSE;
+
+	_clr_fwstate_(pmlmepriv, WIFI_UNDER_DISCONNTING);
 
 	/* Recovery Receive Multicast */
 	rtw_write32(padapter, REG_RCR, rtw_read32(padapter, REG_RCR) | (RCR_AM));
