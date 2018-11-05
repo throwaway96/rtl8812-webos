@@ -10997,6 +10997,10 @@ eqNByte(
 {
 	if (num == 0)
 		return _FALSE;
+
+	if ((num > strlen(str1)) || (num > strlen(str2)))
+		return _FALSE;
+
 	while (num > 0) {
 		num--;
 		if (str1[num] != str2[num])
