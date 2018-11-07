@@ -105,6 +105,7 @@ unsigned char WMM_OUI[] = {0x00, 0x50, 0xf2, 0x02};
 unsigned char	WPS_OUI[] = {0x00, 0x50, 0xf2, 0x04};
 unsigned char	P2P_OUI[] = {0x50, 0x6F, 0x9A, 0x09};
 unsigned char	WFD_OUI[] = {0x50, 0x6F, 0x9A, 0x0A};
+unsigned char	DPP_OUI[] = {0x50, 0x6F, 0x9A, 0x1A};
 
 unsigned char	WMM_INFO_OUI[] = {0x00, 0x50, 0xf2, 0x02, 0x00, 0x01};
 unsigned char	WMM_PARA_OUI[] = {0x00, 0x50, 0xf2, 0x02, 0x01, 0x01};
@@ -6698,6 +6699,33 @@ s32 rtw_action_public_decache(union recv_frame *rframe, u8 token_offset)
 	return _SUCCESS;
 }
 
+unsigned int on_action_public_default(union recv_frame *precv_frame, u8 action)
+{
+	unsigned int ret = _FAIL;
+	u8 *pframe = precv_frame->u.hdr.rx_data;
+	uint frame_len = precv_frame->u.hdr.len;
+	u8 *frame_body = pframe + sizeof(struct rtw_ieee80211_hdr_3addr);
+	u8 token;
+	_adapter *adapter = precv_frame->u.hdr.adapter;
+	int cnt = 0;
+	char msg[64];
+
+	token = frame_body[2];
+
+	if (rtw_action_public_decache(precv_frame, 2) == _FAIL)
+		goto exit;
+
+#ifdef CONFIG_IOCTL_CFG80211
+	cnt += sprintf((msg + cnt), "%s(token:%u)", action_public_str(action), token);
+	rtw_cfg80211_rx_action(adapter, precv_frame, msg);
+#endif
+
+	ret = _SUCCESS;
+
+exit:
+	return ret;
+}
+
 unsigned int on_action_public_p2p(union recv_frame *precv_frame)
 {
 	_adapter *padapter = precv_frame->u.hdr.adapter;
@@ -7104,34 +7132,8 @@ unsigned int on_action_public_vendor(union recv_frame *precv_frame)
 			rtw_rframe_del_wfd_ie(precv_frame, 8);
 
 		ret = on_action_public_p2p(precv_frame);
-	}
-
-exit:
-	return ret;
-}
-
-unsigned int on_action_public_default(union recv_frame *precv_frame, u8 action)
-{
-	unsigned int ret = _FAIL;
-	u8 *pframe = precv_frame->u.hdr.rx_data;
-	uint frame_len = precv_frame->u.hdr.len;
-	u8 *frame_body = pframe + sizeof(struct rtw_ieee80211_hdr_3addr);
-	u8 token;
-	_adapter *adapter = precv_frame->u.hdr.adapter;
-	int cnt = 0;
-	char msg[64];
-
-	token = frame_body[2];
-
-	if (rtw_action_public_decache(precv_frame, 2) == _FAIL)
-		goto exit;
-
-#ifdef CONFIG_IOCTL_CFG80211
-	cnt += sprintf((msg + cnt), "%s(token:%u)", action_public_str(action), token);
-	rtw_cfg80211_rx_action(adapter, precv_frame, msg);
-#endif
-
-	ret = _SUCCESS;
+	} else if (_rtw_memcmp(frame_body + 2, DPP_OUI, 4) == _TRUE)
+		ret = on_action_public_default(precv_frame, frame_body[1]);
 
 exit:
 	return ret;
@@ -7145,8 +7147,9 @@ unsigned int on_action_public(_adapter *padapter, union recv_frame *precv_frame)
 	u8 *frame_body = pframe + sizeof(struct rtw_ieee80211_hdr_3addr);
 	u8 category, action;
 
-	/* check RA matches or not */
-	if (!_rtw_memcmp(adapter_mac_addr(padapter), GetAddr1Ptr(pframe), ETH_ALEN))
+	/* check RA matches or broadcast */
+	if (!(_rtw_memcmp(adapter_mac_addr(padapter), GetAddr1Ptr(pframe), ETH_ALEN) ||
+			is_broadcast_mac_addr(GetAddr1Ptr(pframe))))
 		goto exit;
 
 	category = frame_body[0];
