@@ -13246,6 +13246,17 @@ void linked_status_chk(_adapter *padapter, u8 from_timer)
 				pmlmepriv->need_to_roam = _FALSE;
 		}
 #endif
+
+#ifdef LGE_PRIVATE
+	{
+		u8 in_suspend = adapter_to_pwrctl(padapter)->bInSuspend;
+
+		/* Don't do the keep alive during the suspending */
+		if (in_suspend == _TRUE)
+			return;
+	}
+#endif /* LGE_PRIVATE */
+
 #ifdef CONFIG_MCC_MODE
 		/*
 		 * due to tx ps null date to ao, so ap doest not tx pkt to driver

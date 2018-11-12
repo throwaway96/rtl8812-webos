@@ -2824,12 +2824,21 @@ static void _debug_dlfw_fail(struct dvobj_priv *d)
 			_RTW_PRINT(" ");
 	}
 
+#ifdef LGE_PRIVATE
+	/* read 0x80 after 2 secs */
+	rtw_msleep_os(2000);
+	addr = 0x80;
+	v32 = rtw_read16(a, addr);
+	RTW_PRINT("%s: 0x%X = 0x%04x (after 2 secs)\n",
+		  __FUNCTION__, addr, v32);
+#else
 	/* read 0x80 after 10 secs */
 	rtw_msleep_os(10000);
 	addr = 0x80;
 	v32 = rtw_read16(a, addr);
 	RTW_PRINT("%s: 0x%X = 0x%04x (after 10 secs)\n",
 		  __FUNCTION__, addr, v32);
+#endif /* LGE_PRIVATE */
 }
 
 static enum halmac_ret_status _enter_cpu_sleep_mode(struct dvobj_priv *d)
