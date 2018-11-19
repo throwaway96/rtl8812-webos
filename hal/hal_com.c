@@ -4148,6 +4148,10 @@ static u8 rtw_hal_pause_rx_dma(_adapter *adapter)
 			RTW_PRINT("%s, RX DMA no req\n",
 				  __func__);
 		ret = _FAIL;
+
+#ifdef LGE_PRIVATE
+		rtw_set_surprise_removed(adapter);
+#endif /* LGE_PRIVATE */
 	}
 
 	return ret;
