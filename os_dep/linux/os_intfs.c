@@ -4500,6 +4500,10 @@ int rtw_suspend_common(_adapter *padapter)
 		adapter_wdev_data(padapter)->idle_mode = _TRUE;
 		adapter_wdev_data(padapter)->wowl = _FALSE;
 		adapter_wdev_data(padapter)->wowl_activate = _FALSE;
+	} else {
+		adapter_wdev_data(padapter)->idle_mode = _FALSE;
+		adapter_wdev_data(padapter)->wowl = _TRUE;
+		adapter_wdev_data(padapter)->wowl_activate = _TRUE;
 	}
 #endif /* LGE_PRIVATE */
 
