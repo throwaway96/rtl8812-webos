@@ -3416,6 +3416,10 @@ netdev_open_error:
 	rtw_netif_carrier_off(pnetdev);
 	rtw_netif_stop_queue(pnetdev);
 
+#ifdef LGE_PRIVATE
+	rtw_set_surprise_removed(padapter);
+	rtw_set_drv_stopped(padapter);
+#endif /* LGE_PRIVATE */
 	RTW_INFO("-871x_drv - drv_open fail, bup=%d\n", padapter->bup);
 
 	return -1;
@@ -3653,9 +3657,9 @@ static int netdev_close(struct net_device *pnetdev)
 			/* s2-4. */
 			rtw_free_network_queue(padapter, _TRUE);
 
-		pmlmeinfo->disconnect_occurred_time = rtw_systime_to_ms(rtw_get_current_time());
-		pmlmeinfo->disconnect_code = DISCONNECTION_BY_SYSTEM_DUE_TO_NET_DEVICE_DOWN;
-		pmlmeinfo->wifi_reason_code = WLAN_REASON_DEAUTH_LEAVING;
+			pmlmeinfo->disconnect_occurred_time = rtw_systime_to_ms(rtw_get_current_time());
+			pmlmeinfo->disconnect_code = DISCONNECTION_BY_SYSTEM_DUE_TO_NET_DEVICE_DOWN;
+			pmlmeinfo->wifi_reason_code = WLAN_REASON_DEAUTH_LEAVING;
 #endif
 		}
 	}
