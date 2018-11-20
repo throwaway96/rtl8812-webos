@@ -133,7 +133,11 @@ static const u32 rtw_cipher_suites[] = {
  * (from user space, e.g. iw phy0 wowlan enable)
  */
 static const struct wiphy_wowlan_support wowlan_stub = {
+	#ifdef LGE_PRIVATE
+	.flags = WIPHY_WOWLAN_ANY | WIPHY_WOWLAN_MAGIC_PKT,
+	#else
 	.flags = WIPHY_WOWLAN_ANY,
+	#endif /* LGE_PRIVATE */
 	.n_patterns = 0,
 	.pattern_max_len = 0,
 	.pattern_min_len = 0,
