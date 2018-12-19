@@ -33,8 +33,8 @@ static const struct country_chplan CUSTOMIZED_country_chplan_map[] = {
 	COUNTRY_CHPLAN_ENT2("DC", 0x28, 0x20, 1, 0x1FB, 2), /* LGE Default v1 FCC */
 	COUNTRY_CHPLAN_ENT2("EC", 0x29, 0x20, 1, 0x1F1, 0), /* Ecuador */
 	COUNTRY_CHPLAN_ENT2("EC", 0x29, 0x20, 1, 0x1F1, 1), /* Ecuador */
-	COUNTRY_CHPLAN_ENT2("EG", 0x25, 0x20, 0, 0x1F1, 0), /* Egypt */
-	COUNTRY_CHPLAN_ENT2("EG", 0x25, 0x20, 0, 0x1F1, 1), /* Egypt */
+	COUNTRY_CHPLAN_ENT2("EG", 0x31, 0x20, 0, 0x1F1, 0), /* Egypt */
+	COUNTRY_CHPLAN_ENT2("EG", 0x31, 0x20, 0, 0x1F1, 1), /* Egypt */
 	COUNTRY_CHPLAN_ENT2("EU", 0x2a, 0x20, 1, 0x1FB, 0), /* Germany */
 	COUNTRY_CHPLAN_ENT2("EU", 0x2a, 0x20, 1, 0x1FB, 1), /* Germany */
 	COUNTRY_CHPLAN_ENT2("HK", 0x2b, 0x20, 1, 0x1FB, 0), /* Lebanon, Jordan, Srilanka */
