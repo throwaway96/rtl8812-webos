@@ -1003,6 +1003,13 @@ static int proc_get_chan_plan(struct seq_file *m, void *v)
 	return 0;
 }
 
+static int proc_get_chan_plan_map(struct seq_file *m, void *v)
+{
+	dump_country_chplan_map(m);
+
+	return 0;
+}
+
 static ssize_t proc_set_chan_plan(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data)
 {
 	struct net_device *dev = data;
@@ -3269,6 +3276,7 @@ const struct rtw_proc_hdl adapter_proc_hdls[] = {
 #endif
 	RTW_PROC_HDL_SSEQ("country_code", proc_get_country_code, proc_set_country_code),
 	RTW_PROC_HDL_SSEQ("chan_plan", proc_get_chan_plan, proc_set_chan_plan),
+	RTW_PROC_HDL_SSEQ("chplan_map", proc_get_chan_plan_map, NULL),
 #if CONFIG_RTW_MACADDR_ACL
 	RTW_PROC_HDL_SSEQ("macaddr_acl", proc_get_macaddr_acl, proc_set_macaddr_acl),
 #endif

@@ -1029,13 +1029,12 @@ const struct country_chplan *rtw_get_chplan_from_country(const char *country_cod
 
 	for (i = 0; i < map_sz; i++) {
 		if (strncmp(code, map[i].alpha2, 2) == 0) {
-			ent = &map[i];
-			if (version) {
-				if (strncmp(code, map[i + version].alpha2, 2) == 0)
-					ent = &map[i + version];
-				else ent = NULL;
+			if (version == map[i].version) {
+				ent = &map[i];
+				break;
 			}
-			break;
+
+			continue;
 		}
 	}
 

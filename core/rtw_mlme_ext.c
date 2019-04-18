@@ -487,9 +487,10 @@ static RT_CHANNEL_PLAN_MAP	RTW_ChannelPlanMap[RTW_CHPLAN_MAX] = {
 	CHPLAN_ENT(RTW_RD_2G_FCC1,		RTW_RD_5G_FCC11,	TXPWR_LMT_FCC),		/* 0x39, RTW_CHPLAN_FCC1_FCC11 */
 	CHPLAN_ENT(RTW_RD_2G_ETSI1,		RTW_RD_5G_ETSI2,	TXPWR_LMT_KCC),		/* 0x3a, RTW_CHPLAN_ETSI1_ETSI2_KCC */
 	CHPLAN_ENT(RTW_RD_2G_ETSI1,		RTW_RD_5G_ETSI25,	TXPWR_LMT_ETSI),	/* 0x3b, RTW_CHPLAN_ETSI1_ETSI24 */
+	CHPLAN_ENT(RTW_RD_2G_FCC2,		RTW_RD_5G_NULL,		TXPWR_LMT_FCC),		/* 0x3c, RTW_CHPLAN_FCC2_NULL */
 
 	/* keep this end of map */
-	CHPLAN_ENT(RTW_RD_2G_GLOBAL,		RTW_RD_5G_NULL,		TXPWR_LMT_WW),		/* 0x3c, RTW_CHPLAN_GLOBAL_NULL */
+	CHPLAN_ENT(RTW_RD_2G_GLOBAL,		RTW_RD_5G_NULL,		TXPWR_LMT_WW),		/* 0x3d, RTW_CHPLAN_GLOBAL_NULL */
 
 #endif /* LGE_PRIVATE */
 };
@@ -1338,9 +1339,57 @@ void dump_country_chplan(void *sel, const struct country_chplan *ent)
 #endif /* LGE_PRIVATE */
 }
 
+#ifdef LGE_PRIVATE
+u8 rtw_chplan_get_default_regd(u8 id)
+{
+	u8 regd;
+
+	if (id == RTW_CHPLAN_REALTEK_DEFINE)
+		regd = RTW_CHANNEL_PLAN_MAP_REALTEK_DEFINE.regd;
+	else
+		regd = RTW_ChannelPlanMap[id].regd;
+
+	return regd;
+}
+
+void dump_chset_list(void *sel, RT_CHANNEL_INFO *ch_set)
+{
+	u8 i;
+
+	for (i = 0; i < MAX_CHANNEL_NUM && ch_set[i].ChannelNum != 0; i++)
+		RTW_PRINT_SEL(sel, " %u", ch_set[i].ChannelNum);
+	RTW_PRINT_SEL(sel, ", total:%d\n", i);
+}
+
+void dump_country_chplan_list(void *sel, const struct country_chplan *ent)
+{
+	struct net_device *dev = ((struct seq_file *)(sel))->private;
+	_adapter *adapter = (_adapter *)rtw_netdev_priv(dev);
+	RT_CHANNEL_INFO channel_set[MAX_CHANNEL_NUM];
+
+	RTW_PRINT_SEL(sel, "\"%c%c/%d\", 0x%02X%s, bw:0x%02X, %6s,"
+		, ent->alpha2[0], ent->alpha2[1]
+		, ent->version
+		, ent->chplan
+		, COUNTRY_CHPLAN_EN_11AC(ent) ? " ac" : "   "
+		, ent->bandwidth
+		, regd_str(rtw_chplan_get_default_regd(ent->chplan))
+		);
+
+	init_channel_set(adapter, ent->chplan, channel_set);
+
+	dump_chset_list(sel, channel_set);
+}
+#endif /* LGE_PRIVATE */
+
 void dump_country_chplan_map(void *sel)
 {
+
+#define CC_VER_INIT 1
+#define COUNTRY_VER_MAX 4
+
 	const struct country_chplan *ent;
+	int version;
 	u8 code[2];
 
 #if RTW_DEF_MODULE_REGULATORY_CERT
@@ -1352,11 +1401,16 @@ void dump_country_chplan_map(void *sel)
 
 	for (code[0] = 'A'; code[0] <= 'Z'; code[0]++) {
 		for (code[1] = 'A'; code[1] <= 'Z'; code[1]++) {
-			ent = rtw_get_chplan_from_country(code, 0);
-			if (!ent)
-				continue;
+			for (version = CC_VER_INIT; version <= COUNTRY_VER_MAX; version++) {
+				ent = rtw_get_chplan_from_country(code, version);
+				if (!ent)
+					continue;
 
-			dump_country_chplan(sel, ent);
+				if (((struct seq_file *)(sel))->private == NULL)
+					dump_country_chplan(sel, ent);
+				else
+					dump_country_chplan_list(sel, ent);
+			}
 		}
 	}
 }
