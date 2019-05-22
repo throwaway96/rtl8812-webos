@@ -3079,6 +3079,10 @@ static int cfg80211_rtw_scan(struct wiphy *wiphy
 #endif /* LGE_PRIVATE */
 	parm.ssid_num = i;
 
+	/* no ssid entry, set the scan type as passvie */
+	if (request->n_ssids == 0)
+		parm.scan_mode = SCAN_PASSIVE;
+
 	/* parsing channels, n_channels */
 	for (i = 0; i < request->n_channels && i < RTW_CHANNEL_SCAN_AMOUNT; i++) {
 		#ifdef CONFIG_DEBUG_CFG80211
