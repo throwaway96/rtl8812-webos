@@ -4495,6 +4495,8 @@ int rtw_suspend_common(_adapter *padapter)
 
 	pwrpriv->bInSuspend = _TRUE;
 #ifdef LGE_PRIVATE
+	LGE_MSG("WiFi suspend start");
+
 	if(adapter_wdev_data(padapter)->idle_mode && is_client_associated_to_ap(padapter)) {
 		receive_disconnect(padapter, pmlmeinfo->network.MacAddress, 0, _FALSE);
 		rtw_msleep_os(100);
@@ -4577,6 +4579,9 @@ int rtw_suspend_common(_adapter *padapter)
 	RTW_PRINT("rtw suspend success in %d ms\n",
 		  rtw_get_passing_time_ms(start_time));
 
+#ifdef LGE_PRIVATE
+	LGE_MSG("WiFi suspend done");
+#endif /* LGE_PRIVATE */
 exit:
 	RTW_INFO("<===  %s return %d.............. in %dms\n", __FUNCTION__
 		 , ret, rtw_get_passing_time_ms(start_time));
@@ -4994,6 +4999,10 @@ int rtw_resume_common(_adapter *padapter)
 	RTW_PRINT("resume start\n");
 	RTW_INFO("==> %s (%s:%d)\n", __FUNCTION__, current->comm, current->pid);
 
+#ifdef LGE_PRIVATE
+	LGE_MSG("WiFi resume start");
+#endif /* LGE_PRIVATE */
+
 	if (rtw_mi_check_status(padapter, WIFI_AP_STATE) == _FALSE) {
 #ifdef CONFIG_WOWLAN
 		if (pwrpriv->wowlan_mode == _TRUE)
@@ -5034,6 +5043,8 @@ int rtw_resume_common(_adapter *padapter)
 
 	/* Recovery Receive Multicast */
 	rtw_write32(padapter, REG_RCR, rtw_read32(padapter, REG_RCR) | (RCR_AM));
+
+	LGE_MSG("WiFi resume done");
 #endif /* LGE_PRIVATE */
 
 	return ret;

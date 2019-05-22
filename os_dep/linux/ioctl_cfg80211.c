@@ -2601,6 +2601,7 @@ static void _rtw_cfg80211_surveydone_event_callback(_adapter *padapter, struct c
 			if (target_wps_scan)
 				rtw_cfg80211_clear_wps_sr_of_non_target_bss(padapter, pnetwork, &target_ssid);
 			rtw_cfg80211_inform_bss(padapter, pnetwork);
+			cnt++;
 		}
 #if 0
 		/* check ralink testbed RSN IE length */
@@ -2618,6 +2619,11 @@ static void _rtw_cfg80211_surveydone_event_callback(_adapter *padapter, struct c
 	}
 
 	_exit_critical_bh(&(pmlmepriv->scanned_queue.lock), &irqL);
+
+#ifdef LGE_PRIVATE
+	LGE_MSG("[WLAN] Scan done - search num(%d)", cnt);
+#endif /* LGE_PRIVATE */
+
 }
 
 inline void rtw_cfg80211_surveydone_event_callback(_adapter *padapter)
@@ -2880,12 +2886,14 @@ static int cfg80211_rtw_scan(struct wiphy *wiphy
 		, wdev == wiphy_to_pd_wdev(wiphy) ? " PD" : "");
 
 #ifdef LGE_PRIVATE
+	LGE_MSG("[WLAN] Scan request");
+
 	if (adapter_to_pwrctl(padapter)->bInSuspend == _TRUE) {
 		RTW_INFO("%s: ignore it in suspend\n", __func__);
 		ret = -EBUSY;
 		goto exit;
 	}
-#endif
+#endif /* LGE_PRIVATE */
 
 #ifdef CONFIG_MP_INCLUDED
 	if (rtw_mp_mode_check(padapter)) {
@@ -5560,6 +5568,77 @@ release_plink_ctl:
 	}
 #endif /* CONFIG_RTW_MESH */
 
+#ifdef LGE_PRIVATE
+/* 
+   P2P_GO: connect/disconnect change AUTHORIZED
+   P2P_GC / STA: only connect change AUTHORIZED
+ */
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 31))
+	if (params->sta_flags_mask) {
+		#define BUF_LEN 128
+		struct mlme_priv *pmlmepriv = &adapter->mlmepriv;
+		struct wlan_network *cur_network = &(pmlmepriv->cur_network);
+		int i = 0;
+		char sta_flags_buf[BUF_LEN] = { 0 };
+		u8 cnt = 0;
+
+		for (i = 1; i <= NL80211_STA_FLAG_MAX; i++) {
+			if (params->sta_flags_mask & BIT(i)) {
+				cnt += snprintf(sta_flags_buf + cnt,
+					BUF_LEN - cnt - 1, "%s=%u "
+					, nl80211_sta_flags_str(i),
+					(params->sta_flags_set & BIT(i)) >> i);
+				if (cnt >= BUF_LEN - 1)
+					break;
+			}
+		}
+
+		sta = rtw_get_stainfo(stapriv, mac);
+		if (sta && sta->authorized) {
+			if (_rtw_memcmp(sta_flags_buf, "AUTHORIZED=0", 12)) {
+				sta->authorized = 0;
+				if (MLME_IS_GO(adapter))
+					LGE_MSG("[P2P] Disconnected - MAC("MAC_BFMT") DEV_NAME(%s)",
+						MAC_ARG(mac),
+						(sta->dev_name_len > 0) ? sta->dev_name : NULL);
+			}
+		} else if (sta && !sta->authorized) {
+			if (_rtw_memcmp(sta_flags_buf, "AUTHORIZED=1", 12)) {
+				sta->authorized = 1;
+				if (MLME_IS_GO(adapter))
+					LGE_MSG("[P2P] Connected - MAC("MAC_BFMT") DEV_NAME(%s)",
+						MAC_ARG(mac),
+						(sta->dev_name_len > 0) ? sta->dev_name : NULL);
+				else if (MLME_IS_GC(adapter)) {
+					u8 *wpsie;
+					uint wpsie_len = 0;
+					uint len = 0;
+
+					wpsie = rtw_get_wps_ie_from_scan_queue(
+						cur_network->network.IEs,
+						cur_network->network.IELength,
+						NULL, &wpsie_len,
+						cur_network->network.Reserved[0]);
+					if (wpsie)
+						rtw_get_wps_attr_content(wpsie,
+							wpsie_len, WPS_ATTR_DEVICE_NAME,
+							sta->dev_name, &len);
+					if (len < 32)
+						sta->dev_name_len = len;
+					LGE_MSG("[P2P] Connected - MAC("MAC_BFMT") DEV_NAME(%s)",
+						MAC_ARG(mac),
+						(sta->dev_name_len > 0) ? sta->dev_name : NULL);
+				} else if (MLME_IS_STA(adapter))
+					LGE_MSG("[WLAN] Connected - MAC("MAC_BFMT") SSID(%s)",
+						MAC_ARG(mac),
+						cur_network->network.Ssid.Ssid);
+			}
+		}
+
+	}
+#endif /* (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 31)) */
+#endif /* LGE_PRIVATE */
+
 exit:
 	return ret;
 }
@@ -6444,6 +6523,14 @@ static s32 cfg80211_rtw_remain_on_channel(struct wiphy *wiphy,
 		}
 	}
 	#endif
+
+	if (rtw_mi_buddy_check_fwstate(padapter, _FW_LINKED)) {
+		if (remain_ch != rtw_get_oper_ch(padapter)) {
+			RTW_INFO(CLR_LT_RED"P2P listen ch is not match AP ch"CLR_NONEN);
+			err = -EBUSY;
+			goto exit;
+		}
+	}
 #endif /* LGE_PRIVATE */
 
 	if (_FAIL == rtw_pwr_wakeup(padapter)) {
@@ -7103,6 +7190,10 @@ static int cfg80211_rtw_mgmt_tx(struct wiphy *wiphy,
 		RTW_INFO("RTW_Tx: probe_resp tx_ch=%d, no_cck=%u, da="MAC_FMT"\n", tx_ch, no_cck, MAC_ARG(GetAddr1Ptr(buf)));
 #endif /* CONFIG_DEBUG_CFG80211 */
 		wait_ack = 0;
+#ifdef LGE_PRIVATE
+		if (tx_ch > 14)
+			no_cck = 1; /* force no CCK */
+#endif
 		goto dump;
 	}
 #ifdef CONFIG_RTW_MESH

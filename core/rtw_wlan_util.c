@@ -2170,7 +2170,7 @@ int check_ielen(u8 *start, uint len)
 		left -= 2;
 
 		if (elen > left) {
-			RTW_INFO("IEEE 802.11 element parse failed (id=%d elen=%d left=%lu)\n",
+			RTW_DBG("IEEE 802.11 element parse failed (id=%d elen=%d left=%lu)\n",
 					id, elen, (unsigned long) left);
 			return _FALSE;
 		}
@@ -4802,7 +4802,7 @@ int rtw_lge_parse_country(_adapter *padapter, u8 *list_str)
 			RTW_INFO("%s country [%s, %s]\n", __func__, country, ccode_ver);
 
 		if (rtw_set_country(padapter, country, rtw_atoi(ccode_ver)) == _FAIL)
-			rtw_set_country(padapter, "DC", 0);
+			rtw_set_country(padapter, "DC", 1);
 	}
 
 	return 0;

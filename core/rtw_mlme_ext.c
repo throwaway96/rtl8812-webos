@@ -11632,7 +11632,7 @@ u8 collect_bss_info(_adapter *padapter, union recv_frame *precv_frame, WLAN_BSSI
 				return _FAIL;
 			}
 			if (mesh_conf_ie_len != 7) {
-				RTW_INFO("invalid Mesh conf IE len (%d) for survey event\n", mesh_conf_ie_len);
+				RTW_DBG("invalid Mesh conf IE len (%d) for survey event\n", mesh_conf_ie_len);
 				return _FAIL;
 			}
 

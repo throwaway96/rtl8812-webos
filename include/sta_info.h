@@ -483,6 +483,10 @@ struct sta_info {
 	u8 max_agg_num_minimal_record; /*keep minimal tx desc max_agg_num setting*/
 	u8 curr_rx_rate;
 	u8 curr_rx_rate_bmc;
+
+#ifdef LGE_PRIVATE
+	u8 authorized;
+#endif /* LGE_PRIVATE */
 };
 
 #ifdef CONFIG_RTW_MESH

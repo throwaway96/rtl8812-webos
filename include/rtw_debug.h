@@ -631,4 +631,19 @@ int proc_get_disconnect_info(struct seq_file *m, void *v);
 #define _module_rtl8712_recv_c_		BIT(30)
 #define _module_rtl8712_led_c_		BIT(31)
 
+#ifdef LGE_PRIVATE
+#define LGE_DEBUG 0
+
+#if LGE_DEBUG
+#define LGE_MSG(fmt, arg...)     \
+	do {\
+		_dbgdump(CLR_LT_RED fmt CLR_NONEN, ##arg);\
+	} while (0)
+#else
+#define LGE_MSG(fmt, arg...)     \
+	do {\
+		_dbgdump(fmt "\n", ##arg);\
+	} while (0)
+#endif
+#endif
 #endif /* __RTW_DEBUG_H__ */

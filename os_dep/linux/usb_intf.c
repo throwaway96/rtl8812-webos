@@ -1490,6 +1490,13 @@ static int rtw_drv_init(struct usb_interface *pusb_intf, const struct usb_device
 	rtd2885_wlan_netlink_sendMsg("linkup", "8712");
 #endif
 
+#ifdef LGE_PRIVATE
+	LGE_MSG("[WLAN] DrvVer [%s %s]",
+		DRV_NAME, DRIVERVERSION);
+
+	LGE_MSG("[WLAN] Probing MAC ["MAC_BFMT"]",
+		MAC_ARG(dvobj_get_primary_adapter(dvobj)->mac_addr));
+#endif /* LGE_PRIVATE */
 
 	status = _SUCCESS;
 

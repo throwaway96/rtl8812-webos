@@ -2253,7 +2253,12 @@ inline u8 rtw_set_country_cmd(_adapter *adapter, int flags, const char *country_
 	ent = rtw_get_chplan_from_country(country_code, version);
 
 	if (ent == NULL) {
+#ifdef LGE_PRIVATE
+		RTW_PRINT("%s unsupported country_code:\"%c%c/%u\"\n", __func__,
+			country_code[0], country_code[1], version);
+#else
 		RTW_PRINT("%s unsupported country_code:\"%c%c\"\n", __func__, country_code[0], country_code[1]);
+#endif /* LGE_PRIVATE */
 		return _FAIL;
 	}
 
