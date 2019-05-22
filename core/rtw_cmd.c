@@ -2456,6 +2456,44 @@ u8 traffic_status_watchdog(_adapter *padapter, u8 from_timer)
 	/*  */
 	if ((check_fwstate(pmlmepriv, _FW_LINKED) == _TRUE)
 	    /*&& !MgntInitAdapterInProgress(pMgntInfo)*/) {
+#ifdef LGE_PRIVATE
+#ifdef CONFIG_MCC_MODE
+#define LGE_FAVOR_TH_HIHG 200
+#define LGE_FAVOR_TH_LOW 100
+		if (MCC_EN(padapter) &&
+			(adapter_wdev_data(padapter)->mchan_sched_mode == 0) &&
+			rtw_hal_check_mcc_status(padapter, MCC_STATUS_DOING_MCC)) {
+			static u32 mcc[3] = { 0 };
+
+			mcc[padapter->iface_id] += pmlmepriv->LinkDetectInfo.NumRxOkInPeriod;
+			mcc[1] = (mcc[1] + 1) & 0x00000003;
+
+			if (padapter->iface_id && (mcc[1] == 0)) {
+				u8 val = 0;
+
+				if ((mcc[0] < LGE_FAVOR_TH_LOW) &&
+				    (mcc[2] > LGE_FAVOR_TH_HIHG))
+					val = 4;
+				if ((mcc[2] < LGE_FAVOR_TH_LOW) &&
+				    (mcc[0] > LGE_FAVOR_TH_HIHG))
+					val = 3;
+
+				#if LGE_DEBUG
+				LGE_MSG("Current dynamic MCC priority : %s [%u, %u, %u]",
+					(val == 0) ? "Fair" : (val == 3) ? "STA favor" : "P2P favor",
+					mcc[0], mcc[2], mcc[1]);
+				#else /* LGE_DEBUG */
+				LGE_MSG("Current dynamic MCC priority : %s",
+					(val == 0) ? "Fair" : (val == 3) ? "STA favor" : "P2P favor");
+				#endif /* LGE_DEBUG */
+
+				mcc[0] = 0;
+				mcc[2] = 0;
+				rtw_set_mcc_duration_cmd(padapter, MCC_DURATION_MAPPING, val);
+			}
+		}
+#endif
+#endif /* LGE_PRIVATE */
 		/* if we raise bBusyTraffic in last watchdog, using lower threshold. */
 		if (pmlmepriv->LinkDetectInfo.bBusyTraffic)
 			BusyThreshold = BusyThresholdLow;

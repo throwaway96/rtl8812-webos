@@ -34,7 +34,8 @@ u8 mcc_switch_channel_policy_table[][7]={
 	{30, 50, 35, 100, 3, 0, 30},
 	{70, 50, 15, 100, 3, 0, 30},
 	{50, 50, 25, 100, 3, 0, 30},
-	{50, 50, 25, 100, 3, 0, 30},
+	{20, 50, 40, 100, 3, 0, 30},
+	{80, 50, 10, 100, 3, 0, 30},
 };
 
 const int mcc_max_policy_num = sizeof(mcc_switch_channel_policy_table) /sizeof(u8) /7;
@@ -3744,12 +3745,28 @@ static u8 set_mcc_duration_hdl(PADAPTER adapter, const u8 *val)
 				break;
 			/* 1 = favor STA */
 			case 1:
-				mccobjpriv->duration= 70;
+				mccobjpriv->duration = 70;
 				mccobjpriv->policy_index = 1;
 				mccobjpriv->mchan_sched_mode = MCC_FAVOR_STA;
 				break;
 			/* 2 = favor P2P*/
 			case 2:
+				mccobjpriv->duration = 30;
+				mccobjpriv->policy_index = 0;
+				mccobjpriv->mchan_sched_mode = MCC_FAVOR_P2P;
+				break;
+			/* 3 = fair scheduling, favor STA */
+			case 3:
+				mccobjpriv->duration = 80;
+				mccobjpriv->policy_index = 4;
+				mccobjpriv->mchan_sched_mode = MCC_FAVOR_STA;
+				break;
+			/* 3 = fair scheduling, favor P2P */
+			case 4:
+				mccobjpriv->duration = 20;
+				mccobjpriv->policy_index = 3;
+				mccobjpriv->mchan_sched_mode = MCC_FAVOR_P2P;
+				break;
 			default:
 				mccobjpriv->duration= 30;
 				mccobjpriv->policy_index = 0;
