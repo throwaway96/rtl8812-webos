@@ -2460,9 +2460,11 @@ u8 traffic_status_watchdog(_adapter *padapter, u8 from_timer)
 #ifdef CONFIG_MCC_MODE
 #define LGE_FAVOR_TH_HIHG 200
 #define LGE_FAVOR_TH_LOW 100
-		if (MCC_EN(padapter) &&
-			(adapter_wdev_data(padapter)->mchan_sched_mode == 0) &&
-			rtw_hal_check_mcc_status(padapter, MCC_STATUS_DOING_MCC)) {
+		_adapter *padapter_primary = GET_PRIMARY_ADAPTER(padapter);
+
+		if (MCC_EN(padapter_primary) &&
+			(adapter_wdev_data(padapter_primary)->mchan_sched_mode == 0) &&
+			rtw_hal_check_mcc_status(padapter_primary, MCC_STATUS_DOING_MCC)) {
 			static u32 mcc[3] = { 0 };
 
 			mcc[padapter->iface_id] += pmlmepriv->LinkDetectInfo.NumRxOkInPeriod;

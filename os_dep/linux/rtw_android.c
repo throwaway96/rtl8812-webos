@@ -944,13 +944,13 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 	{
 		u8 val = 0;
 
-		RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s]"CLR_NONEN, command);
-
 		sscanf(command, "SET_MCHAN_SCHED_MODE %u", (unsigned int *)&val);
+		LGE_MSG("[WLAN] Private cmd - SET_MCHAN_SCHED_MODE (%u) received", val);
+
 		adapter_wdev_data(padapter)->mchan_sched_mode = val;
-		#ifdef CONFIG_MCC_MODE
+#ifdef CONFIG_MCC_MODE
 		rtw_set_mcc_duration_cmd(padapter, MCC_DURATION_MAPPING, val);
-		#endif /* CONFIG_MCC_MODE */
+#endif /* CONFIG_MCC_MODE */
 
 		snprintf(command, 3, "OK");
 		bytes_written = strlen("OK");
@@ -1079,10 +1079,10 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 		u8 val = 0;
 
 		sscanf(command, "SET_WOWL %u", (unsigned int *)&val);
-		adapter_wdev_data(padapter)->wowl = val;
 
-		LGE_MSG("[WLAN] Private cmd - SET_WOWL (%d) received", val);
+		LGE_MSG("[WLAN] Private cmd - SET_WOWL (%u) received", val);
 
+		adapter_wdev_data(padapter)->wowl = (val & 0x1);
 		snprintf(command, 3, "OK");
 		bytes_written = strlen("OK");
 
@@ -1090,7 +1090,6 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 		break;
 	case LGE_PRIVATE_CMD_WOWL_ACTIVATE:
 	{
-		u8 val = 0;
 		u8 in_suspend = adapter_to_pwrctl(padapter)->bInSuspend;
 
 		LGE_MSG("[WLAN] Private cmd - WOWL_ACTIVATE received");
@@ -1099,8 +1098,7 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 			if (in_suspend == _FALSE) {
 				struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
 
-				sscanf(command, "WOWL_ACTIVATE %u", (unsigned int *)&val);
-				adapter_wdev_data(padapter)->wowl_activate = 1;
+				adapter_wdev_data(padapter)->wowl_activate = _TRUE;
 
 				if (check_fwstate(pmlmepriv, _FW_UNDER_SURVEY))
 					rtw_scan_abort(padapter);
@@ -1118,7 +1116,6 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 		break;
 	case LGE_PRIVATE_CMD_IDLE_MODE:
 	{
-		u8 val = 0;
 		u8 in_suspend = adapter_to_pwrctl(padapter)->bInSuspend;
 
 		LGE_MSG("[WLAN] Private cmd - IDLE_MODE received");
@@ -1127,7 +1124,6 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 			if (in_suspend == _FALSE) {
 				struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
 
-				sscanf(command, "WOWL_ACTIVATE %u", (unsigned int *)&val);
 				adapter_wdev_data(padapter)->idle_mode = _TRUE;
 
 				if (check_fwstate(pmlmepriv, _FW_UNDER_SURVEY))
