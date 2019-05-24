@@ -1077,6 +1077,8 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 	case LGE_PRIVATE_CMD_SET_WOWL:
 	{
 		u8 val = 0;
+		char event_name[] = "WIFI_STATUS=suspend";
+		char *envp[] = { event_name, NULL };
 
 		sscanf(command, "SET_WOWL %u", (unsigned int *)&val);
 
@@ -1085,6 +1087,10 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 		adapter_wdev_data(padapter)->wowl = (val & 0x1);
 		snprintf(command, 3, "OK");
 		bytes_written = strlen("OK");
+
+#if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 12))
+		kobject_uevent_env(&padapter->pnetdev->dev.kobj, KOBJ_CHANGE, envp);
+#endif
 
 	}
 		break;

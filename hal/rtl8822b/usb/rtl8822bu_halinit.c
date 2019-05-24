@@ -208,6 +208,10 @@ u32 rtl8822bu_init(PADAPTER padapter)
 {
 	u8 status = _SUCCESS;
 	systime init_start_time = rtw_get_current_time();
+#ifdef LGE_PRIVATE
+	char event_name[] = "WIFI_STATUS=ready";
+	char *envp[] = { event_name, NULL };
+#endif
 
 #ifdef CONFIG_FWLPS_IN_IPS
 	if (_SUCCESS == rtl8822bu_fw_ips_init(padapter))
@@ -222,6 +226,14 @@ u32 rtl8822bu_init(PADAPTER padapter)
 exit:
 	RTW_INFO("%s in %dms\n", __func__, rtw_get_passing_time_ms(init_start_time));
 
+#ifdef LGE_PRIVATE
+	if (status == _SUCCESS) {
+#if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 12))
+		kobject_uevent_env(&padapter->pnetdev->dev.kobj, KOBJ_CHANGE, envp);
+		RTW_INFO("%s Completed Sending WIFI Ready \n", __func__);
+#endif
+	}
+#endif
 	return status;
 }
 

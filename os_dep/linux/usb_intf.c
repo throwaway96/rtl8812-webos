@@ -919,7 +919,10 @@ static int rtw_suspend(struct usb_interface *pusb_intf, pm_message_t message)
 	struct debug_priv *pdbgpriv;
 	PADAPTER padapter;
 	int ret = 0;
-
+#ifdef LGE_PRIVATE
+	char event_name[] = "WIFI_STATUS=suspend";
+	char *envp[] = { event_name, NULL };
+#endif
 
 	dvobj = usb_get_intfdata(pusb_intf);
 	pwrpriv = dvobj_to_pwrctl(dvobj);
@@ -949,6 +952,13 @@ static int rtw_suspend(struct usb_interface *pusb_intf, pm_message_t message)
 
 	ret =  rtw_suspend_common(padapter);
 
+#ifdef LGE_PRIVATE
+	if (ret == 0) {
+#if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 12))
+		kobject_uevent_env(&padapter->pnetdev->dev.kobj, KOBJ_CHANGE, envp);
+#endif
+	}
+#endif
 exit:
 	return ret;
 }
@@ -1032,7 +1042,10 @@ static int rtw_resume(struct usb_interface *pusb_intf)
 	PADAPTER padapter;
 	struct mlme_ext_priv *pmlmeext;
 	int ret = 0;
-
+#ifdef LGE_PRIVATE
+	char event_name[] = "WIFI_STATUS=ready";
+	char *envp[] = { event_name, NULL };
+#endif
 
 	dvobj = usb_get_intfdata(pusb_intf);
 	pwrpriv = dvobj_to_pwrctl(dvobj);
@@ -1084,6 +1097,13 @@ static int rtw_resume(struct usb_interface *pusb_intf)
 	#endif
 	RTW_INFO("<========  %s return %d\n", __FUNCTION__, ret);
 
+#ifdef LGE_PRIVATE
+	if (ret == 0) {
+#if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 12))
+		kobject_uevent_env(&padapter->pnetdev->dev.kobj, KOBJ_CHANGE, envp);
+#endif
+	}
+#endif
 	return ret;
 }
 
