@@ -3286,6 +3286,47 @@ exit:
 	return 0;
 }
 
+#ifdef LGE_PRIVATE
+static int rtw_usb_disconnect(
+	struct net_device *dev,
+	struct iw_request_info *info,
+	union iwreq_data *wrqu, char *extra)
+{
+	u8 buf1[256] = { 0 };
+	u8 buf2[256] = { 0 };
+	u32 len;
+	u8 *pbuf;
+	PADAPTER padapter = rtw_netdev_priv(dev);
+
+	RTW_INFO("+%s\n", __func__);
+
+	len = wrqu->data.length;
+
+	pbuf = (u8 *)rtw_zmalloc(len + 1);
+	if (pbuf == NULL) {
+		RTW_INFO("%s: no memory!\n", __func__);
+		return -ENOMEM;
+	}
+
+	if (copy_from_user(pbuf, wrqu->data.pointer, len)) {
+		rtw_mfree(pbuf, len + 1);
+		RTW_INFO("%s: copy from user fail!\n", __func__);
+		return -EFAULT;
+	}
+
+	pbuf[len] = '\0';
+
+	RTW_INFO("%s: string=\"%s\"\n", __func__, pbuf);
+
+	rtw_set_surprise_removed(padapter);
+
+free_buf:
+	rtw_mfree(pbuf, len);
+	return 0;
+}
+
+#endif /* LGE_PRIVATE */
+
 static int rtw_wx_write32(struct net_device *dev,
 			  struct iw_request_info *info,
 			  union iwreq_data *wrqu, char *extra)
@@ -12129,6 +12170,8 @@ static const struct iw_priv_args rtw_private_args[] = {
 		SIOCIWFIRSTPRIV + 0x17,
 		IW_PRIV_TYPE_CHAR | 1024, IW_PRIV_TYPE_CHAR | 1024 , "rrm"
 	},
+#else
+	{SIOCIWFIRSTPRIV + 0x17, IW_PRIV_TYPE_CHAR | 1024, 0,  "NULL"},
 #endif
 	{SIOCIWFIRSTPRIV + 0x18, IW_PRIV_TYPE_CHAR | IFNAMSIZ , 0 , "rereg_nd_name"},
 #ifdef CONFIG_MP_INCLUDED
@@ -12143,6 +12186,13 @@ static const struct iw_priv_args rtw_private_args[] = {
 		IW_PRIV_TYPE_CHAR | 40, IW_PRIV_TYPE_CHAR | 0x7FF, "test"
 	},
 
+#ifdef LGE_PRIVATE
+	{
+		SIOCIWFIRSTPRIV + 0x1E,
+		IW_PRIV_TYPE_CHAR | 40,
+		IW_PRIV_TYPE_CHAR | 0x7FF, "usb_disconnect"
+	},
+#else
 #ifdef CONFIG_INTEL_WIDI
 	{
 		SIOCIWFIRSTPRIV + 0x1E,
@@ -12153,6 +12203,7 @@ static const struct iw_priv_args rtw_private_args[] = {
 		IW_PRIV_TYPE_CHAR | 128, 0, "widi_prob_req"
 	},
 #endif /* CONFIG_INTEL_WIDI */
+#endif /* LGE_PRIVATE */
 
 	{ SIOCIWFIRSTPRIV + 0x0E, IW_PRIV_TYPE_CHAR | 1024, 0 , ""},  /* set  */
 	{ SIOCIWFIRSTPRIV + 0x0F, IW_PRIV_TYPE_CHAR | 1024, IW_PRIV_TYPE_CHAR | IW_PRIV_SIZE_MASK , ""},/* get
@@ -12290,10 +12341,14 @@ static iw_handler rtw_private_handler[] = {
 #endif
 	NULL,							/* 0x1C is reserved for hostapd */
 	rtw_test,						/* 0x1D */
+#ifdef LGE_PRIVATE
+	rtw_usb_disconnect,				/* 0x1E */
+#else	
 #ifdef CONFIG_INTEL_WIDI
 	rtw_widi_set,					/* 0x1E */
 	rtw_widi_set_probe_request,		/* 0x1F */
 #endif /* CONFIG_INTEL_WIDI */
+#endif /* LGE_PRIVATE */
 };
 
 #if WIRELESS_EXT >= 17

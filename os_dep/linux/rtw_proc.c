@@ -3113,6 +3113,7 @@ const struct rtw_proc_hdl adapter_proc_hdls[] = {
 	RTW_PROC_HDL_SSEQ("customer_str", proc_get_customer_str, NULL),
 #endif
 	RTW_PROC_HDL_SSEQ("fwstate", proc_get_fwstate, NULL),
+	RTW_PROC_HDL_SSEQ("kill_fw", proc_kill_fw, NULL),
 	RTW_PROC_HDL_SSEQ("sec_info", proc_get_sec_info, NULL),
 	RTW_PROC_HDL_SSEQ("mlmext_state", proc_get_mlmext_state, NULL),
 	RTW_PROC_HDL_SSEQ("qos_option", proc_get_qos_option, NULL),

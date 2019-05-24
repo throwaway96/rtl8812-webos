@@ -916,6 +916,55 @@ int proc_get_fwstate(struct seq_file *m, void *v)
 	return 0;
 }
 
+int proc_kill_fw(struct seq_file *m, void *v)
+{
+	struct net_device *dev = m->private;
+	_adapter *padapter = (_adapter *)rtw_netdev_priv(dev);
+	u32 cnt = 0;
+	u32 backup_val = 0;
+	u8 val8 = 0;
+
+	cnt = 10000;
+	while ((rtw_read8(padapter, (0x1700 + 3)) & BIT(5)) == 0) {
+		if (cnt == 0) {
+			RTW_ERR("[ERR]backup_val fail\n");
+			return 0;
+		}
+		cnt--;
+		rtw_usleep_os(50);
+	}
+
+	rtw_write32(padapter, 0x1700, 0x800F0000 | 0x38);
+	backup_val = rtw_read32(padapter, 0x1708);
+
+
+	val8 = rtw_read8(padapter, REG_SYS_FUNC_EN + 1);
+	val8 &= ~BIT(2);
+	rtw_write8(padapter, REG_SYS_FUNC_EN + 1, val8);
+
+	rtw_msleep_os(4000);
+
+	val8 = rtw_read8(padapter, REG_SYS_FUNC_EN + 1);
+	val8 |= BIT(2);
+	rtw_write8(padapter, REG_SYS_FUNC_EN + 1, val8);
+
+	cnt = 10000;
+	while ((rtw_read8(padapter, 0x1700 + 3) & BIT(5)) == 0) {
+		if (cnt == 0) {
+			RTW_ERR("[ERR]backup_val fail\n");
+			return 0;
+		}
+		cnt--;
+		rtw_usleep_os(50);
+	}
+
+	rtw_write32(padapter, 0x1704, backup_val);
+	rtw_write32(padapter, 0x1700, 0xC00F0000 | 0x38);
+	
+
+	return 0;
+}
+
 int proc_get_sec_info(struct seq_file *m, void *v)
 {
 	struct net_device *dev = m->private;
