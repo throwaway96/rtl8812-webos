@@ -9815,7 +9815,7 @@ int rtw_wdev_alloc(_adapter *padapter, struct wiphy *wiphy)
 
 #ifdef LGE_PRIVATE
 	strncpy(pwdev_priv->country, "DC", 3);
-	pwdev_priv->ccode_version = 0;
+	pwdev_priv->ccode_version = 1;
 	pwdev_priv->mchan_sched_mode = 0;
 	pwdev_priv->wowl = _FALSE;
 	pwdev_priv->wowl_activate = _FALSE;

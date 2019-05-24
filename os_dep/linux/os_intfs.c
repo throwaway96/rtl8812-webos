@@ -403,7 +403,7 @@ char *rtw_initmac = 0;  /* temp mac address if users want to use instead of the 
 u8 rtw_bmc_tx_rate = MGN_UNKNOWN;
 #endif
 #ifdef LGE_PRIVATE
-int rtw_wowlan_sta_mix_mode = 1;
+int rtw_wowlan_sta_mix_mode = 0;
 #else
 int rtw_wowlan_sta_mix_mode = 0;
 #endif /* LGE_PRIVATE */
@@ -3395,6 +3395,12 @@ netdev_open_normal_process:
 	if (rtw_is_file_readable(rtw_lge_file_path) == _TRUE) {
 		RTW_INFO("%s acquire Settings from file:%s\n", __func__, rtw_lge_file_path);
 		rtw_lge_load_setting(padapter, rtw_lge_file_path);
+	} else {
+		RTW_INFO("%s file is not exist:%s\n", __func__, rtw_lge_file_path);
+		RTW_INFO("%s can not load the private settings\n", __func__);
+		rtw_set_country(padapter,
+			adapter_wdev_data(padapter)->country,
+			adapter_wdev_data(padapter)->ccode_version);
 	}
 #endif /* LGE_PRIVATE */
 

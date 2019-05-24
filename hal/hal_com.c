@@ -8997,6 +8997,8 @@ static void rtw_hal_wow_enable(_adapter *adapter)
 #if defined(CONFIG_USB_HCI) || defined(CONFIG_PCI_HCI)
 	/* Invoid SE0 reset signal during suspending*/
 	rtw_write8(adapter, REG_RSV_CTRL, 0x20);
+	/* don't generate usb toogle signal during suspend process*/
+	rtw_write8(adapter, 0xfe10, 0x19);
 	if (IS_8188F(pHalData->version_id) == FALSE)
 		rtw_write8(adapter, REG_RSV_CTRL, 0x60);
 #endif
