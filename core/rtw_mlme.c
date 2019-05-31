@@ -1552,19 +1552,6 @@ void rtw_free_assoc_resources(_adapter *adapter, int lock_scanned_queue)
 			rtw_tdls_cmd(adapter, NULL, TDLS_RS_RCR);
 #endif /* CONFIG_TDLS */
 
-#ifdef LGE_PRIVATE
-		if (psta && psta->authorized) {
-			if (MLME_IS_GC(adapter) || MLME_IS_GO(adapter)) {
-				LGE_MSG("[P2P] Disconnected - MAC("MAC_BFMT") DEV_NAME(%s)",
-					MAC_ARG(pmlmepriv->cur_network.network.MacAddress),
-					(psta->dev_name_len > 0) ? psta->dev_name : NULL);
-			} else if (MLME_IS_STA(adapter)) {
-				LGE_MSG("[WLAN] Disconnected - MAC("MAC_BFMT") SSID(%s)",
-					MAC_ARG(pmlmepriv->cur_network.network.MacAddress),
-					pmlmepriv->cur_network.network.Ssid.Ssid);
-			}
-		}
-#endif /* LGE_PRIVATE */
 		/* _enter_critical_bh(&(pstapriv->sta_hash_lock), &irqL); */
 		rtw_free_stainfo(adapter, psta);
 		/* _exit_critical_bh(&(pstapriv->sta_hash_lock), &irqL); */

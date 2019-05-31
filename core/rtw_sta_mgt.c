@@ -830,6 +830,21 @@ u32	rtw_free_stainfo(_adapter *padapter , struct sta_info *psta)
 		/* _exit_critical_bh(&(pfree_sta_queue->lock), &irqL0); */
 	}
 
+#ifdef LGE_PRIVATE
+	if (psta && psta->authorized) {
+		struct	mlme_priv *pmlmepriv = &padapter->mlmepriv;
+		if (MLME_IS_GC(padapter) || MLME_IS_GO(padapter)) {
+			LGE_MSG("[P2P] Disconnected - MAC("MAC_BFMT") DEV_NAME(%s)",
+				MAC_ARG(pmlmepriv->cur_network.network.MacAddress),
+				(psta->dev_name_len > 0) ? psta->dev_name : NULL);
+		} else if (MLME_IS_STA(padapter)) {
+			LGE_MSG("[WLAN] Disconnected - MAC("MAC_BFMT") SSID(%s)",
+				MAC_ARG(pmlmepriv->cur_network.network.MacAddress),
+				pmlmepriv->cur_network.network.Ssid.Ssid);
+		}
+	}
+#endif /* LGE_PRIVATE */
+
 exit:
 	return _SUCCESS;
 }
