@@ -1196,7 +1196,8 @@ void rtw_cfg80211_indicate_disconnect(_adapter *padapter, u16 reason, u8 locally
 		if (pwdev->sme_state == CFG80211_SME_CONNECTING) {
 			RTW_INFO(FUNC_ADPT_FMT" call cfg80211_connect_result\n", FUNC_ADPT_ARG(padapter));
 			rtw_cfg80211_connect_result(pwdev, NULL, NULL, 0, NULL, 0,
-				WLAN_STATUS_UNSPECIFIED_FAILURE, GFP_ATOMIC);
+				reason ? reason : WLAN_STATUS_UNSPECIFIED_FAILURE,
+				GFP_ATOMIC);
 		} else if (pwdev->sme_state == CFG80211_SME_CONNECTED) {
 			RTW_INFO(FUNC_ADPT_FMT" call cfg80211_disconnected\n", FUNC_ADPT_ARG(padapter));
 			rtw_cfg80211_disconnected(pwdev, reason, NULL, 0, locally_generated, GFP_ATOMIC);
@@ -1207,7 +1208,8 @@ void rtw_cfg80211_indicate_disconnect(_adapter *padapter, u16 reason, u8 locally
 		if (pwdev_priv->connect_req) {
 			RTW_INFO(FUNC_ADPT_FMT" call cfg80211_connect_result\n", FUNC_ADPT_ARG(padapter));
 			rtw_cfg80211_connect_result(pwdev, NULL, NULL, 0, NULL, 0,
-				WLAN_STATUS_UNSPECIFIED_FAILURE, GFP_ATOMIC);
+				reason ? reason : WLAN_STATUS_UNSPECIFIED_FAILURE,
+				GFP_ATOMIC);
 		} else {
 			RTW_INFO(FUNC_ADPT_FMT" call cfg80211_disconnected\n", FUNC_ADPT_ARG(padapter));
 			rtw_cfg80211_disconnected(pwdev, reason, NULL, 0, locally_generated, GFP_ATOMIC);
@@ -2912,7 +2914,7 @@ static int cfg80211_rtw_scan(struct wiphy *wiphy
 #endif
 
 #ifdef LGE_PRIVATE
-	if (adapter_wdev_data(padapter)->idle_mode == 1) {
+	if (adapter_wdev_data(padapter)->idle_mode) {
 		RTW_INFO(" In idle mode, ignore it.\n");
 		adapter_wdev_data(padapter)->block_scan = _TRUE;
 		ret = -EBUSY;
@@ -9821,6 +9823,7 @@ int rtw_wdev_alloc(_adapter *padapter, struct wiphy *wiphy)
 	pwdev_priv->wowl = _FALSE;
 	pwdev_priv->wowl_activate = _FALSE;
 	pwdev_priv->idle_mode = _FALSE;
+	pwdev_priv->delay_disconnect = _FALSE;
 #endif /* LGE_PRIVATE */
 
 #ifdef CONFIG_CONCURRENT_MODE

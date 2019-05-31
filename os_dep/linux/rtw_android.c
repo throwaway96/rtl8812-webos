@@ -973,6 +973,13 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 		u8 surprise_removed = rtw_is_surprise_removed(padapter_primary);
 		u8 concurreny = 0, chk_primary, chk_buddy = 0;
 
+		if (adapter_wdev_data(padapter_primary)->delay_disconnect) {
+			/* report disconnect to uplayer */
+			RTW_INFO("==>%s: indicate disconnet !!!\n", __func__);
+			rtw_mi_suspend_free_assoc_resource(padapter_primary);
+			adapter_wdev_data(padapter_primary)->delay_disconnect = _FALSE;
+		}
+
 		if (in_suspend == _FALSE) {
 			char p2p_opch[8] = "N/A";
 

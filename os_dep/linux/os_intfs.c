@@ -4467,7 +4467,12 @@ int rtw_suspend_normal(_adapter *padapter)
 #endif
 	rtw_mi_netif_caroff_qstop(padapter);
 
+#ifdef LGE_PRIVATE
+	if (adapter_wdev_data(padapter)->idle_mode == 0)
+		rtw_mi_suspend_free_assoc_resource(padapter);
+#else
 	rtw_mi_suspend_free_assoc_resource(padapter);
+#endif /* LGE_PRIVATE */
 
 	rtw_led_control(padapter, LED_CTL_POWER_OFF);
 
@@ -4501,8 +4506,6 @@ int rtw_suspend_common(_adapter *padapter)
 	struct debug_priv *pdbgpriv = &dvobj->drv_dbg;
 	struct pwrctrl_priv *pwrpriv = dvobj_to_pwrctl(dvobj);
 	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	struct mlme_ext_priv	*pmlmeext = &padapter->mlmeextpriv;
-	struct mlme_ext_info	*pmlmeinfo = &(pmlmeext->mlmext_info);
 
 	int ret = 0;
 	systime start_time = rtw_get_current_time();
@@ -4516,19 +4519,29 @@ int rtw_suspend_common(_adapter *padapter)
 #ifdef LGE_PRIVATE
 	LGE_MSG("WiFi suspend start");
 
-	if(adapter_wdev_data(padapter)->idle_mode && is_client_associated_to_ap(padapter)) {
-		receive_disconnect(padapter, pmlmeinfo->network.MacAddress, 0, _FALSE);
-		rtw_msleep_os(100);
-	}
-
 	if (is_client_associated_to_ap(padapter) == _FALSE) {
+		/* QSM+(0) WOWL(0) : SET_WOWL(0) IDLE_MODE */
+		/* QSM+(0) WOWL(1) : SET_WOWL(0) IDLE_MODE */
+		/* QSM+(1) WOWL(0) : SET_WOWL(0) */
+		/* QSM+(1) WOWL(1) : SET_WOWL(0) */
 		adapter_wdev_data(padapter)->idle_mode = _TRUE;
 		adapter_wdev_data(padapter)->wowl = _FALSE;
 		adapter_wdev_data(padapter)->wowl_activate = _FALSE;
 	} else {
-		adapter_wdev_data(padapter)->idle_mode = _FALSE;
-		adapter_wdev_data(padapter)->wowl = _TRUE;
-		adapter_wdev_data(padapter)->wowl_activate = _TRUE;
+		if ((adapter_wdev_data(padapter)->idle_mode) ||
+			(adapter_wdev_data(padapter)->wowl == _FALSE)) {
+			/* QSM+(0) WOWL(0) : SET_WOWL(0) IDLE_MODE */
+			/* QSM+(1) WOWL(0) : SET_WOWL(0) */
+			adapter_wdev_data(padapter)->idle_mode = _TRUE;
+			adapter_wdev_data(padapter)->wowl = _FALSE;
+			adapter_wdev_data(padapter)->wowl_activate = _FALSE;
+		} else {
+			/* QSM+(0) WOWL(1) : SET_WOWL(1) WOWL_ACTIVATE */
+			/* QSM+(1) WOWL(1) : SET_WOWL(1) */
+			adapter_wdev_data(padapter)->idle_mode = _FALSE;
+			adapter_wdev_data(padapter)->wowl = _TRUE;
+			adapter_wdev_data(padapter)->wowl_activate = _TRUE;
+		}
 	}
 #endif /* LGE_PRIVATE */
 
@@ -4573,6 +4586,12 @@ int rtw_suspend_common(_adapter *padapter)
 			pwrpriv->wowlan_mode = _TRUE;
 		else if (pwrpriv->wowlan_pno_enable == _TRUE)
 			pwrpriv->wowlan_mode |= pwrpriv->wowlan_pno_enable;
+
+#ifdef LGE_PRIVATE
+		/* don't enter wowlan in this case */
+		if (adapter_wdev_data(padapter)->idle_mode)
+			pwrpriv->wowlan_mode = _FALSE;
+#endif /* LGE_PRIVATE */
 
 #ifdef CONFIG_P2P_WOWLAN
 		if (!rtw_p2p_chk_state(&padapter->wdinfo, P2P_STATE_NONE) || P2P_ROLE_DISABLE != padapter->wdinfo.role)
@@ -5011,7 +5030,6 @@ int rtw_resume_common(_adapter *padapter)
 	struct pwrctrl_priv *pwrpriv = adapter_to_pwrctl(padapter);
 	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
 
-
 	if (pwrpriv->bInSuspend == _FALSE)
 		return 0;
 
@@ -5051,8 +5069,9 @@ int rtw_resume_common(_adapter *padapter)
 	if (adapter_wdev_data(padapter)->idle_mode) {
 		rtw_hal_sreset_reset(padapter);
 		rtw_init_pwrctrl_priv_reset(padapter);
-
+		adapter_wdev_data(padapter)->delay_disconnect = _TRUE;
 	}
+
 	adapter_wdev_data(padapter)->wowl = _FALSE;
 	adapter_wdev_data(padapter)->wowl_activate = _FALSE;
 	adapter_wdev_data(padapter)->idle_mode = _FALSE;

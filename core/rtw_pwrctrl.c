@@ -2570,7 +2570,7 @@ int _rtw_pwr_wakeup(_adapter *padapter, u32 ips_deffer_ms, const char *caller)
 		pwrpriv->ips_deny_time = rtw_get_current_time() + rtw_ms_to_systime(ips_deffer_ms);
 
 #ifdef LGE_PRIVATE
-	if (adapter_wdev_data(padapter)->idle_mode == 1) {
+	if (adapter_wdev_data(padapter)->idle_mode) {
 		RTW_INFO("%s In idle mode, ignore it.\n", __func__);
 		ret = _FAIL;
 		goto exit;
