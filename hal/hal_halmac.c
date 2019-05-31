@@ -982,7 +982,7 @@ static int init_write_rsvd_page_size(struct dvobj_priv *d)
 
 #ifdef CONFIG_USB_HCI
 	/* for USB do not exceed MAX_CMDBUF_SZ */
-	size = 0x1000;
+	size = MAX_CMDBUF_SZ - TXDESC_OFFSET;
 #elif defined(CONFIG_PCIE_HCI)
 	size = MAX_CMDBUF_SZ - TXDESC_OFFSET;
 #elif defined(CONFIG_SDIO_HCI)

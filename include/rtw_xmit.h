@@ -88,7 +88,7 @@
 #elif defined(CONFIG_RTL8723D) && defined(CONFIG_LPS_POFF)
 	#define MAX_CMDBUF_SZ	(128*70) /*(8960)*/
 #else
-	#define MAX_CMDBUF_SZ	(5120)	/* (4096) */
+	#define MAX_CMDBUF_SZ	0x7000	/* (4096) */
 #endif
 
 #define MAX_BEACON_LEN	 512
