@@ -2471,27 +2471,42 @@ u8 traffic_status_watchdog(_adapter *padapter, u8 from_timer)
 			mcc[1] = (mcc[1] + 1) & 0x00000003;
 
 			if (padapter->iface_id && (mcc[1] == 0)) {
-				u8 val = 0;
+				u8 *val = &adapter_wdev_data(padapter_primary)->mchan_sched_dyn;
+
+				/* 
+				   Default dynamic MCC priority -> Fair
+				   There is only wlan traffic -> Make STA favor
+				   There is only p2p traffic -> Make P2P favor
+				   There are traffics of both wlan and p2p -> Fair
+				   There is no traffics of both wlan and p2p -> Stay previous dynamic MCC priority
+				   (Low, High) : P2P favor
+				   (High, Low) : STA favor
+				   (High, High) : Fair
+				   (Low, Low) : Stay previous dynamic MCC priority
+				*/ 
 
 				if ((mcc[0] < LGE_FAVOR_TH_LOW) &&
-				    (mcc[2] > LGE_FAVOR_TH_HIHG))
-					val = 4;
-				if ((mcc[2] < LGE_FAVOR_TH_LOW) &&
-				    (mcc[0] > LGE_FAVOR_TH_HIHG))
-					val = 3;
+					(mcc[2] > LGE_FAVOR_TH_HIHG))
+					*val = 4; /* P2P faver */
+				if ((mcc[0] > LGE_FAVOR_TH_HIHG) &&
+					(mcc[2] < LGE_FAVOR_TH_LOW))
+					*val = 3; /* STA favor */
+				if ((mcc[0] > LGE_FAVOR_TH_HIHG) &&
+					(mcc[2] > LGE_FAVOR_TH_HIHG))
+					*val = 0; /* Fair */
 
 				#if LGE_DEBUG
 				LGE_MSG("Current dynamic MCC priority : %s [%u, %u, %u]",
-					(val == 0) ? "Fair" : (val == 3) ? "STA favor" : "P2P favor",
+					(*val == 0) ? "Fair" : (*val == 3) ? "STA favor" : "P2P favor",
 					mcc[0], mcc[2], mcc[1]);
 				#else /* LGE_DEBUG */
 				LGE_MSG("Current dynamic MCC priority : %s",
-					(val == 0) ? "Fair" : (val == 3) ? "STA favor" : "P2P favor");
+					(*val == 0) ? "Fair" : (*val == 3) ? "STA favor" : "P2P favor");
 				#endif /* LGE_DEBUG */
 
 				mcc[0] = 0;
 				mcc[2] = 0;
-				rtw_set_mcc_duration_cmd(padapter, MCC_DURATION_MAPPING, val);
+				rtw_set_mcc_duration_cmd(padapter, MCC_DURATION_MAPPING, *val);
 			}
 		}
 #endif

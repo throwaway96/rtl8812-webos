@@ -185,6 +185,7 @@ struct rtw_wdev_priv {
 	u8 country[3];
 	u8 ccode_version;
 	u8 mchan_sched_mode;
+	u8 mchan_sched_dyn;
 	u8 wowl;
 	u8 wowl_activate;
 	u8 idle_mode;

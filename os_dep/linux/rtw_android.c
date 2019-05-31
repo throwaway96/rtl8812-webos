@@ -948,6 +948,10 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 		LGE_MSG("[WLAN] Private cmd - SET_MCHAN_SCHED_MODE (%u) received", val);
 
 		adapter_wdev_data(padapter)->mchan_sched_mode = val;
+		if (val == 0) {
+			/* default dynamic Fair */
+			adapter_wdev_data(padapter)->mchan_sched_dyn = 0;
+		}
 #ifdef CONFIG_MCC_MODE
 		rtw_set_mcc_duration_cmd(padapter, MCC_DURATION_MAPPING, val);
 #endif /* CONFIG_MCC_MODE */
