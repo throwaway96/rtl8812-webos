@@ -4565,6 +4565,9 @@ int rtw_suspend_common(_adapter *padapter)
 		pdbgpriv->dbg_suspend_error_cnt++;
 		goto exit;
 	}
+	
+	if (check_fwstate(pmlmepriv, _FW_UNDER_SURVEY))
+		rtw_scan_abort(padapter);
 	rtw_ps_deny(padapter, PS_DENY_SUSPEND);
 
 	rtw_mi_cancel_all_timer(padapter);
