@@ -64,4 +64,13 @@ int rtw_set_channel_plan(_adapter *adapter, u8 channel_plan);
 int rtw_set_country(_adapter *adapter, const char *country_code, const u8 version);
 int rtw_set_band(_adapter *adapter, u8 band);
 
+#ifdef LGE_PRIVATE
+
+typedef enum {
+	LGE_ABNOR_FW_STALL = 1,
+	LGE_ABNOR_MAX
+}LGE_ABNOR;
+
+void lge_set_abnormal(_adapter *adapter, LGE_ABNOR abnor);
+#endif /* LGE_PRIVATE */
 #endif

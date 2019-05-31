@@ -100,7 +100,8 @@ const char *android_wifi_cmd_str[ANDROID_WIFI_CMD_MAX] = {
 	"GET_CS_INFO",
 	"SET_WOWL",
 	"WOWL_ACTIVATE",
-	"IDLE_MODE"
+	"IDLE_MODE",
+	"SET_ABNORMAL"
 #endif /* LGE_PRIVATE */
 };
 
@@ -1143,6 +1144,23 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 			} else
 				RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s], in_suspend=_TRUE"CLR_NONEN, command);
 		} else
+			RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s], is not primary"CLR_NONEN, command);
+
+		snprintf(command, 3, "OK");
+		bytes_written = strlen("OK");
+	}
+		break;
+	case LGE_PRIVATE_CMD_SET_ABNORMAL:
+	{
+		u8 val = 0;
+
+		sscanf(command, "SET_ABNORMAL %u", (unsigned int *)&val);
+
+		LGE_MSG("[WLAN] Private cmd - SET_ABNORMAL (%u) received", val);
+
+		if (padapter->isprimary)
+			lge_set_abnormal(padapter, val);
+		else
 			RTW_INFO(CLR_LT_GRN"LGE PRIVATE [%s], is not primary"CLR_NONEN, command);
 
 		snprintf(command, 3, "OK");

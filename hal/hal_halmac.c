@@ -3705,6 +3705,9 @@ int rtw_halmac_send_h2c(struct dvobj_priv *d, u8 *h2c)
 		hal->srestpriv.self_dect_fw = _TRUE;
 		hal->srestpriv.self_dect_fw_cnt++;
 #endif /* DBG_CONFIG_ERROR_DETECT */
+#ifdef LGE_PRIVATE
+		lge_set_abnormal(adapter, LGE_ABNOR_FW_STALL);
+#endif /* LGE_PRIVATE */
 		goto exit;
 	}
 

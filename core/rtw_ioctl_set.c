@@ -892,3 +892,24 @@ int rtw_set_band(_adapter *adapter, u8 band)
 	RTW_PRINT(FUNC_ADPT_FMT" band:%d fail\n", FUNC_ADPT_ARG(adapter), band);
 	return _FAIL;
 }
+
+#ifdef LGE_PRIVATE
+void lge_set_abnormal(_adapter *adapter, LGE_ABNOR abnor)
+{
+	switch (abnor) {
+	case LGE_ABNOR_FW_STALL: /* Make F/W to stall */
+	{
+#if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 12))
+		char event_name[] = "WIFI_STATUS=stall";
+		char *envp[] = { event_name, NULL };
+
+		kobject_uevent_env(&adapter->pnetdev->dev.kobj, KOBJ_CHANGE, envp);
+#endif
+		LGE_MSG("[WIFI] WIFI_STATUS=stall");
+	}
+		break;
+	default:
+		break;
+	}
+}
+#endif /* LGE_PRIVATE */
