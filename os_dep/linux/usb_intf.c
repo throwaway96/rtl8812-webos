@@ -919,10 +919,6 @@ static int rtw_suspend(struct usb_interface *pusb_intf, pm_message_t message)
 	struct debug_priv *pdbgpriv;
 	PADAPTER padapter;
 	int ret = 0;
-#ifdef LGE_PRIVATE
-	char event_name[] = "WIFI_STATUS=suspend";
-	char *envp[] = { event_name, NULL };
-#endif
 
 	dvobj = usb_get_intfdata(pusb_intf);
 	pwrpriv = dvobj_to_pwrctl(dvobj);
@@ -955,10 +951,14 @@ static int rtw_suspend(struct usb_interface *pusb_intf, pm_message_t message)
 #ifdef LGE_PRIVATE
 	if (ret == 0) {
 #if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 12))
+		char event_name[] = "WIFI_STATUS=suspend";
+		char *envp[] = { event_name, NULL };
+
 		kobject_uevent_env(&padapter->pnetdev->dev.kobj, KOBJ_CHANGE, envp);
 #endif
+		LGE_MSG("[WIFI] WIFI_STATUS=suspend");
 	}
-#endif
+#endif /* LGE_PRIVATE */
 exit:
 	return ret;
 }
@@ -1034,6 +1034,10 @@ int rtw_resume_process(_adapter *padapter)
 	return ret;
 }
 
+#ifdef LGE_PRIVATE
+extern int netdev_open(struct net_device *pnetdev);
+#endif /* LGE_PRIVATE */
+
 static int rtw_resume(struct usb_interface *pusb_intf)
 {
 	struct dvobj_priv *dvobj;
@@ -1043,14 +1047,18 @@ static int rtw_resume(struct usb_interface *pusb_intf)
 	struct mlme_ext_priv *pmlmeext;
 	int ret = 0;
 #ifdef LGE_PRIVATE
-	char event_name[] = "WIFI_STATUS=ready";
-	char *envp[] = { event_name, NULL };
-#endif
+	HAL_DATA_TYPE *hal;
 
 	dvobj = usb_get_intfdata(pusb_intf);
+	padapter = dvobj_get_primary_adapter(dvobj);
+	hal = GET_HAL_DATA(padapter);
+#else
+	dvobj = usb_get_intfdata(pusb_intf);
+	padapter = dvobj_get_primary_adapter(dvobj);
+#endif /* LGE_PRIVATE */
+
 	pwrpriv = dvobj_to_pwrctl(dvobj);
 	pdbgpriv = &dvobj->drv_dbg;
-	padapter = dvobj_get_primary_adapter(dvobj);
 	pmlmeext = &padapter->mlmeextpriv;
 
 	RTW_INFO("==> %s (%s:%d), MAC_81=%x\n", __FUNCTION__, current->comm, current->pid, rtw_read8(padapter, REG_MCUFW_CTRL+1));
@@ -1098,12 +1106,26 @@ static int rtw_resume(struct usb_interface *pusb_intf)
 	RTW_INFO("<========  %s return %d\n", __FUNCTION__, ret);
 
 #ifdef LGE_PRIVATE
-	if (ret == 0) {
-#if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 12))
-		kobject_uevent_env(&padapter->pnetdev->dev.kobj, KOBJ_CHANGE, envp);
-#endif
+#ifdef CONFIG_CONCURRENT_MODE
+	{
+		/* we have open the p2p interface after resume */
+		_adapter *sec_adapter = adapter_to_dvobj(padapter)->padapters[IFACE_ID1];
+
+		if (sec_adapter && (sec_adapter->bup == _FALSE))
+			netdev_open(sec_adapter->pnetdev);
 	}
 #endif
+
+	if (ret == 0) {
+#if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 12))
+		char event_name[] = "WIFI_STATUS=ready";
+		char *envp[] = { event_name, NULL };
+
+		kobject_uevent_env(&padapter->pnetdev->dev.kobj, KOBJ_CHANGE, envp);
+#endif
+		LGE_MSG("[WIFI] WIFI_STATUS=ready");
+	}
+#endif /* LGE_PRIVATE */
 	return ret;
 }
 

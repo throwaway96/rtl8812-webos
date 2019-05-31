@@ -1096,7 +1096,7 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 #if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 12))
 		kobject_uevent_env(&padapter->pnetdev->dev.kobj, KOBJ_CHANGE, envp);
 #endif
-
+		LGE_MSG("[WIFI] WIFI_STATUS=suspend");
 	}
 		break;
 	case LGE_PRIVATE_CMD_WOWL_ACTIVATE:

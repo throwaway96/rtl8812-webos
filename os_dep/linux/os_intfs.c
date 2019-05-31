@@ -3402,6 +3402,19 @@ netdev_open_normal_process:
 			adapter_wdev_data(padapter)->country,
 			adapter_wdev_data(padapter)->ccode_version);
 	}
+
+	if ((status == _SUCCESS) &&
+		(!pwrctrlpriv->bInSuspend)) {
+#if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 12))
+		char event_name[] = "WIFI_STATUS=ready";
+		char *envp[] = { event_name, NULL };
+
+		kobject_uevent_env(&padapter->pnetdev->dev.kobj, KOBJ_CHANGE, envp);
+		RTW_INFO("%s Completed Sending WIFI Ready \n", __func__);
+#endif
+		LGE_MSG("[WIFI] WIFI_STATUS=ready");
+	}
+
 #endif /* LGE_PRIVATE */
 
 	RTW_INFO("-871x_drv - drv_open, bup=%d\n", padapter->bup);
