@@ -4802,10 +4802,10 @@ int rtw_lge_parse_country(_adapter *padapter, u8 *list_str)
 			RTW_INFO("%s country [%s, %s]\n", __func__, country, ccode_ver);
 
 		if (rtw_set_country(padapter, country, rtw_atoi(ccode_ver)) == _FAIL)
-			rtw_set_country(padapter, "DC", 1);
+			rtw_set_country(padapter, "DC", 3);
 	} else {
-		RTW_INFO("%s can not load the country setting. Apply to [DC,1]\n", __func__);
-		rtw_set_country(padapter, "DC", 1);
+		RTW_INFO("%s can not load the country setting. Apply to [DC,3]\n", __func__);
+		rtw_set_country(padapter, "DC", 3);
 	}
 
 	return 0;
