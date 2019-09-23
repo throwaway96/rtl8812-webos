@@ -2215,6 +2215,8 @@ static void rtw_hal_mcc_start_prehdl(PADAPTER padapter)
 		mccadapriv = &iface->mcc_adapterpriv;
 		mccadapriv->role = MCC_ROLE_MAX;
 	}
+
+	SET_MCC_DURATION(padapter, padapter->registrypriv.rtw_mcc_duration);
 }
 
 static u8 rtw_hal_set_mcc_start_setting(PADAPTER padapter, u8 status)
@@ -2904,7 +2906,7 @@ void rtw_hal_mcc_update_parameter(PADAPTER padapter, u8 force_update)
 
 		/* GO/AP is order 0, GC/STA is order 1 */
 		order0_duration = order0_iface->mcc_adapterpriv.mcc_duration = interval - duration;
-		order0_iface->mcc_adapterpriv.mcc_duration = duration;
+		order1_iface->mcc_adapterpriv.mcc_duration = duration;
 
 		tsf_bsae_port = rtw_hal_get_port(order1_iface);
 		tsf_sync_port = rtw_hal_get_port(order0_iface);
@@ -3702,7 +3704,6 @@ void rtw_hal_mcc_parameter_init(PADAPTER padapter)
 
 	if (is_primary_adapter(padapter)) {
 		SET_MCC_EN_FLAG(padapter, padapter->registrypriv.en_mcc);
-		SET_MCC_DURATION(padapter, padapter->registrypriv.rtw_mcc_duration);
 		SET_MCC_RUNTIME_DURATION(padapter, padapter->registrypriv.rtw_mcc_enable_runtime_duration);
 		SET_MCC_PHYDM_OFFLOAD(padapter, padapter->registrypriv.rtw_mcc_phydm_offload);
 	}

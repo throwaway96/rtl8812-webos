@@ -123,7 +123,7 @@ sint _rtw_init_recv_priv(struct recv_priv *precvpriv, _adapter *padapter)
 
 		rtw_list_insert_tail(&(precvframe->u.list), &(precvpriv->free_recv_queue.queue));
 
-		res = rtw_os_recv_resource_alloc(padapter, precvframe);
+		rtw_os_recv_resource_alloc(padapter, precvframe);
 
 		precvframe->u.hdr.len = 0;
 
@@ -2021,7 +2021,9 @@ sint validate_recv_mgnt_frame(PADAPTER padapter, union recv_frame *precv_frame)
 #endif
 	mgt_dispatcher(padapter, precv_frame);
 
+#if defined(CONFIG_IEEE80211W) || defined(CONFIG_RTW_MESH)
 exit:
+#endif
 	return _SUCCESS;
 
 }
@@ -2087,7 +2089,9 @@ sint validate_recv_data_frame(_adapter *adapter, union recv_frame *precv_frame)
 		break;
 	}
 
+#ifdef CONFIG_RTW_MESH
 pre_validate_status_chk:
+#endif
 	if (ret == _FAIL) {
 		#ifdef DBG_RX_DROP_FRAME
 		RTW_INFO("DBG_RX_DROP_FRAME "FUNC_ADPT_FMT" case:%d, res:%d, ra="MAC_FMT", ta="MAC_FMT"\n"
@@ -2893,10 +2897,13 @@ static int rtw_recv_indicatepkt_check(union recv_frame *rframe, u8 *ehdr_pos, u3
 
 	ret = _SUCCESS;
 
+#ifdef CONFIG_WAPI_SUPPORT
 exit:
+#endif
 	return ret;
 }
 
+#ifdef CONFIG_RTW_MESH
 static void recv_free_fwd_resource(_adapter *adapter, struct xmit_frame *fwd_frame, _list *b2u_list)
 {
 	struct xmit_priv *xmitpriv = &adapter->xmitpriv;
@@ -2904,7 +2911,6 @@ static void recv_free_fwd_resource(_adapter *adapter, struct xmit_frame *fwd_fra
 	if (fwd_frame)
 		rtw_free_xmitframe(xmitpriv, fwd_frame);
 
-#ifdef CONFIG_RTW_MESH
 #if CONFIG_RTW_MESH_DATA_BMC_TO_UC
 	if (!rtw_is_list_empty(b2u_list)) {
 		struct xmit_frame *b2uframe;
@@ -2919,7 +2925,6 @@ static void recv_free_fwd_resource(_adapter *adapter, struct xmit_frame *fwd_fra
 		}
 	}
 #endif
-#endif /* CONFIG_RTW_MESH */
 }
 
 static void recv_fwd_pkt_hdl(_adapter *adapter, _pkt *pkt
@@ -2939,7 +2944,6 @@ static void recv_fwd_pkt_hdl(_adapter *adapter, _pkt *pkt
 		}
 	}
 
-#ifdef CONFIG_RTW_MESH
 #if CONFIG_RTW_MESH_DATA_BMC_TO_UC
 	if (!rtw_is_list_empty(b2u_list)) {
 		_list *list = get_next(b2u_list);
@@ -2963,7 +2967,6 @@ static void recv_fwd_pkt_hdl(_adapter *adapter, _pkt *pkt
 		}
 	}
 #endif
-#endif /* CONFIG_RTW_MESH */
 
 	if (fwd_frame) {
 		fwd_frame->pkt = fwd_pkt;
@@ -2978,6 +2981,7 @@ static void recv_fwd_pkt_hdl(_adapter *adapter, _pkt *pkt
 exit:
 	return;
 }
+#endif /* CONFIG_RTW_MESH */
 
 int amsdu_to_msdu(_adapter *padapter, union recv_frame *prframe)
 {
@@ -2991,8 +2995,10 @@ int amsdu_to_msdu(_adapter *padapter, union recv_frame *prframe)
 	_queue *pfree_recv_queue = &(precvpriv->free_recv_queue);
 	const u8 *da, *sa;
 	int act;
+#ifdef CONFIG_RTW_MESH /* TODO: move AP mode forward & b2u logic here */
 	struct xmit_frame *fwd_frame;
 	_list b2u_list;
+#endif
 	u8 mctrl_len = 0;
 	int	ret = _SUCCESS;
 
@@ -3015,9 +3021,10 @@ int amsdu_to_msdu(_adapter *padapter, union recv_frame *prframe)
 		}
 
 		act = RTW_RX_MSDU_ACT_INDICATE;
-		fwd_frame = NULL;
 
 		#ifdef CONFIG_RTW_MESH
+		fwd_frame = NULL;
+
 		if (MLME_IS_MESH(padapter)) {
 			u8 *mda = pdata, *msa = pdata + ETH_ALEN;
 			struct rtw_ieee80211s_hdr *mctrl = (struct rtw_ieee80211s_hdr *)(pdata + ETH_HLEN);
@@ -3037,8 +3044,10 @@ int amsdu_to_msdu(_adapter *padapter, union recv_frame *prframe)
 			sa = pdata + ETH_ALEN;
 		}
 
+		#ifdef CONFIG_RTW_MESH
 		if (!act)
 			goto move_to_next;
+		#endif
 
 		rtw_led_rx_control(padapter, da);
 
@@ -3050,12 +3059,14 @@ int amsdu_to_msdu(_adapter *padapter, union recv_frame *prframe)
 				RTW_INFO("DBG_RX_DROP_FRAME %s rtw_os_alloc_msdu_pkt fail\n", __func__);
 				#endif
 			}
+			#ifdef CONFIG_RTW_MESH
 			if (act & RTW_RX_MSDU_ACT_FORWARD) {
 				#ifdef DBG_TX_DROP_FRAME
 				RTW_INFO("DBG_TX_DROP_FRAME %s rtw_os_alloc_msdu_pkt fail\n", __func__);
 				#endif
 				recv_free_fwd_resource(padapter, fwd_frame, &b2u_list);
 			}
+			#endif
 			break;
 		}
 
@@ -3072,7 +3083,9 @@ int amsdu_to_msdu(_adapter *padapter, union recv_frame *prframe)
 		else
 			rtw_os_pkt_free(sub_pkt);
 
+#ifdef CONFIG_RTW_MESH
 move_to_next:
+#endif
 		/* move the data point to data content */
 		pdata += ETH_HLEN;
 		a_len -= ETH_HLEN;
@@ -3131,10 +3144,11 @@ static int recv_process_mpdu(_adapter *padapter, union recv_frame *prframe)
 		}
 	} else {
 		int act = RTW_RX_MSDU_ACT_INDICATE;
+
+		#ifdef CONFIG_RTW_MESH /* TODO: move AP mode forward & b2u logic here */
 		struct xmit_frame *fwd_frame = NULL;
 		_list b2u_list;
 
-		#ifdef CONFIG_RTW_MESH
 		if (MLME_IS_MESH(padapter) && pattrib->mesh_ctrl_present) {
 			act = rtw_mesh_rx_msdu_act_check(prframe
 				, pattrib->mda, pattrib->msa
@@ -3144,11 +3158,13 @@ static int recv_process_mpdu(_adapter *padapter, union recv_frame *prframe)
 		}
 		#endif
 
+		#ifdef CONFIG_RTW_MESH
 		if (!act) {
 			rtw_free_recvframe(prframe, pfree_recv_queue);
 			ret = _FAIL;
 			goto exit;
 		}
+		#endif
 
 		rtw_led_rx_control(padapter, pattrib->dst);
 
@@ -3160,12 +3176,14 @@ static int recv_process_mpdu(_adapter *padapter, union recv_frame *prframe)
 					, FUNC_ADPT_ARG(padapter));
 				#endif
 			}
+			#ifdef CONFIG_RTW_MESH
 			if (act & RTW_RX_MSDU_ACT_FORWARD) {
 				#ifdef DBG_TX_DROP_FRAME
 				RTW_INFO("DBG_TX_DROP_FRAME %s wlanhdr_to_ethhdr fail\n", __func__);
 				#endif
 				recv_free_fwd_resource(padapter, fwd_frame, &b2u_list);
 			}
+			#endif
 			rtw_free_recvframe(prframe, pfree_recv_queue);
 			goto exit;
 		}
@@ -3562,9 +3580,15 @@ void rtw_reordering_ctrl_timeout_handler(void *pcontext)
 {
 	_irqL irql;
 	struct recv_reorder_ctrl *preorder_ctrl = (struct recv_reorder_ctrl *)pcontext;
-	_adapter *padapter = preorder_ctrl->padapter;
-	_queue *ppending_recvframe_queue = &preorder_ctrl->pending_recvframe_queue;
+	_adapter *padapter = NULL;
+	_queue *ppending_recvframe_queue = NULL;
 
+
+	if ((preorder_ctrl == NULL) || (preorder_ctrl->padapter == NULL))
+		return;
+
+	padapter = preorder_ctrl->padapter;
+	ppending_recvframe_queue = &preorder_ctrl->pending_recvframe_queue;
 
 	if (RTW_CANNOT_RUN(padapter))
 		return;
@@ -3573,8 +3597,7 @@ void rtw_reordering_ctrl_timeout_handler(void *pcontext)
 
 	_enter_critical_bh(&ppending_recvframe_queue->lock, &irql);
 
-	if (preorder_ctrl)
-		preorder_ctrl->bReorderWaiting = _FALSE;
+	preorder_ctrl->bReorderWaiting = _FALSE;
 
 	if (recv_indicatepkts_in_order(padapter, preorder_ctrl, _TRUE) == _TRUE)
 		_set_timer(&preorder_ctrl->reordering_ctrl_timer, REORDER_WAIT_TIME);
@@ -4010,13 +4033,7 @@ static sint fill_radiotap_hdr(_adapter *padapter, union recv_frame *precvframe, 
 	/* rate */
 	if (pattrib->data_rate < 12) {
 		rtap_hdr->it_present |= (1 << IEEE80211_RADIOTAP_RATE);
-		if (pattrib->data_rate < 4) {
-			/* CCK */
-			hdr_buf[rt_len] = data_rate[pattrib->data_rate];
-		} else {
-			/* OFDM */
-			hdr_buf[rt_len] = data_rate[pattrib->data_rate];
-		}
+		hdr_buf[rt_len] = data_rate[pattrib->data_rate];
 	}
 	rt_len += 1; /* force padding 1 byte for aligned */
 

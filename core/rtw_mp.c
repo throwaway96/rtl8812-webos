@@ -222,6 +222,7 @@ static int init_mp_priv_by_os(struct mp_priv *pmp_priv)
 #endif
 
 #ifdef PLATFORM_LINUX
+#if 0
 static int init_mp_priv_by_os(struct mp_priv *pmp_priv)
 {
 	int i, res;
@@ -262,6 +263,7 @@ _exit_init_mp_priv:
 
 	return res;
 }
+#endif
 #endif
 
 static void mp_init_xmit_attrib(struct mp_tx *pmptx, PADAPTER padapter)
@@ -363,7 +365,7 @@ void free_mp_priv(struct mp_priv *pmp_priv)
 	pmp_priv->pmp_xmtframe_buf = NULL;
 }
 
-
+#if 0
 static VOID PHY_IQCalibrate_default(
 	IN	PADAPTER	pAdapter,
 	IN	BOOLEAN	bReCovery
@@ -386,7 +388,7 @@ static VOID PHY_SetRFPathSwitch_default(
 {
 	RTW_INFO("%s\n", __func__);
 }
-
+#endif
 
 void mpt_InitHWConfig(PADAPTER Adapter)
 {
@@ -1142,6 +1144,7 @@ static VOID mpt_AdjustRFRegByRateByChan92CU(PADAPTER pAdapter, u8 RateIdx, u8 Ch
  * 01/09/2009	MHC		Add CCK modification for 40MHZ. Suggestion from SD3.
  *
  *---------------------------------------------------------------------------*/
+#if 0
 static void mpt_SwitchRfSetting(PADAPTER pAdapter)
 {
 	hal_mpt_SwitchRfSetting(pAdapter);
@@ -1153,6 +1156,7 @@ static void MPT_CCKTxPowerAdjust(PADAPTER Adapter, BOOLEAN bInCH14)
 {
 	hal_mpt_CCKTxPowerAdjust(Adapter, bInCH14);
 }
+#endif
 
 /*---------------------------hal\rtl8192c\MPT_HelperFunc.c---------------------------*/
 
@@ -1231,6 +1235,7 @@ s32 SetThermalMeter(PADAPTER pAdapter, u8 target_ther)
 	return hal_mpt_SetThermalMeter(pAdapter, target_ther);
 }
 
+#if 0
 static void TriggerRFThermalMeter(PADAPTER pAdapter)
 {
 	hal_mpt_TriggerRFThermalMeter(pAdapter);
@@ -1240,6 +1245,7 @@ static u8 ReadRFThermalMeter(PADAPTER pAdapter)
 {
 	return hal_mpt_ReadRFThermalMeter(pAdapter);
 }
+#endif
 
 void GetThermalMeter(PADAPTER pAdapter, u8 *value)
 {
@@ -1817,6 +1823,11 @@ void SetPacketTx(PADAPTER padapter)
 	else
 		pattrib->psta = rtw_get_stainfo(&padapter->stapriv, get_bssid(&padapter->mlmepriv));
 
+	if (pattrib->psta == NULL) {
+		RTW_INFO("%s:psta = NULL !!\n", __func__);
+		return;
+	}
+
 	pattrib->mac_id = pattrib->psta->cmn.mac_id;
 	pattrib->mbssid = 0;
 
@@ -2100,8 +2111,12 @@ static u32 rtw_GetPSDData(PADAPTER pAdapter, u32 point)
  */
 u32 mp_query_psd(PADAPTER pAdapter, u8 *data)
 {
+	HAL_DATA_TYPE	*pHalData	= GET_HAL_DATA(pAdapter);
+	struct dm_struct *p_dm = adapter_to_phydm(pAdapter);
+
 	u32 i, psd_pts = 0, psd_start = 0, psd_stop = 0;
 	u32 psd_data = 0;
+	char *pdata = NULL;
 
 
 #ifdef PLATFORM_LINUX
@@ -2122,16 +2137,26 @@ u32 mp_query_psd(PADAPTER pAdapter, u8 *data)
 		sscanf(data, "pts=%d,start=%d,stop=%d", &psd_pts, &psd_start, &psd_stop);
 
 	data[0] = '\0';
+	pdata = data;
+
+	if (psd_stop > 1536 || psd_stop < 1) {
+		rtw_warn_on(1);
+		psd_stop = 1536;
+	}
+
 
 	i = psd_start;
+
 	while (i < psd_stop) {
 		if (i >= psd_pts)
 			psd_data = rtw_GetPSDData(pAdapter, i - psd_pts);
 		else
 			psd_data = rtw_GetPSDData(pAdapter, i);
-		sprintf(data, "%s%x ", data, psd_data);
+
+		pdata += sprintf(pdata, "%x ", psd_data);
 		i++;
 	}
+
 
 #ifdef CONFIG_LONG_DELAY_ISSUE
 	rtw_msleep_os(100);

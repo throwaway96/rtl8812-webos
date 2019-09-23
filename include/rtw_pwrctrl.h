@@ -56,6 +56,17 @@
 
 #define MAX_WKFM_SIZE	16 /* (16 bytes for WKFM bit mask, 16*8 = 128 bits) */
 #define MAX_WKFM_PATTERN_SIZE	128
+
+/*
+ * MAX_WKFM_PATTERN_STR_LEN : the max. length of wow pattern string
+ *	e.g. echo 00:01:02:...:7f > /proc/net/rtl88x2bu/wlan0/wow_pattern_info
+ *	- each byte of pattern is represented as 2-bytes ascii : MAX_WKFM_PATTERN_SIZE * 2
+ *	- the number of common ':' in pattern string : MAX_WKFM_PATTERN_SIZE - 1
+ *	- 1 byte '\n'(0x0a) is generated at the end when we use echo command
+ *	so total max. length is (MAX_WKFM_PATTERN_SIZE * 3)
+ */
+#define MAX_WKFM_PATTERN_STR_LEN (MAX_WKFM_PATTERN_SIZE * 3)
+
 #define WKFMCAM_ADDR_NUM 6
 #define WKFMCAM_SIZE 24 /* each entry need 6*4 bytes */
 enum pattern_type {
@@ -577,7 +588,6 @@ u32 rtw_ps_deny_get(PADAPTER padapter);
 #if defined(CONFIG_WOWLAN)
 void rtw_get_current_ip_address(PADAPTER padapter, u8 *pcurrentip);
 void rtw_get_sec_iv(PADAPTER padapter, u8 *pcur_dot11txpn, u8 *StaAddr);
-bool rtw_check_pattern_valid(u8 *input, u8 len);
 bool rtw_wowlan_parser_pattern_cmd(u8 *input, char *pattern,
 				int *pattern_len, char *bit_mask);
 void rtw_wow_pattern_sw_reset(_adapter *adapter);

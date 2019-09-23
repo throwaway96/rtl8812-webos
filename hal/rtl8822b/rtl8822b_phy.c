@@ -226,7 +226,9 @@ static u8 _init_rf_reg(PADAPTER adapter)
 			status = odm_config_rf_with_header_file(&hal->odmpriv, CONFIG_RF_RADIO, phydm_path);
 			if (HAL_STATUS_SUCCESS != status)
 				goto exit;
+#if 0 /* Remove because coverity check fail */
 			ret = _TRUE;
+#endif
 		}
 	}
 

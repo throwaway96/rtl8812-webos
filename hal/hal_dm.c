@@ -389,7 +389,7 @@ void rtw_hal_turbo_edca(_adapter *adapter)
 	u32	edca_param;
 	u64	cur_tx_bytes = 0;
 	u64	cur_rx_bytes = 0;
-	u8	bbtchange = _TRUE;
+	//u8	bbtchange = _TRUE;
 	u8	is_bias_on_rx = _FALSE;
 	u8	is_linked = _FALSE;
 	u8	interface_type;
@@ -426,7 +426,8 @@ void rtw_hal_turbo_edca(_adapter *adapter)
 	}
 
 	/* Check if the status needs to be changed. */
-	if ((bbtchange) || (!precvpriv->is_any_non_be_pkts)) {
+	//if ((bbtchange) || (!precvpriv->is_any_non_be_pkts)) {
+	if (1) {
 		cur_tx_bytes = dvobj->traffic_stat.cur_tx_bytes;
 		cur_rx_bytes = dvobj->traffic_stat.cur_rx_bytes;
 
@@ -1175,7 +1176,6 @@ void rtw_phydm_watchdog(_adapter *adapter)
 {
 	u8	bLinked = _FALSE;
 	u8	bsta_state = _FALSE;
-	u8	bBtDisabled = _TRUE;
 	u8	rfk_forbidden = _TRUE;
 	u8	segment_iqk = _TRUE;
 	u8	tx_unlinked_low_rate = 0xFF;
@@ -1201,10 +1201,12 @@ void rtw_phydm_watchdog(_adapter *adapter)
 	odm_cmn_info_update(&pHalData->odmpriv, ODM_CMNINFO_STATION_STATE, bsta_state);
 
 #ifdef CONFIG_BT_COEXIST
-	bBtDisabled = rtw_btcoex_IsBtDisabled(adapter);
-#endif /* CONFIG_BT_COEXIST */
 	odm_cmn_info_update(&pHalData->odmpriv, ODM_CMNINFO_BT_ENABLED,
-							(bBtDisabled == _TRUE) ? _FALSE : _TRUE);
+		(rtw_btcoex_IsBtDisabled(adapter) == _TRUE) ? _FALSE : _TRUE);
+#else
+	odm_cmn_info_update(&pHalData->odmpriv, ODM_CMNINFO_BT_ENABLED, _FALSE);
+#endif /* CONFIG_BT_COEXIST */
+
 #ifdef CONFIG_LPS_PG
 	_lps_pg_state_update(adapter);
 #endif

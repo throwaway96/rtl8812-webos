@@ -213,8 +213,10 @@ phydm_common_info_self_init(
 		dm->num_rf_path = 1;
 	else if (dm->support_ic_type & ODM_IC_2SS)
 		dm->num_rf_path = 2;
+#if ODM_IC_3SS != 0
 	else if (dm->support_ic_type & ODM_IC_3SS)
 		dm->num_rf_path = 3;
+#endif
 	else if (dm->support_ic_type & ODM_IC_4SS)
 		dm->num_rf_path = 4;
 	else
@@ -1755,9 +1757,7 @@ phydm_pause_func_console(
 		
 	} else {
 		for (i = 0; i < 10; i++) {
-			if (input[i + 1]) {
-				PHYDM_SSCANF(input[i + 1], DCMD_HEX, &var1[i]);
-			}
+			PHYDM_SSCANF(input[i + 1], DCMD_HEX, &var1[i]);
 		}
 
 		func = (enum phydm_func_idx)var1[0];

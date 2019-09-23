@@ -542,11 +542,10 @@ void dump_adapters_status(void *sel, struct dvobj_priv *dvobj)
 		P2P_INFO_DASH
 		"-------\n");
 
-	rtw_mi_get_ch_setting_union(dvobj_get_primary_adapter(dvobj), &u_ch, &u_bw, &u_offset);
-	RTW_PRINT_SEL(sel, "%55s %3u,%u,%u\n"
-		, "union:"
-		, u_ch, u_bw, u_offset
-	);
+	if (rtw_mi_get_ch_setting_union(dvobj_get_primary_adapter(dvobj), &u_ch, &u_bw, &u_offset))
+		RTW_PRINT_SEL(sel, "%55s %3u,%u,%u\n"
+			, "union:"
+			, u_ch, u_bw, u_offset);
 
 	RTW_PRINT_SEL(sel, "%55s %3u,%u,%u offch_state:%d\n"
 		, "oper:"
@@ -2923,9 +2922,9 @@ ssize_t proc_set_rx_ampdu(struct file *file, const char __user *buffer, size_t c
 		rtw_rx_ampdu_apply(padapter);
 	}
 
-exit:
 	return count;
 }
+
 int proc_get_rx_ampdu_factor(struct seq_file *m, void *v)
 {
 	struct net_device *dev = m->private;
@@ -4360,7 +4359,7 @@ ssize_t proc_set_pattern_info(struct file *file, const char __user *buffer,
 	_adapter *padapter = (_adapter *)rtw_netdev_priv(dev);
 	struct pwrctrl_priv *pwrpriv = adapter_to_pwrctl(padapter);
 	struct wowlan_ioctl_param poidparam;
-	u8 tmp[MAX_WKFM_PATTERN_SIZE] = {0};
+	u8 tmp[MAX_WKFM_PATTERN_STR_LEN + 1] = {0};
 	int ret = 0, num = 0;
 	u8 index = 0;
 
@@ -4369,15 +4368,16 @@ ssize_t proc_set_pattern_info(struct file *file, const char __user *buffer,
 	if (count < 1)
 		return -EFAULT;
 
-	if (count > sizeof(tmp)) {
-		rtw_warn_on(1);
+	if (count >= sizeof(tmp)) {
+		RTW_ERR("%s: pattern string is too long, count=%zu\n",
+			__func__, count);
 		return -EFAULT;
 	}
 
 	if (pwrpriv->wowlan_pattern_idx >= MAX_WKFM_CAM_NUM) {
-		RTW_INFO("WARNING: priv-pattern is full(idx: %d)\n",
+		RTW_ERR("priv-pattern is full(idx: %d)\n",
 			 pwrpriv->wowlan_pattern_idx);
-		RTW_INFO("WARNING: please clean priv-pattern first\n");
+		RTW_ERR("please clean priv-pattern first\n");
 		return -ENOMEM;
 	}
 
@@ -4387,6 +4387,7 @@ ssize_t proc_set_pattern_info(struct file *file, const char __user *buffer,
 			rtw_hal_set_hwreg(padapter,
 					  HW_VAR_WOWLAN, (u8 *)&poidparam);
 		} else {
+			tmp[count] = '\0';
 			index = pwrpriv->wowlan_pattern_idx;
 			ret = rtw_wowlan_parser_pattern_cmd(tmp,
 					    pwrpriv->patterns[index].content,
@@ -4395,6 +4396,9 @@ ssize_t proc_set_pattern_info(struct file *file, const char __user *buffer,
 			if (ret == _TRUE)
 				pwrpriv->wowlan_pattern_idx++;
 		}
+	} else {
+		rtw_warn_on(1);
+		return -EFAULT;
 	}
 
 	return count;
@@ -5483,7 +5487,7 @@ ssize_t proc_set_tx_deauth(struct file *file, const char __user *buffer, size_t 
 	char tmp[16];
 	u8	mac_addr[NUM_STA][ETH_ALEN];
 	u8 bc_addr[ETH_ALEN] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-	u32 key_type;
+	u32 key_type = 0xffffffff;
 	u8 index;
 
 
@@ -5500,9 +5504,9 @@ ssize_t proc_set_tx_deauth(struct file *file, const char __user *buffer, size_t 
 			RTW_INFO("invalid read_reg parameter!\n");
 			return count;
 		}
-		RTW_INFO("key_type=%d\n", key_type);
+		RTW_INFO("key_type=%u\n", key_type);
 	}
-	if (key_type < 0 || key_type > 4)
+	if (key_type > 4)
 		return count;
 
 	if ((check_fwstate(pmlmepriv, WIFI_STATION_STATE) == _TRUE)
@@ -5588,7 +5592,7 @@ ssize_t proc_set_tx_auth(struct file *file, const char __user *buffer, size_t co
 	char tmp[16];
 	u8	mac_addr[NUM_STA][ETH_ALEN];
 	u8 bc_addr[ETH_ALEN] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-	u32 tx_auth;
+	u32 tx_auth = 0;
 	u8 index;
 
 

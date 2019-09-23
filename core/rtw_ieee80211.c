@@ -794,8 +794,10 @@ int rtw_parse_wpa2_ie(u8 *rsn_ie, int rsn_ie_len, int *group_cipher, int *pairwi
 
 	if (pairwise_cipher) {
 		*pairwise_cipher = 0;
-		for (i = 0; i < info.pcs_cnt; i++)
-			*pairwise_cipher |= rtw_get_wpa2_cipher_suite(info.pcs_list + 4 * i);
+		if (info.pcs_list) {
+			for (i = 0; i < info.pcs_cnt; i++)
+				*pairwise_cipher |= rtw_get_wpa2_cipher_suite(info.pcs_list + 4 * i);
+		}
 	}
 
 	if (is_8021x) {

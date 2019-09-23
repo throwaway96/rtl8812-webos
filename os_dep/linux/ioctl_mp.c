@@ -553,9 +553,11 @@ int rtw_mp_txpower_index(struct net_device *dev,
 			 struct iw_point *wrqu, char *extra)
 {
 	PADAPTER padapter = rtw_netdev_priv(dev);
+	HAL_DATA_TYPE *phal_data = GET_HAL_DATA(padapter);
 	char input[wrqu->length + 1];
 	u32 rfpath;
-	u32 txpower_inx;
+	u32 txpower_inx = 0;
+	char *pextra = extra;
 
 	if (wrqu->length > 128)
 		return -EFAULT;
@@ -566,10 +568,31 @@ int rtw_mp_txpower_index(struct net_device *dev,
 		return -EFAULT;
 
 	input[wrqu->length] = '\0';
+	_rtw_memset(extra, 0, strlen(extra));
 
-	rfpath = rtw_atoi(input);
-	txpower_inx = mpt_ProQueryCalTxPower(padapter, rfpath);
-	sprintf(extra, " %d", txpower_inx);
+		if (wrqu->length == 2) {
+			if (input[0] != '\0' ) {
+				rfpath = rtw_atoi(input);
+				txpower_inx = mpt_ProQueryCalTxPower(padapter, rfpath);
+			}
+			pextra += sprintf(pextra, " %d", txpower_inx);
+	} else {
+		txpower_inx = mpt_ProQueryCalTxPower(padapter, 0);
+		pextra += sprintf(pextra, "patha=%d", txpower_inx);
+		if (phal_data->rf_type > RF_1T2R) {
+			txpower_inx = mpt_ProQueryCalTxPower(padapter, 1);
+			pextra += sprintf(pextra, ",pathb=%d", txpower_inx);
+		}
+		if (phal_data->rf_type > RF_2T4R) {
+			txpower_inx = mpt_ProQueryCalTxPower(padapter, 2);
+			pextra += sprintf(pextra, ",pathc=%d", txpower_inx);
+		}
+		if (phal_data->rf_type > RF_3T4R) {
+			txpower_inx = mpt_ProQueryCalTxPower(padapter, 3);
+			pextra += sprintf(pextra, ",pathd=%d", txpower_inx);
+		}
+	}
+
 	wrqu->length = strlen(extra);
 
 	return 0;
@@ -2093,9 +2116,8 @@ int rtw_mp_pwrlmt(struct net_device *dev,
 		sprintf(extra, "Turn on Power Limit\n");
 
 	} else
+		sprintf(extra, "Get Power Limit Status:%s\n", (registry_par->RegEnableTxPowerLimit == 1) ? "ON" : "OFF");
 #endif
-		sprintf(extra, "Get Power Limit Status:%s\n", (pwrlimtstat == 1) ? "ON" : "OFF");
-
 
 	wrqu->data.length = strlen(extra);
 	return 0;
@@ -2182,14 +2204,16 @@ int rtw_efuse_mask_file(struct net_device *dev,
 			}
 			maskfileBuffer[count++] = tmp;
 
-		 } while (count < 64);
+		} while (count < 64);
+
+		_rtw_memset(extra, '\0' , strlen(extra));
 
 		for (i = 0; i < count; i++)
-			sprintf(extra, "%s:%02x", extra, maskfileBuffer[i]);
+			ptmp += sprintf(ptmp, "%02x:", maskfileBuffer[i]);
 
 		padapter->registrypriv.bFileMaskEfuse = _TRUE;
 
-		sprintf(extra, "%s\nLoad Efuse Mask data %d hex ok\n", extra, count);
+		sprintf(ptmp, "\nLoad Efuse Mask data %d hex ok\n", count);
 		wrqu->data.length = strlen(extra);
 		return 0;
 	}

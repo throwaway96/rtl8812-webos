@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright(c) 2015 - 2017 Realtek Corporation.
+ * Copyright(c) 2015 - 2019 Realtek Corporation.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of version 2 of the GNU General Public License as
@@ -349,7 +349,7 @@ void rtl8822b_set_FwPwrMode_cmd(PADAPTER adapter, u8 psmode)
 	u8 h2c[RTW_HALMAC_H2C_MAX_SIZE] = {0};
 	u8 PowerState = 0, awake_intvl = 1, byte5 = 0, rlbm = 0;
 	u8 allQueueUAPSD = 0;
-	char *fw_psmode_str = "";
+	char *fw_psmode_str = "UNSPECIFIED";
 #ifdef CONFIG_P2P
 	struct wifidirect_info *wdinfo = &adapter->wdinfo;
 #endif /* CONFIG_P2P */
@@ -461,8 +461,6 @@ void rtl8822b_set_FwPwrMode_cmd(PADAPTER adapter, u8 psmode)
 		fw_psmode_str = "LPS";
 	else if (mode == 2)
 		fw_psmode_str = "WMMPS";
-	else
-		fw_psmode_str = "UNSPECIFIED";
 
 	RTW_INFO(FUNC_ADPT_FMT": fw ps mode = %s, drv ps mode = %d, rlbm = %d , smart_ps = %d, allQueueUAPSD = %d\n", 
 				FUNC_ADPT_ARG(adapter), fw_psmode_str, psmode, rlbm, smart_ps, allQueueUAPSD);

@@ -922,8 +922,6 @@ extern s32 rtw_free_xmitbuf(struct xmit_priv *pxmitpriv, struct xmit_buf *pxmitb
 
 void rtw_count_tx_stats(_adapter *padapter, struct xmit_frame *pxmitframe, int sz);
 extern void rtw_update_protection(_adapter *padapter, u8 *ie, uint ie_len);
-static s32 update_attrib_sec_info(_adapter *padapter, struct pkt_attrib *pattrib, struct sta_info *psta);
-static void update_attrib_phy_info(_adapter *padapter, struct pkt_attrib *pattrib, struct sta_info *psta);
 
 #ifdef CONFIG_WMMPS_STA
 static void update_attrib_trigger_frame_info(_adapter *padapter, struct pkt_attrib *pattrib);
@@ -1027,7 +1025,6 @@ void rtw_tx_desc_backup_reset(void);
 u8 rtw_get_tx_desc_backup(_adapter *padapter, u8 hwq, struct rtw_tx_desc_backup **pbak);
 #endif
 
-static void do_queue_select(_adapter *padapter, struct pkt_attrib *pattrib);
 u32	rtw_get_ff_hwaddr(struct xmit_frame	*pxmitframe);
 
 #ifdef CONFIG_XMIT_ACK

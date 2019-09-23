@@ -101,7 +101,7 @@ struct phydm_adaptivity_struct {
 	u16			igi_up_bound_lmt_val;	/*max value of igi_up_bound_lmt_cnt*/
 	boolean		igi_lmt_en;
 	u8			adapt_igi_up;
-	s8			rvrt_val[2];
+	u32			rvrt_val[2];
 	s8			th_l2h;
 	s8			th_h2l;
 };

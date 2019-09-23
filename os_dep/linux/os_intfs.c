@@ -3263,7 +3263,7 @@ void netdev_br_init(struct net_device *netdev)
 
 int _netdev_open(struct net_device *pnetdev)
 {
-	uint status;
+	uint status = _SUCCESS;
 	_adapter *padapter = (_adapter *)rtw_netdev_priv(pnetdev);
 	struct pwrctrl_priv *pwrctrlpriv = adapter_to_pwrctl(padapter);
 #ifdef CONFIG_BT_COEXIST_SOCKET_TRX
@@ -4633,12 +4633,13 @@ exit:
 #ifdef CONFIG_WOWLAN
 int rtw_resume_process_wow(_adapter *padapter)
 {
-	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	struct mlme_ext_priv	*pmlmeext = &padapter->mlmeextpriv;
-	struct mlme_ext_info	*pmlmeinfo = &(pmlmeext->mlmext_info);
-	struct pwrctrl_priv *pwrpriv = adapter_to_pwrctl(padapter);
-	struct dvobj_priv *psdpriv = padapter->dvobj;
-	struct debug_priv *pdbgpriv = &psdpriv->drv_dbg;
+	struct mlme_priv *pmlmepriv = NULL;
+	struct mlme_ext_priv *pmlmeext = NULL;
+	struct mlme_ext_info *pmlmeinfo = NULL;
+	struct net_device *pnetdev = NULL;
+	struct pwrctrl_priv *pwrpriv = NULL;
+	struct dvobj_priv *psdpriv = NULL;
+	struct debug_priv *pdbgpriv = NULL;
 	struct wowlan_ioctl_param poidparam;
 	struct sta_info	*psta = NULL;
 	int ret = _SUCCESS;
@@ -4646,9 +4647,17 @@ int rtw_resume_process_wow(_adapter *padapter)
 	RTW_INFO("==> "FUNC_ADPT_FMT" entry....\n", FUNC_ADPT_ARG(padapter));
 
 	if (padapter) {
+		RTW_INFO("==> "FUNC_ADPT_FMT" entry....\n",
+			 FUNC_ADPT_ARG(padapter));
+ 
+		pmlmepriv = &padapter->mlmepriv;
+		pmlmeext = &padapter->mlmeextpriv;
+		pmlmeinfo = &pmlmeext->mlmext_info;
+		pnetdev = padapter->pnetdev;
 		pwrpriv = adapter_to_pwrctl(padapter);
+		psdpriv = padapter->dvobj;
+		pdbgpriv = &psdpriv->drv_dbg;
 	} else {
-		pdbgpriv->dbg_resume_error_cnt++;
 		ret = -1;
 		goto exit;
 	}
@@ -5033,6 +5042,9 @@ int rtw_resume_common(_adapter *padapter)
 	struct pwrctrl_priv *pwrpriv = adapter_to_pwrctl(padapter);
 	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
 
+	if (pwrpriv == NULL)
+		return 0;
+
 	if (pwrpriv->bInSuspend == _FALSE)
 		return 0;
 
@@ -5059,10 +5071,9 @@ int rtw_resume_common(_adapter *padapter)
 #endif /* CONFIG_AP_WOWLAN */
 	}
 
-	if (pwrpriv) {
-		pwrpriv->bInSuspend = _FALSE;
-		pwrpriv->wowlan_in_resume = _FALSE;
-	}
+	pwrpriv->bInSuspend = _FALSE;
+	pwrpriv->wowlan_in_resume = _FALSE;
+
 
 
 	RTW_PRINT("%s:%d in %d ms\n", __FUNCTION__ , ret,

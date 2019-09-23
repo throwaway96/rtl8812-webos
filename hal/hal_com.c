@@ -2380,7 +2380,9 @@ static u8 _rtw_mbid_cam_search_by_macaddr(_adapter *adapter, u8 *mac_addr)
 		}
 	}
 
-	RTW_INFO("%s mac:"MAC_FMT" - cam_id:%d\n", __func__, MAC_ARG(mac_addr), cam_id);
+	if (mac_addr)
+		RTW_INFO("%s mac:"MAC_FMT" - cam_id:%d\n", __func__, MAC_ARG(mac_addr), cam_id);
+
 	return cam_id;
 }
 
@@ -2481,6 +2483,9 @@ u8 rtw_mbid_camid_alloc(_adapter *adapter, u8 *mac_addr)
 	struct mbid_cam_ctl_t *mbid_cam_ctl = &dvobj->mbid_cam_ctl;
 	u8 entry_num = ATOMIC_READ(&mbid_cam_ctl->mbid_entry_num);
 
+	if (mac_addr == NULL)
+		goto exit;
+
 	if (INVALID_CAM_ID != rtw_mbid_cam_search_by_macaddr(adapter, mac_addr))
 		goto exit;
 
@@ -2536,6 +2541,9 @@ u8 rtw_mbid_cam_assign(_adapter *adapter, u8 *mac_addr, u8 camid)
 	u8 ret = _FALSE;
 	struct dvobj_priv *dvobj = adapter_to_dvobj(adapter);
 	struct mbid_cam_ctl_t *mbid_cam_ctl = &dvobj->mbid_cam_ctl;
+
+	if (mac_addr == NULL)
+		goto exit;
 
 	if ((camid >= TOTAL_MBID_CAM_NUM) || (camid == INVALID_CAM_ID)) {
 		RTW_INFO(FUNC_ADPT_FMT" failed !! invlaid mbid_canid :%d\n", FUNC_ADPT_ARG(adapter), camid);
@@ -3565,9 +3573,9 @@ void rtw_set_p2p_ps_offload_cmd(_adapter *adapter, u8 p2p_ps_state)
 	case P2P_PS_SCAN:
 		/*This feature FW not ready 20161116 YiWei*/
 		return;
+		/*
 		RTW_INFO("P2P_PS_SCAN\n");
 		(&p2p_ps_para)->discovery = 1;
-		/*
 		(&p2p_ps_para)->ctwindow_length = pwdinfo->ctwindow;
 		(&p2p_ps_para)->noa_duration_para = pwdinfo->noa_duration[0];
 		(&p2p_ps_para)->noa_interval_para = pwdinfo->noa_interval[0];
@@ -3579,9 +3587,9 @@ void rtw_set_p2p_ps_offload_cmd(_adapter *adapter, u8 p2p_ps_state)
 	case P2P_PS_SCAN_DONE:
 		/*This feature FW not ready 20161116 YiWei*/
 		return;
+		/*
 		RTW_INFO("P2P_PS_SCAN_DONE\n");
 		(&p2p_ps_para)->discovery = 0;
-		/*
 		pwdinfo->p2p_ps_state = P2P_PS_ENABLE;
 		(&p2p_ps_para)->ctwindow_length = pwdinfo->ctwindow;
 		(&p2p_ps_para)->noa_duration_para = pwdinfo->noa_duration[0];
@@ -9126,8 +9134,8 @@ static void rtw_hal_wow_disable(_adapter *adapter)
 		rtw_hal_enable_tx_report(adapter);
 	#endif
 
-	if ((pwrctl->wowlan_wake_reason != RX_DISASSOC) ||
-		(pwrctl->wowlan_wake_reason != RX_DEAUTH) ||
+	if ((pwrctl->wowlan_wake_reason != RX_DISASSOC) &&
+		(pwrctl->wowlan_wake_reason != RX_DEAUTH) &&
 		(pwrctl->wowlan_wake_reason != FW_DECISION_DISCONNECT)) {
 		rtw_hal_get_aoac_rpt(adapter);
 		rtw_hal_update_sw_security_info(adapter);
@@ -10104,14 +10112,14 @@ int rtw_hal_reset_tsf(_adapter *adapter, u8 reset_port)
 
 static void rtw_hal_set_hw_update_tsf(PADAPTER padapter)
 {
-	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
-	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	
 
 #if defined(CONFIG_RTL8822B) || defined(CONFIG_MI_WITH_MBSSID_CAM)
 	RTW_INFO("[Warn] %s "ADPT_FMT" enter func\n", __func__, ADPT_ARG(padapter));
 	rtw_warn_on(1);
 	return;
-#endif
+#else
+	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
 
 	if (!pmlmeext->en_hw_update_tsf)
 		return;
@@ -10132,6 +10140,8 @@ static void rtw_hal_set_hw_update_tsf(PADAPTER padapter)
 			rtw_write8(padapter, REG_BCN_CTRL, rtw_read8(padapter, REG_BCN_CTRL) & (~DIS_TSF_UDT));
 	}
 	pmlmeext->en_hw_update_tsf = _FALSE;
+
+#endif
 }
 
 #ifdef CONFIG_HW_P0_TSF_SYNC
@@ -10901,10 +10911,14 @@ u8 rtw_hal_query_txbfee_rf_num(_adapter *adapter)
 	if ((pregistrypriv->beamformee_rf_num) && (IS_HARDWARE_TYPE_8814AE(adapter) || IS_HARDWARE_TYPE_8814AU(adapter) || IS_HARDWARE_TYPE_8822BU(adapter) || IS_HARDWARE_TYPE_8821C(adapter)))
 		return pregistrypriv->beamformee_rf_num;
 	else if (IS_HARDWARE_TYPE_8814AE(adapter) || IS_HARDWARE_TYPE_8814AU(adapter)) {
+#ifdef LGE_PRIVATE
+		return 2;
+#else
 		if (pmlmeinfo->assoc_AP_vendor == HT_IOT_PEER_BROADCOM)
 			return 2;
 		else
 			return 2;/*TODO: May be 3 in the future, by ChenYu. */
+#endif /* !LGE_PRIVATE */
 	} else
 		return 1;
 
@@ -12038,7 +12052,7 @@ int hal_config_macaddr(_adapter *adapter, bool autoload_fail)
 	}
 
 #if defined(CONFIG_RTL8822B) && defined(CONFIG_USB_HCI)
-	if (_rtw_memcmp(hw_addr, ft_mac_addr, ETH_ALEN))
+	if (hw_addr && _rtw_memcmp(hw_addr, ft_mac_addr, ETH_ALEN))
 		hw_addr[0] = 0xff;
 #endif
 

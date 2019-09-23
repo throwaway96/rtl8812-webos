@@ -48,7 +48,7 @@ phydm_rx_statistic_cal(
 	if (date_rate <= ODM_RATE54M) {
 		phydm->phy_dbg_info.num_qry_legacy_pkt[date_rate]++;
 		/**/
-	} else if (date_rate <= ODM_RATEMCS31) {
+	} else if (date_rate <= (HT_RATE_NUM + ODM_RATEMCS0 - 1)) {
 		phydm->phy_dbg_info.ht_pkt_not_zero = true;
 
 		if (phydm->support_ic_type & PHYSTS_2ND_TYPE_IC) {
@@ -66,7 +66,7 @@ phydm_rx_statistic_cal(
 		}
 	}
 	#if ODM_IC_11AC_SERIES_SUPPORT
-	else if (date_rate <= ODM_RATEVHTSS4MCS9) {
+	else if (date_rate <= (VHT_RATE_NUM + ODM_RATEVHTSS1MCS0 - 1)) {
 		#if (ODM_PHY_STATUS_NEW_TYPE_SUPPORT == 1)
 		if ((phy_status_type == 1) && 
 			(phy_sta_rpt->gid != 0) && 

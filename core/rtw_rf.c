@@ -319,12 +319,12 @@ u8 rtw_get_op_chs_by_cch_bw(u8 cch, u8 bw, u8 **op_chs, u8 *op_ch_num)
 	u8 valid = 1;
 
 	if (cch <= 14
-		&& bw >= CHANNEL_WIDTH_20 && bw <= CHANNEL_WIDTH_40
+		&& bw <= CHANNEL_WIDTH_40
 	) {
 		c_chs_ent = &center_chs_2g_by_bw[bw];
 		op_chs_ent = &op_chs_of_cch_2g_by_bw[bw];
 	} else if (cch >= 36 && cch <= 177
-		&& bw >= CHANNEL_WIDTH_20 && bw <= CHANNEL_WIDTH_160
+		&& bw <= CHANNEL_WIDTH_160
 	) {
 		c_chs_ent = &center_chs_5g_by_bw[bw];
 		op_chs_ent = &op_chs_of_cch_5g_by_bw[bw];
@@ -1038,7 +1038,6 @@ const struct country_chplan *rtw_get_chplan_from_country(const char *country_cod
 		}
 	}
 
-exit:
 	#if RTW_DEF_MODULE_REGULATORY_CERT
 	if (!ent || !(COUNTRY_CHPLAN_DEF_MODULE_FALGS(ent) & RTW_DEF_MODULE_REGULATORY_CERT))
 		exc_ent = ent = NULL;
@@ -1180,7 +1179,6 @@ struct regd_exc_ent *_rtw_regd_exc_search(struct rf_ctl_t *rfctl, const char *co
 		break;
 	}
 
-exit:
 	if (match)
 		return ent;
 	else

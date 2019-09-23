@@ -1080,32 +1080,36 @@ static s32 _rtw_hal_macid_bmp_sleep(_adapter *adapter, struct macid_bmp *bmp, u8
 {
 	struct macid_ctl_t *macid_ctl = adapter_to_macidctl(adapter);
 	u16 reg_sleep;
-	u32 *m = &bmp->m0;
+	u32 m;
 	u8 mid = 0;
 	u32 val32;
 
 	do {
-		if (*m == 0)
-			goto move_next;
-
-		if (mid == 0)
+		if (mid == 0) {
+			m = bmp->m0;
 			reg_sleep = macid_ctl->reg_sleep_m0;
 		#if (MACID_NUM_SW_LIMIT > 32)
-		else if (mid == 1)
+		} else if (mid == 1) {
+			m = bmp->m1;
 			reg_sleep = macid_ctl->reg_sleep_m1;
 		#endif
 		#if (MACID_NUM_SW_LIMIT > 64)
-		else if (mid == 2)
+		} else if (mid == 2) {
+			m = bmp->m2;
 			reg_sleep = macid_ctl->reg_sleep_m2;
 		#endif
 		#if (MACID_NUM_SW_LIMIT > 96)
-		else if (mid == 3)
+		} else if (mid == 3) {
+			m = bmp->m3;
 			reg_sleep = macid_ctl->reg_sleep_m3;
 		#endif
-		else {
+		} else {
 			rtw_warn_on(1);
 			break;
 		}
+
+		if (m == 0)
+			goto move_next;
 
 		if (!reg_sleep) {
 			rtw_warn_on(1);
@@ -1115,22 +1119,21 @@ static s32 _rtw_hal_macid_bmp_sleep(_adapter *adapter, struct macid_bmp *bmp, u8
 		val32 = rtw_read32(adapter, reg_sleep);
 		RTW_DBG(ADPT_FMT" %s m%u=0x%08x, ori reg_0x%03x=0x%08x\n"
 			, ADPT_ARG(adapter), sleep ? "sleep" : "wakeup"
-			, mid, *m, reg_sleep, val32);
+			, mid, m, reg_sleep, val32);
 
 		if (sleep) {
-			if ((val32 & *m) == *m)
+			if ((val32 & m) == m)
 				goto move_next;
-			val32 |= *m;
+			val32 |= m;
 		} else {
-			if ((val32 & *m) == 0)
+			if ((val32 & m) == 0)
 				goto move_next;
-			val32 &= ~(*m);
+			val32 &= ~m;
 		}
 
 		rtw_write32(adapter, reg_sleep, val32);
 
 move_next:
-		m++;
 		mid++;
 	} while (mid * 32 < MACID_NUM_SW_LIMIT);
 

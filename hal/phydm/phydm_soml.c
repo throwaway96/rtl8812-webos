@@ -456,8 +456,10 @@ phydm_adsl(
 
 	if (dm->support_ic_type & ODM_IC_4SS)
 		rate_num = 4;
+#if ODM_IC_3SS != 0
 	else if (dm->support_ic_type & ODM_IC_3SS)
 		rate_num = 3;
+#endif
 	else if (dm->support_ic_type & ODM_IC_2SS)
 		rate_num = 2;
 

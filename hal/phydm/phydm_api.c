@@ -1128,7 +1128,7 @@ phydm_set_bb_txagc_offset(
 
 	#if	ODM_IC_11AC_SERIES_SUPPORT
 	if (dm->support_ic_type & ODM_IC_11AC_SERIES) {
-		if (power_offset > -16 || power_offset < 15) {
+		if (power_offset > -16 && power_offset < 15) {
 			if (add_half_db)
 				power_idx += 1;
 

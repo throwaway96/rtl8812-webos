@@ -3063,6 +3063,30 @@ unsigned char check_assoc_AP(u8 *pframe, uint len)
 	return HT_IOT_PEER_UNKNOWN;
 }
 
+#ifdef CONFIG_80211AC_VHT
+unsigned char get_vht_mu_bfer_cap(u8 *pframe, uint len)
+{
+	unsigned int i;
+	unsigned int mu_bfer=0;
+	PNDIS_802_11_VARIABLE_IEs pIE;
+
+	for (i = sizeof(NDIS_802_11_FIXED_IEs); i < len;) {
+		pIE = (PNDIS_802_11_VARIABLE_IEs)(pframe + i);
+
+		switch (pIE->ElementID) {
+
+		case EID_VHTCapability:
+			mu_bfer = GET_VHT_CAPABILITY_ELE_MU_BFER(pIE->data);
+			break;
+		default:
+			break;
+		}
+		i += (pIE->Length + 2);
+	}
+	return mu_bfer;
+}
+#endif
+
 void update_capinfo(PADAPTER Adapter, u16 updateCap)
 {
 	struct mlme_ext_priv	*pmlmeext = &Adapter->mlmeextpriv;
@@ -3552,6 +3576,7 @@ inline u8 rtw_macid_get_iface_bmp(struct macid_ctl_t *macid_ctl, u8 id)
 
 inline bool rtw_macid_is_iface_shared(struct macid_ctl_t *macid_ctl, u8 id)
 {
+#if CONFIG_IFACE_NUMBER >= 2
 	int i;
 	u8 iface_bmp = 0;
 
@@ -3562,7 +3587,7 @@ inline bool rtw_macid_is_iface_shared(struct macid_ctl_t *macid_ctl, u8 id)
 			iface_bmp |= BIT(i);
 		}
 	}
-
+#endif
 	return 0;
 }
 
@@ -3656,21 +3681,22 @@ void rtw_alloc_macid(_adapter *padapter, struct sta_info *psta)
 		}
 #endif /* CONFIG_MCC_MODE */
 
-		if (is_bc_sta) {
-			struct cam_ctl_t *cam_ctl = dvobj_to_sec_camctl(dvobj);
+		#ifdef CONFIG_CONCURRENT_MODE
+		/* for BMC data TX with force camid */
+		if (is_bc_sta && rtw_sec_camid_is_used(dvobj_to_sec_camctl(dvobj), i))
+			continue;
+		#endif
 
-			if ((!rtw_macid_is_used(macid_ctl, i)) && (!rtw_sec_camid_is_used(cam_ctl, i)))
-				break;
-		} else {
-			if (!rtw_macid_is_used(macid_ctl, i))
-				break;
-		}
+		if (!rtw_macid_is_used(macid_ctl, i))
+			break;
 	}
 
 	if (i < macid_ctl->num) {
 
 		rtw_macid_map_set(used_map, i);
 
+		#ifdef CONFIG_CONCURRENT_MODE
+		/* for BMC data TX with force camid */
 		if (is_bc_sta) {
 			struct cam_ctl_t *cam_ctl = dvobj_to_sec_camctl(dvobj);
 
@@ -3678,6 +3704,7 @@ void rtw_alloc_macid(_adapter *padapter, struct sta_info *psta)
 			rtw_iface_bcmc_id_set(padapter, i);
 			rtw_sec_cam_map_set(&cam_ctl->used, i);
 		}
+		#endif
 
 		rtw_macid_map_set(&macid_ctl->if_g[padapter->iface_id], i);
 		macid_ctl->sta[i] = psta;
@@ -4136,8 +4163,10 @@ bool rtw_wowlan_parser_pattern_cmd(u8 *input, char *pattern,
 	char *cp = NULL, *end = NULL;
 	size_t len = 0;
 	int pos = 0, mask_pos = 0, res = 0;
-	u8 member[2] = {0};
 
+	/* To get the pattern string after "=", when we use :
+	 * iwpriv wlanX pattern=XX:XX:..:XX
+	 */
 	cp = strchr(input, '=');
 	if (cp) {
 		*cp = 0;
@@ -4145,31 +4174,35 @@ bool rtw_wowlan_parser_pattern_cmd(u8 *input, char *pattern,
 		input = cp;
 	}
 
-	while (1) {
-		cp = strchr(input, ':');
+	/* To take off the newline character '\n'(0x0a) at the end of pattern string,
+	 * when we use echo xxxx > /proc/xxxx
+	 */
+	cp = strchr(input, '\n');
+	if (cp)
+		*cp = 0;
 
-		if (cp) {
-			len = strlen(input) - strlen(cp);
-			*cp = 0;
-			cp++;
-		} else
-			len = 2;
+	while (input) {
+		cp = strsep((char **)(&input), ":");
 
-		if (bit_mask && (strcmp(input, "-") == 0 ||
-				 strcmp(input, "xx") == 0 ||
-				 strcmp(input, "--") == 0)) {
+		if (bit_mask && (strcmp(cp, "-") == 0 ||
+				 strcmp(cp, "xx") == 0 ||
+				 strcmp(cp, "--") == 0)) {
 			/* skip this byte and leave mask bit unset */
 		} else {
 			u8 hex;
 
-			strncpy(member, input, len);
-			if (!rtw_check_pattern_valid(member, sizeof(member))) {
-				RTW_INFO("%s:[ERROR] pattern is invalid!!\n",
-					 __func__);
+			if (strlen(cp) != 2) {
+				RTW_ERR("%s:[ERROR] hex len != 2, input=[%s]\n",
+					__func__, cp);
 				goto error;
 			}
 
-			res = sscanf(member, "%02hhx", &hex);
+			if (hexstr2bin(cp, &hex, 1) < 0) {
+				RTW_ERR("%s:[ERROR] pattern is invalid, input=[%s]\n",
+					__func__, cp);
+				goto error;
+			}
+
 			pattern[pos] = hex;
 			mask_pos = pos / 8;
 			if (bit_mask)
@@ -4177,9 +4210,6 @@ bool rtw_wowlan_parser_pattern_cmd(u8 *input, char *pattern,
 		}
 
 		pos++;
-		if (!cp)
-			break;
-		input = cp;
 	}
 
 	(*pattern_len) = pos;
@@ -4189,23 +4219,6 @@ error:
 	return _FALSE;
 }
 
-bool rtw_check_pattern_valid(u8 *input, u8 len)
-{
-	int i = 0;
-	bool res = _FALSE;
-
-	if (len != 2)
-		goto exit;
-
-	for (i = 0 ; i < len ; i++)
-		if (IsHexDigit(input[i]) == _FALSE)
-			goto exit;
-
-	res = _SUCCESS;
-
-exit:
-	return res;
-}
 void rtw_wow_pattern_sw_reset(_adapter *adapter)
 {
 	int i;
@@ -4326,6 +4339,7 @@ u8 rtw_set_default_pattern(_adapter *adapter)
 			}
 			break;
 #endif /*CONFIG_IPV6*/
+#if (DEFAULT_PATTERN_NUM > 3)
 		case 3:
 			target = pwrpriv->patterns[index].content;
 			_rtw_memcpy(target, &multicast_addr,
@@ -4348,6 +4362,7 @@ u8 rtw_set_default_pattern(_adapter *adapter)
 			pwrpriv->patterns[index].len =
 				IP_OFFSET + sizeof(multicast_ip);
 			break;
+#endif
 		default:
 			break;
 		}
@@ -4592,7 +4607,13 @@ int rtw_dev_nlo_info_set(struct pno_nlo_info *nlo_info, pno_ssid_t *ssid,
 	source = rtw_zmalloc(2048);
 
 	if (source != NULL) {
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0))
+		len = kernel_read(fp, source, len, &pos);
+#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0))
+		len = __vfs_read(fp, source, len, &pos);
+#else
 		len = vfs_read(fp, source, len, &pos);
+#endif
 		rtw_parse_cipher_list(nlo_info, source);
 		rtw_mfree(source, 2048);
 	}
@@ -4837,7 +4858,13 @@ int rtw_lge_load_setting(_adapter *padapter, char *path)
 	source = rtw_zmalloc(2048);
 
 	if (source != NULL) {
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0))
+		len = kernel_read(fp, source, len, &pos);
+#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0))
+		len = __vfs_read(fp, source, len, &pos);
+#else
 		len = vfs_read(fp, source, len, &pos);
+#endif
 		rtw_lge_parse_country(padapter, source);
 		rtw_mfree(source, 2048);
 	}

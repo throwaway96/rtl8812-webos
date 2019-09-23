@@ -525,6 +525,11 @@ void rtw_efuse_analyze(PADAPTER	padapter, u8 Type, u8 Fake)
 
 	eFuseWord = rtw_zmalloc(EFUSE_MAX_SECTION_NUM * (EFUSE_MAX_WORD_UNIT * 2));
 
+	if (eFuseWord == NULL) {
+		RTW_INFO("eFuseWord allocate fail\n");
+		return;
+	}
+
 	RTW_INFO("\n");
 	if (Type == 0) {
 		if (Fake == 0) {
@@ -1320,11 +1325,11 @@ VOID hal_ReadEFuse_BT_logic_map(
 	total = EFUSE_BT_REAL_BANK_CONTENT_LEN;
 
 	used = eFuse_Addr - 1;
-
-	if (total)
-		efuse_usage = (u8)((used * 100) / total);
-	else
-		efuse_usage = 100;
+#if (EFUSE_BT_REAL_BANK_CONTENT_LEN == 0)
+	efuse_usage = 100;
+#else
+	efuse_usage = (u8)((used * 100) / total);
+#endif
 
 	fakeBTEfuseUsedBytes = used;
 	RTW_INFO("%s: BTEfuseUsed last Bytes = %#x\n", __FUNCTION__, fakeBTEfuseUsedBytes);

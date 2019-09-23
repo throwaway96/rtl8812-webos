@@ -1845,12 +1845,14 @@ void free_mlme_ext_priv(struct mlme_ext_priv *pmlmeext)
 	}
 }
 
+#ifdef CONFIG_PATCH_JOIN_WRONG_CHANNEL
 static u8 cmp_pkt_chnl_diff(_adapter *padapter, u8 *pframe, uint packet_len)
 {
 	/* if the channel is same, return 0. else return channel differential	 */
 	uint len;
 	u8 channel;
 	u8 *p;
+
 	p = rtw_get_ie(pframe + WLAN_HDR_A3_LEN + _BEACON_IE_OFFSET_, _DSSET_IE_, &len, packet_len - _BEACON_IE_OFFSET_);
 	if (p) {
 		channel = *(p + 2);
@@ -1861,6 +1863,7 @@ static u8 cmp_pkt_chnl_diff(_adapter *padapter, u8 *pframe, uint packet_len)
 	} else
 		return 0;
 }
+#endif /* CONFIG_PATCH_JOIN_WRONG_CHANNEL */
 
 static void _mgt_dispatcher(_adapter *padapter, struct mlme_handler *ptable, union recv_frame *precv_frame)
 {
@@ -3180,9 +3183,6 @@ unsigned int OnAssocReq(_adapter *padapter, union recv_frame *precv_frame)
 		  * goto OnAssocReqFail;
 		*/
 	}
-
-	if (status != _STATS_SUCCESSFUL_)
-		goto OnAssocReqFail;
 
 #ifdef CONFIG_P2P
 	pstat->is_p2p_device = _FALSE;
@@ -12245,7 +12245,7 @@ void report_survey_event(_adapter *padapter, union recv_frame *precv_frame)
 	struct cmd_priv *pcmdpriv;
 	/* u8 *pframe = precv_frame->u.hdr.rx_data; */
 	/* uint len = precv_frame->u.hdr.len; */
-	RT_CHANNEL_INFO *chset = adapter_to_chset(padapter);
+	RT_CHANNEL_INFO *chset;
 	int ch_set_idx = -1;
 
 	if (!padapter)
@@ -12253,7 +12253,7 @@ void report_survey_event(_adapter *padapter, union recv_frame *precv_frame)
 
 	pmlmeext = &padapter->mlmeextpriv;
 	pcmdpriv = &padapter->cmdpriv;
-
+	chset = adapter_to_chset(padapter);
 
 	pcmd_obj = (struct cmd_obj *)rtw_zmalloc(sizeof(struct cmd_obj));
 	if (pcmd_obj == NULL)
@@ -12295,12 +12295,14 @@ void report_survey_event(_adapter *padapter, union recv_frame *precv_frame)
 	ch_set_idx = rtw_chset_search_ch(chset, psurvey_evt->bss.Configuration.DSConfig);
 	if (ch_set_idx >= 0) {
 		if (psurvey_evt->bss.InfrastructureMode == Ndis802_11Infrastructure) {
+			#ifndef LGE_PRIVATE
 			if (chset[ch_set_idx].ScanType == SCAN_PASSIVE
 				&& !rtw_is_dfs_ch(psurvey_evt->bss.Configuration.DSConfig)
 			) {
 				RTW_INFO("%s: change ch:%d to active\n", __func__, psurvey_evt->bss.Configuration.DSConfig);
 				chset[ch_set_idx].ScanType = SCAN_ACTIVE;
 			}
+			#endif /* LGE_PRIVATE */
 			#ifdef CONFIG_DFS
 			if (psurvey_evt->bss.Ssid.SsidLength == 0
 				|| is_all_null(psurvey_evt->bss.Ssid.Ssid, psurvey_evt->bss.Ssid.SsidLength) == _TRUE)
@@ -14781,7 +14783,11 @@ u8 rtw_scan_sparse(_adapter *adapter, struct rtw_ieee80211_channel *ch, u8 ch_nu
 		int i;
 		int k = 0;
 
-		scan_division_num = (ch_num / max_allow_ch) + ((ch_num % max_allow_ch) ? 1 : 0);
+		scan_division_num = (ch_num / max_allow_ch);
+#ifndef LGE_PRIVATE
+		scan_division_num += ((ch_num % max_allow_ch) ? 1 : 0);
+#endif /* LGE_PRIVATE */
+
 		token = (token + 1) % scan_division_num;
 
 		if (0)
@@ -15263,7 +15269,9 @@ void survey_done_set_ch_bw(_adapter *padapter)
 					FUNC_ADPT_ARG(padapter), cur_channel, cur_bwmode, cur_ch_offset);
 		}
 	}
+#ifdef CONFIG_MCC_MODE
 exit:
+#endif
 	set_channel_bwmode(padapter, cur_channel, cur_ch_offset, cur_bwmode);
 }
 
@@ -16928,7 +16936,7 @@ u8 tdls_hdl(_adapter *padapter, unsigned char *pbuf)
 		u8 sta_band = 0;
 
 		/* leave ALL PS when TDLS is established */
-		rtw_pwr_wakeup(padapter);
+		(void) rtw_pwr_wakeup(padapter);
 
 		rtw_hal_rcr_set_chk_bssid(padapter, MLME_TDLS_LINKED);
 		RTW_INFO("Created Direct Link with "MAC_FMT"\n", MAC_ARG(ptdls_sta->cmn.mac_addr));

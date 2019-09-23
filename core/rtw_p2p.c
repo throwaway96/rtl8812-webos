@@ -3510,6 +3510,7 @@ static void ro_ch_timer_process(void *FunctionContext)
 	p2p_cancel_roch_cmd(adapter, 0, NULL, 0);
 }
 
+#if 0
 static void rtw_change_p2pie_op_ch(_adapter *padapter, const u8 *frame_body, u32 len, u8 ch)
 {
 	u8 *ies, *p2p_ie;
@@ -3540,7 +3541,9 @@ static void rtw_change_p2pie_op_ch(_adapter *padapter, const u8 *frame_body, u32
 		p2p_ie = rtw_get_p2p_ie(p2p_ie + p2p_ielen, ies_len - (p2p_ie - ies + p2p_ielen), NULL, &p2p_ielen);
 	}
 }
+#endif
 
+#if defined(CONFIG_CONCURRENT_MODE) && defined(CONFIG_CFG80211_ONECHANNEL_UNDER_CONCURRENT)
 static void rtw_change_p2pie_ch_list(_adapter *padapter, const u8 *frame_body, u32 len, u8 ch)
 {
 	u8 *ies, *p2p_ie;
@@ -3584,11 +3587,12 @@ static void rtw_change_p2pie_ch_list(_adapter *padapter, const u8 *frame_body, u
 		p2p_ie = rtw_get_p2p_ie(p2p_ie + p2p_ielen, ies_len - (p2p_ie - ies + p2p_ielen), NULL, &p2p_ielen);
 	}
 }
+#endif
 
+#if defined(CONFIG_CONCURRENT_MODE) && defined(CONFIG_CFG80211_ONECHANNEL_UNDER_CONCURRENT)
 static bool rtw_chk_p2pie_ch_list_with_buddy(_adapter *padapter, const u8 *frame_body, u32 len)
 {
 	bool fit = _FALSE;
-#ifdef CONFIG_CONCURRENT_MODE
 	u8 *ies, *p2p_ie;
 	u32 ies_len, p2p_ielen;
 	u8 union_ch = rtw_mi_get_union_chan(padapter);
@@ -3630,14 +3634,14 @@ static bool rtw_chk_p2pie_ch_list_with_buddy(_adapter *padapter, const u8 *frame
 		/* Get the next P2P IE */
 		p2p_ie = rtw_get_p2p_ie(p2p_ie + p2p_ielen, ies_len - (p2p_ie - ies + p2p_ielen), NULL, &p2p_ielen);
 	}
-#endif
+
 	return fit;
 }
 
+#if defined(CONFIG_P2P_INVITE_IOT)
 static bool rtw_chk_p2pie_op_ch_with_buddy(_adapter *padapter, const u8 *frame_body, u32 len)
 {
 	bool fit = _FALSE;
-#ifdef CONFIG_CONCURRENT_MODE
 	u8 *ies, *p2p_ie;
 	u32 ies_len, p2p_ielen;
 	u8 union_ch = rtw_mi_get_union_chan(padapter);
@@ -3666,13 +3670,13 @@ static bool rtw_chk_p2pie_op_ch_with_buddy(_adapter *padapter, const u8 *frame_b
 		/* Get the next P2P IE */
 		p2p_ie = rtw_get_p2p_ie(p2p_ie + p2p_ielen, ies_len - (p2p_ie - ies + p2p_ielen), NULL, &p2p_ielen);
 	}
-#endif
+
 	return fit;
 }
+#endif
 
 static void rtw_cfg80211_adjust_p2pie_channel(_adapter *padapter, const u8 *frame_body, u32 len)
 {
-#ifdef CONFIG_CONCURRENT_MODE
 	u8 *ies, *p2p_ie;
 	u32 ies_len, p2p_ielen;
 	u8 union_ch = rtw_mi_get_union_chan(padapter);
@@ -3735,8 +3739,8 @@ static void rtw_cfg80211_adjust_p2pie_channel(_adapter *padapter, const u8 *fram
 
 	}
 
-#endif
 }
+#endif
 
 #ifdef CONFIG_WFD
 u32 rtw_xframe_build_wfd_ie(struct xmit_frame *xframe)

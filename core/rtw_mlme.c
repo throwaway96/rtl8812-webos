@@ -770,7 +770,7 @@ struct wlan_network *_rtw_find_same_network(_queue *scanned_queue, struct wlan_n
 
 	if (plist == phead)
 		found = NULL;
-exit:
+
 	return found;
 }
 
@@ -2667,7 +2667,7 @@ void rtw_sta_mstatus_disc_rpt(_adapter *adapter, u8 mac_id)
 {
 	struct macid_ctl_t *macid_ctl = &adapter->dvobj->macid_ctl;
 
-	if (mac_id >= 0 && mac_id < macid_ctl->num) {
+	if (mac_id < macid_ctl->num) {
 		u8 id_is_shared = mac_id == RTW_DEFAULT_MGMT_MACID; /* TODO: real shared macid judgment */
 
 		RTW_INFO(FUNC_ADPT_FMT" - mac_id=%d%s\n", FUNC_ADPT_ARG(adapter)
@@ -3052,7 +3052,6 @@ void rtw_mlme_reset_auto_scan_int(_adapter *adapter, u8 *reason)
 	#endif
 #endif /* CONFIG_RTW_MESH */
 
-exit:
 	if (interval_ms == 0xffffffff)
 		interval_ms = 0;
 
@@ -3344,15 +3343,15 @@ void rtw_dynamic_check_timer_handlder(void *ctx)
 	struct dvobj_priv *pdvobj = (struct dvobj_priv *)ctx;
 	_adapter *adapter = dvobj_get_primary_adapter(pdvobj);
 
+	if (!adapter)
+		goto exit;
+
 #if (MP_DRIVER == 1)
 	if (adapter->registrypriv.mp_mode == 1 && adapter->mppriv.mp_dm == 0) { /* for MP ODM dynamic Tx power tracking */
 		/* RTW_INFO("%s mp_dm =0 return\n", __func__); */
 		goto exit;
 	}
 #endif
-
-	if (!adapter)
-		goto exit;
 
 	if (!rtw_is_hw_init_completed(adapter))
 		goto exit;
@@ -4137,6 +4136,9 @@ static int rtw_rsn_sync_pmkid(_adapter *adapter, u8 *ie, uint ie_len, int i_ent)
 	if (i_ent < 0 && info.pmkid_cnt == 0)
 		goto exit;
 
+	if (info.pmkid_list == NULL)
+		goto exit;
+
 	if (i_ent >= 0 && info.pmkid_cnt == 1 && _rtw_memcmp(info.pmkid_list, sec->PMKIDList[i_ent].PMKID, 16)) {
 		RTW_INFO(FUNC_ADPT_FMT" has carried the same PMKID:"KEY_FMT"\n"
 			, FUNC_ADPT_ARG(adapter), KEY_ARG(&sec->PMKIDList[i_ent].PMKID));
@@ -4687,7 +4689,7 @@ unsigned int rtw_restructure_ht_ie(_adapter *padapter, u8 *in_ie, u8 *out_ie, ui
 #ifdef CONFIG_80211AC_VHT
 		/* IOT action suggested by Yu Chen 2017/3/3 */
 		if ((pmlmeinfo->assoc_AP_vendor == HT_IOT_PEER_BROADCOM) &&
-			!GET_VHT_CAPABILITY_ELE_MU_BFER(&pvhtpriv->beamform_cap))
+			!pvhtpriv->ap_is_mu_bfer)
 			rf_num = (rf_num >= 2 ? 2 : rf_num);
 #endif
 		SET_HT_CAP_TXBF_COMP_STEERING_NUM_ANTENNAS(&ht_capie, rf_num);

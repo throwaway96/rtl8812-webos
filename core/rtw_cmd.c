@@ -1410,6 +1410,13 @@ u8 rtw_joinbss_cmd(_adapter  *padapter, struct wlan_network *pnetwork)
 
 	pmlmeinfo->assoc_AP_vendor = check_assoc_AP(pnetwork->network.IEs, pnetwork->network.IELength);
 
+#ifdef CONFIG_80211AC_VHT
+	/* save AP beamform_cap info for BCM IOT issue */
+	if (pmlmeinfo->assoc_AP_vendor == HT_IOT_PEER_BROADCOM)
+		pvhtpriv->ap_is_mu_bfer =
+			get_vht_mu_bfer_cap(pnetwork->network.IEs,
+				pnetwork->network.IELength);
+#endif
 	/*
 		Modified by Arvin 2015/05/13
 		Solution for allocating a new WLAN_BSSID_EX to avoid race condition issue between disconnect and joinbss
@@ -2376,9 +2383,9 @@ u8 rtw_tdls_cmd(_adapter *padapter, u8 *addr, u8 option)
 	init_h2fwcmd_w_parm_no_rsp(pcmdobj, TDLSoption, GEN_CMD_CODE(_TDLS));
 	res = rtw_enqueue_cmd(pcmdpriv, pcmdobj);
 
+exit:
 #endif /* CONFIG_TDLS */
 
-exit:
 
 
 
@@ -5045,7 +5052,6 @@ void rtw_create_ibss_post_hdl(_adapter *padapter, int status)
 
 createbss_cmd_fail:
 	_exit_critical_bh(&pmlmepriv->lock, &irqL);
-exit:
 	return;
 }
 

@@ -114,8 +114,7 @@ phydm_ra_debug(
 	u32	reg_u32_tmp;
 
 	for (i = 0; i < 5; i++) {
-		if (input[i + 1])
-			PHYDM_SSCANF(input[i + 1], DCMD_DECIMAL, &var1[i]);
+		PHYDM_SSCANF(input[i + 1], DCMD_DECIMAL, &var1[i]);
 	}
 	
 	if ((strcmp(input[1], help) == 0)) {

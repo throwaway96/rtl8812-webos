@@ -225,6 +225,9 @@ odm_txpowertracking_callback_thermal_meter(
 
 	configure_txpower_track(dm, &c);
 
+	if (*c.get_delta_swing_table == NULL)
+		return;
+
 	(*c.get_delta_swing_table)(dm, (u8 **)&delta_swing_table_idx_tup_a, (u8 **)&delta_swing_table_idx_tdown_a,
 		(u8 **)&delta_swing_table_idx_tup_b, (u8 **)&delta_swing_table_idx_tdown_b);
 

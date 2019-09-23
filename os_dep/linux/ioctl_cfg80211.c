@@ -954,6 +954,9 @@ void rtw_cfg80211_ibss_indicate_connect(_adapter *padapter)
 
 	RTW_INFO(FUNC_ADPT_FMT"\n", FUNC_ADPT_ARG(padapter));
 
+	if (cur_network == NULL)
+		return;
+
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 15, 0))
 	freq = rtw_ch2freq(cur_network->network.Configuration.DSConfig);
 
@@ -2303,7 +2306,6 @@ static int cfg80211_rtw_change_iface(struct wiphy *wiphy,
 	struct mlme_ext_priv	*pmlmeext = &(padapter->mlmeextpriv);
 #ifdef CONFIG_P2P
 	struct wifidirect_info *pwdinfo = &(padapter->wdinfo);
-	u8 is_p2p = _FALSE;
 #endif
 	int ret = 0;
 	u8 change = _FALSE;
@@ -2360,20 +2362,13 @@ static int cfg80211_rtw_change_iface(struct wiphy *wiphy,
 		networkType = Ndis802_11IBSS;
 		break;
 
-	#if defined(CONFIG_P2P) && ((LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 37)) || defined(COMPAT_KERNEL_RELEASE))
-	case NL80211_IFTYPE_P2P_CLIENT:
-		is_p2p = _TRUE;
-	#endif
 	case NL80211_IFTYPE_STATION:
 		networkType = Ndis802_11Infrastructure;
-
 		#ifdef CONFIG_P2P
 		if (change && pwdinfo->driver_interface == DRIVER_CFG80211) {
-			if (is_p2p == _TRUE)
-				rtw_p2p_enable(padapter, P2P_ROLE_CLIENT);
 			#if !RTW_P2P_GROUP_INTERFACE
-			else if (rtw_p2p_chk_role(pwdinfo, P2P_ROLE_CLIENT)
-					|| rtw_p2p_chk_role(pwdinfo, P2P_ROLE_GO)
+			if (rtw_p2p_chk_role(pwdinfo, P2P_ROLE_CLIENT)
+				|| rtw_p2p_chk_role(pwdinfo, P2P_ROLE_GO)
 			) {
 				/* it means remove GC/GO and change mode from GC/GO to station(P2P DEVICE) */
 				rtw_p2p_set_role(pwdinfo, P2P_ROLE_DEVICE);
@@ -2381,30 +2376,35 @@ static int cfg80211_rtw_change_iface(struct wiphy *wiphy,
 			#endif
 		}
 		#endif /* CONFIG_P2P */
-
 		break;
 
-	#if defined(CONFIG_P2P) && ((LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 37)) || defined(COMPAT_KERNEL_RELEASE))
-	case NL80211_IFTYPE_P2P_GO:
-		is_p2p = _TRUE;
-	#endif
 	case NL80211_IFTYPE_AP:
 		networkType = Ndis802_11APMode;
-
 		#ifdef CONFIG_P2P
 		if (change && pwdinfo->driver_interface == DRIVER_CFG80211) {
-			if (is_p2p == _TRUE)
-				rtw_p2p_enable(padapter, P2P_ROLE_GO);
 			#if !RTW_P2P_GROUP_INTERFACE
-			else if (!rtw_p2p_chk_state(pwdinfo, P2P_STATE_NONE)) {
+			if (!rtw_p2p_chk_state(pwdinfo, P2P_STATE_NONE)) {
 				/* it means P2P Group created, we will be GO and change mode from  P2P DEVICE to AP(GO) */
 				rtw_p2p_set_role(pwdinfo, P2P_ROLE_GO);
 			}
 			#endif
 		}
 		#endif /* CONFIG_P2P */
-
 		break;
+
+#if defined(CONFIG_P2P) && ((LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 37)) || defined(COMPAT_KERNEL_RELEASE))
+	case NL80211_IFTYPE_P2P_CLIENT:
+		networkType = Ndis802_11Infrastructure;
+		if (change && pwdinfo->driver_interface == DRIVER_CFG80211)
+			rtw_p2p_enable(padapter, P2P_ROLE_CLIENT);
+		break;
+
+	case NL80211_IFTYPE_P2P_GO:
+		networkType = Ndis802_11APMode;
+		if (change && pwdinfo->driver_interface == DRIVER_CFG80211)
+			rtw_p2p_enable(padapter, P2P_ROLE_GO);
+		break;
+#endif /* defined(CONFIG_P2P) && ((LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 37)) || defined(COMPAT_KERNEL_RELEASE)) */
 
 #ifdef CONFIG_RTW_MESH
 	case NL80211_IFTYPE_MESH_POINT:
@@ -4016,7 +4016,7 @@ static int cfg80211_rtw_disconnect(struct wiphy *wiphy, struct net_device *ndev,
 		pmlmeinfo->disconnect_code = DISCONNECTION_BY_SYSTEM_DUE_TO_HIGH_LAYER_COMMAND;
 		pmlmeinfo->wifi_reason_code = WLAN_REASON_DEAUTH_LEAVING;
 
-		rtw_pwr_wakeup(padapter);
+		(void) rtw_pwr_wakeup(padapter);
 	}
 
 	rtw_wdev_set_not_indic_disco(pwdev_priv, 0);
@@ -4345,8 +4345,7 @@ static int rtw_cfg80211_monitor_if_xmit_entry(struct sk_buff *skb, struct net_de
 
 	RTW_INFO(FUNC_NDEV_FMT"\n", FUNC_NDEV_ARG(ndev));
 
-	if (skb)
-		rtw_mstat_update(MSTAT_TYPE_SKB, MSTAT_ALLOC_SUCCESS, skb->truesize);
+	rtw_mstat_update(MSTAT_TYPE_SKB, MSTAT_ALLOC_SUCCESS, skb->truesize);
 
 	if (IS_CH_WAITING(rfctl)) {
 		#ifdef CONFIG_DFS_MASTER
@@ -7507,6 +7506,11 @@ static int cfg80211_rtw_tdls_oper(struct wiphy *wiphy,
 
 	if (rtw_is_tdls_enabled(padapter) == _FALSE) {
 		RTW_INFO("TDLS is not enabled\n");
+		return 0;
+	}
+
+	if (peer == NULL) {
+		RTW_WARN("%s: peer is NULL\n", __func__);
 		return 0;
 	}
 

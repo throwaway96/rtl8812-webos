@@ -1650,7 +1650,9 @@ chbw_decision:
 		dump_adapters_status(RTW_DBGDUMP , adapter_to_dvobj(padapter));
 	}
 
+#ifdef CONFIG_MCC_MODE
 update_beacon:
+#endif
 	/* update beacon content only if bstart_bss is _TRUE */
 	if (_TRUE == pmlmeext->bstart_bss) {
 

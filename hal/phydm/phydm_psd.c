@@ -352,9 +352,7 @@ phydm_psd_debug(
 
 	if (var1[0] == 0) {
 		for (i = 1; i < 10; i++) {
-			if (input[i + 1]) {
-				PHYDM_SSCANF(input[i + 1], DCMD_DECIMAL, &var1[i]);
-			}
+			PHYDM_SSCANF(input[i + 1], DCMD_DECIMAL, &var1[i]);
 		}
 
 		PDM_SNPF(out_len, used, output + used, out_len - used,

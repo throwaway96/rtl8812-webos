@@ -187,11 +187,14 @@ static u8 _halmac_sdio_reg_read_n(void *p, u32 offset, u32 size, u8 *data)
 	u32 sdio_read_size;
 
 
+	if (!data)
+		return rst;
+
 	sdio_read_size = RND4(size);
 	sdio_read_size = rtw_sdio_cmd53_align_size(d, sdio_read_size);
 
 	pbuf = rtw_zmalloc(sdio_read_size);
-	if ((!pbuf) || (!data))
+	if (!pbuf)
 		return rst;
 
 	ret = rtw_sdio_read_cmd53(d, offset, pbuf, sdio_read_size);
@@ -484,7 +487,10 @@ const char *const RTW_HALMAC_FEATURE_NAME[] = {
 	"HALMAC_FEATURE_CFG_PARA",
 	"HALMAC_FEATURE_DUMP_PHYSICAL_EFUSE",
 	"HALMAC_FEATURE_DUMP_LOGICAL_EFUSE",
+	"HALMAC_FEATURE_DUMP_LOGICAL_EFUSE_MASK",
 	"HALMAC_FEATURE_UPDATE_PACKET",
+	"HALMAC_FEATURE_SEND_SCAN_PACKET",
+	"HALMAC_FEATURE_DROP_SCAN_PACKET",
 	"HALMAC_FEATURE_UPDATE_DATAPACK",
 	"HALMAC_FEATURE_RUN_DATAPACK",
 	"HALMAC_FEATURE_CHANNEL_SWITCH",
@@ -987,12 +993,15 @@ static int init_write_rsvd_page_size(struct dvobj_priv *d)
 	size = MAX_CMDBUF_SZ - TXDESC_OFFSET;
 #elif defined(CONFIG_SDIO_HCI)
 	size = 0x7000; /* 28KB */
+#else
+	/* Use HALMAC default setting and don't call any function */
+	return 0;
 #endif
-
+#if 0	/* Fail to pass coverity DEADCODE check */
 	/* If size==0, use HALMAC default setting and don't call any function */
 	if (!size)
 		return 0;
-
+#endif
 	err = rtw_halmac_set_max_dl_fw_size(d, size);
 	if (err) {
 		RTW_ERR("%s: Fail to set max download fw size!\n", __FUNCTION__);

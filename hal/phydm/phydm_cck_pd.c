@@ -230,7 +230,7 @@ phydm_cckpd_new_cs_ratio(
 			cs_ration = dig_t->aaa_default + AAA_BASE;
 			cs_2r_offset = 3;
 			pd_th = 0xd;
-		} else if ((igi_curr <= 0x24) || (dm->rssi_min < 22)) {
+		} else if (dm->rssi_min < 22) {
 			
 			if (cckpd_t->cck_fa_ma > 1000) {
 				cs_ration = dig_t->aaa_default + AAA_STEP;
@@ -244,6 +244,8 @@ phydm_cckpd_new_cs_ratio(
 				cs_ration = cckpd_t->cck_cca_th_aaa;
 				pd_th = cckpd_t->cur_cck_cca_thres;
 			}
+		} else {
+			is_update = false;
 		}
 	} else {
 	

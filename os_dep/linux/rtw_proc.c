@@ -2209,7 +2209,6 @@ static int btreg_parse_str(char const *input, u8 *type, u16 *addr, u16 *val)
 	u8 t = 0;
 	u32 a, v;
 	u8 i, n;
-	u8 *p;
 
 
 	num = sscanf(input, "%s %x %x", str, &a, &v);
@@ -2222,13 +2221,9 @@ static int btreg_parse_str(char const *input, u8 *type, u16 *addr, u16 *val)
 		return -EINVAL;
 	}
 
-	/* convert to lower case for following type compare */
-	p = str;
-	for (; *p; ++p)
-		*p = tolower(*p);
 	n = sizeof(btreg_type) / sizeof(btreg_type[0]);
 	for (i = 0; i < n; i++) {
-		if (!strcmp(str, btreg_type[i])) {
+		if (!strcasecmp(str, btreg_type[i])) {
 			t = i;
 			break;
 		}

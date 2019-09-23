@@ -317,9 +317,7 @@ phydm_fahm_dbg(
 	u32		i;
 
 	for (i = 0; i < 2; i++) {
-		if (input[i + 1]) {
-			PHYDM_SSCANF(input[i + 1], DCMD_DECIMAL, &var1[i]);
-		}
+		PHYDM_SSCANF(input[i + 1], DCMD_DECIMAL, &var1[i]);
 	}
 
 	if ((strcmp(input[1], help) == 0)) {
@@ -915,9 +913,7 @@ phydm_nhm_dbg(
 			nhm_para.mntr_time = 262;
 		} else {
 			for (i = 1; i < 7; i++) {
-				if (input[i + 1]) {
-					PHYDM_SSCANF(input[i + 1], DCMD_DECIMAL, &var1[i]);
-				}
+				PHYDM_SSCANF(input[i + 1], DCMD_DECIMAL, &var1[i]);
 			}
 			nhm_para.incld_txon = (enum nhm_inexclude_txon_all)var1[1];
 			nhm_para.incld_cca = (enum nhm_inexclude_cca_all)var1[2];
@@ -1244,7 +1240,7 @@ phydm_ccx_monitor_trigger(
 	u16			monitor_time		/*unit ms*/
 )
 {
-	u8			nhm_th[11], i, igi;
+	u8			nhm_th[11] = { 0 }, i, igi;
 	struct dm_struct	*dm = (struct dm_struct *)dm_void;
 	struct ccx_info		*ccx_info = &dm->dm_ccx_info;
 	u16 	monitor_time_4us = 0;
@@ -1789,9 +1785,7 @@ phydm_clm_dbg(
 	u32		i;
 
 	for (i = 0; i < 4; i++) {
-		if (input[i + 1]) {
-			PHYDM_SSCANF(input[i + 1], DCMD_DECIMAL, &var1[i]);
-		}
+		PHYDM_SSCANF(input[i + 1], DCMD_DECIMAL, &var1[i]);
 	}
 
 	if ((strcmp(input[1], help) == 0)) {

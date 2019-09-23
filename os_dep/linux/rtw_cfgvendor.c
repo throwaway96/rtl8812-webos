@@ -1230,7 +1230,8 @@ static int rtw_cfgvendor_lstats_get_info(struct wiphy *wiphy,
 	output = rtw_malloc(sizeof(wifi_radio_stat) + sizeof(wifi_iface_stat)+1);
 	if (output == NULL) {
 		RTW_DBG("Allocate lstats info buffer fail!\n");
-}
+		return err;
+	}
 
 	radio = (wifi_radio_stat *)output;
 

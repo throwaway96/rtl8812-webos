@@ -441,7 +441,8 @@ void rtw_os_recv_indicate_pkt(_adapter *padapter, _pkt *pkt, union recv_frame *r
 
 				if (bmcast) {
 					psta = rtw_get_bcmc_stainfo(padapter);
-					pskb2 = rtw_skb_clone(pkt);
+					if (psta != NULL)
+						pskb2 = rtw_skb_clone(pkt);
 				} else
 					psta = rtw_get_stainfo(pstapriv, ehdr->h_dest);
 

@@ -157,7 +157,7 @@ int usbctrl_vendorreq(struct intf_hdl *pintfhdl, u8 request, u16 value, u16 inde
 
 #if (defined(CONFIG_RTL8822B) || defined(CONFIG_RTL8821C))
 	if (value < 0xFE00) {
-		if (0x00 <= value && value <= 0xff)
+		if (value <= 0xff)
 			current_reg_sec = REG_ON_SEC;
 		else if (0x1000 <= value && value <= 0x10ff)
 			current_reg_sec = REG_ON_SEC;
@@ -280,15 +280,19 @@ unsigned int ffaddr2pipehdl(struct dvobj_priv *pdvobj, u32 addr)
 	else if (addr == RECV_INT_IN_ADDR)
 		pipe = usb_rcvintpipe(pusbd, pdvobj->RtInPipe[1]);
 
-	else if (addr < HW_QUEUE_ENTRY) {
 #ifdef RTW_HALMAC
-		/* halmac already translate queue id to bulk out id */
-		ep_num = pdvobj->RtOutPipe[addr];
+         /* halmac already translate queue id to bulk out id (addr 0~3) */
+        else if (addr < 4) {
+                ep_num = pdvobj->RtOutPipe[addr];
+                pipe = usb_sndbulkpipe(pusbd, ep_num);
+        }
 #else
-		ep_num = pdvobj->Queue2Pipe[addr];
+        else if (addr < HW_QUEUE_ENTRY) {
+                ep_num = pdvobj->Queue2Pipe[addr];
+                pipe = usb_sndbulkpipe(pusbd, ep_num);
+        }
 #endif
-		pipe = usb_sndbulkpipe(pusbd, ep_num);
-	}
+
 
 	return pipe;
 }

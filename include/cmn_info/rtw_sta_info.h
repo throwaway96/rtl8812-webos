@@ -149,7 +149,7 @@ struct rssi_info {
 	s8		rssi;
 	s8		rssi_cck;
 	s8		rssi_ofdm;
-	u8		packet_map;
+	u64		packet_map;
 	u8		ofdm_pkt_cnt;
 	u8		cck_pkt_cnt;
 	u16		cck_sum_power;

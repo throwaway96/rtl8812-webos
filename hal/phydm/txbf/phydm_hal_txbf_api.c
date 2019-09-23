@@ -134,7 +134,6 @@ beamforming_get_htndp_tx_rate(
 	if (dm->support_ic_type & ODM_RTL8814A)
 		nr_index = tx_bf_nr(hal_txbf_8814a_get_ntx(dm), comp_steering_num_of_bfer);
 	else
-#endif
 		nr_index = tx_bf_nr(1, comp_steering_num_of_bfer);
 
 	switch (nr_index) {
@@ -154,6 +153,9 @@ beamforming_get_htndp_tx_rate(
 		ndp_tx_rate = ODM_MGN_MCS8;
 		break;
 	}
+#else
+	ndp_tx_rate = ODM_MGN_MCS8;
+#endif
 
 	return ndp_tx_rate;
 
@@ -173,7 +175,6 @@ beamforming_get_vht_ndp_tx_rate(
 	if (dm->support_ic_type & ODM_RTL8814A)
 		nr_index = tx_bf_nr(hal_txbf_8814a_get_ntx(dm), comp_steering_num_of_bfer);
 	else
-#endif
 		nr_index = tx_bf_nr(1, comp_steering_num_of_bfer);
 
 	switch (nr_index) {
@@ -193,6 +194,9 @@ beamforming_get_vht_ndp_tx_rate(
 		ndp_tx_rate = ODM_MGN_VHT2SS_MCS0;
 		break;
 	}
+#else
+	ndp_tx_rate = ODM_MGN_VHT2SS_MCS0;
+#endif
 
 	return ndp_tx_rate;
 

@@ -5865,7 +5865,7 @@ static int rtw_rereg_nd_name(struct net_device *dev,
 	_adapter *padapter = rtw_netdev_priv(dev);
 	struct dvobj_priv *dvobj = adapter_to_dvobj(padapter);
 	struct rereg_nd_name_data *rereg_priv = &padapter->rereg_nd_name_priv;
-	char new_ifname[IFNAMSIZ];
+	char new_ifname[IFNAMSIZ + 1];
 
 	if (rereg_priv->old_ifname[0] == 0) {
 		char *reg_ifname;
@@ -5886,6 +5886,8 @@ static int rtw_rereg_nd_name(struct net_device *dev,
 
 	if (copy_from_user(new_ifname, wrqu->data.pointer, IFNAMSIZ))
 		return -EFAULT;
+
+	new_ifname[wrqu->data.length] = '\0';
 
 	if (0 == strcmp(rereg_priv->old_ifname, new_ifname))
 		return ret;
@@ -7924,7 +7926,7 @@ static int rtw_wx_set_priv(struct net_device *dev,
 		return -EFAULT;
 
 	len = dwrq->length;
-	ext = rtw_vmalloc(len);
+	ext = rtw_vmalloc(len + 1);
 	if (!ext)
 		return -ENOMEM;
 
@@ -7933,7 +7935,7 @@ static int rtw_wx_set_priv(struct net_device *dev,
 		return -EFAULT;
 	}
 
-
+	ext[len] = '\0';
 
 #ifdef CONFIG_DEBUG_RTW_WX_SET_PRIV
 	ext_dbg = rtw_vmalloc(len);
@@ -8156,7 +8158,7 @@ static int rtw_wowlan_set_pattern(struct net_device *dev,
 	struct wowlan_ioctl_param poidparam;
 	int ret = 0, len = 0, i = 0;
 	systime start_time = rtw_get_current_time();
-	u8 input[wrqu->data.length];
+	u8 input[wrqu->data.length + 1];
 	u8 index = 0;
 
 	poidparam.subcode = 0;
@@ -8177,6 +8179,8 @@ static int rtw_wowlan_set_pattern(struct net_device *dev,
 		if (copy_from_user(input,
 				   wrqu->data.pointer, wrqu->data.length))
 			return -EFAULT;
+
+		input[wrqu->data.length] = '\0';
 		/* leave PS first */
 		rtw_ps_deny(padapter, PS_DENY_IOCTL);
 		LeaveAllPowerSaveModeDirect(padapter);
@@ -9801,7 +9805,8 @@ static int rtw_mp_efuse_set(struct net_device *dev,
 		RTW_INFO("%s: MAC address=%s\n", __FUNCTION__, tmp[1]);
 
 		for (jj = 0, kk = 0; jj < cnts; jj++, kk += 2)
-			pEfuseHal->fakeEfuseModifiedMap[addr + jj] = key_2char2num(tmp[1][kk], tmp[1][kk + 1]);
+			if ((addr + jj) < EFUSE_MAX_MAP_LEN)
+				pEfuseHal->fakeEfuseModifiedMap[addr + jj] = key_2char2num(tmp[1][kk], tmp[1][kk + 1]);
 
 		_rtw_memset(extra, '\0', strlen(extra));
 		sprintf(extra, "write mac addr to fake map OK\n");
@@ -9881,7 +9886,7 @@ static int rtw_mp_customer_str(
 		|| !adapter->registrypriv.mp_customer_str)
 		return -EFAULT;
 
-	len = wrqu->data.length;
+	len = wrqu->data.length + 1;
 
 	pbuf = (u8 *)rtw_zmalloc(len);
 	if (pbuf == NULL) {
@@ -9889,7 +9894,7 @@ static int rtw_mp_customer_str(
 		return -ENOMEM;
 	}
 
-	if (copy_from_user(pbuf, wrqu->data.pointer, len)) {
+	if (copy_from_user(pbuf, wrqu->data.pointer, wrqu->data.length)) {
 		rtw_mfree(pbuf, len);
 		RTW_WARN("%s: copy from user fail!\n", __func__);
 		return -EFAULT;
@@ -10411,36 +10416,34 @@ static int rtw_priv_get(struct net_device *dev,
 	if (subcmd < MP_NULL) {
 #ifdef CONFIG_MP_INCLUDED
 		rtw_priv_mp_get(dev, info, wdata, extra);
+		rtw_msleep_os(10); /* delay 5ms for sending pkt before exit adb shell operation */
 #endif
-		return 0;
-	}
-
-	switch (subcmd) {
+	} else {
+		switch (subcmd) {
 #if defined(CONFIG_RTL8723B)
-	case MP_SetBT:
-		RTW_INFO("set MP_SetBT\n");
-		rtw_mp_SetBT(dev, info, wdata, extra);
-		break;
+		case MP_SetBT:
+			RTW_INFO("set MP_SetBT\n");
+			rtw_mp_SetBT(dev, info, wdata, extra);
+			break;
 #endif
 #ifdef CONFIG_SDIO_INDIRECT_ACCESS
-	case MP_SD_IREAD:
-		rtw_mp_sd_iread(dev, info, wrqu, extra);
-		break;
-	case MP_SD_IWRITE:
-		rtw_mp_sd_iwrite(dev, info, wrqu, extra);
-		break;
+		case MP_SD_IREAD:
+			rtw_mp_sd_iread(dev, info, wrqu, extra);
+			break;
+		case MP_SD_IWRITE:
+			rtw_mp_sd_iwrite(dev, info, wrqu, extra);
+			break;
 #endif
 #ifdef CONFIG_APPEND_VENDOR_IE_ENABLE
-	case VENDOR_IE_GET:
-		RTW_INFO("get case VENDOR_IE_GET\n");
-		rtw_vendor_ie_get(dev , info , wdata , extra);
-		break;
+		case VENDOR_IE_GET:
+			RTW_INFO("get case VENDOR_IE_GET\n");
+			rtw_vendor_ie_get(dev, info, wdata, extra);
+			break;
 #endif
-	default:
-		return -EIO;
+		default:
+			return -EIO;
+		}
 	}
-
-	rtw_msleep_os(10); /* delay 5ms for sending pkt before exit adb shell operation */
 	return 0;
 }
 
@@ -12498,9 +12501,13 @@ static int _rtw_ioctl_wext_private(struct net_device *dev, union iwreq_data *wrq
 	input_len = wdata.data.length;
 	if (!input_len)
 		return -EINVAL;
+
 	input = rtw_zmalloc(input_len);
-	if (NULL == input)
-		return -ENOMEM;
+	if (input == NULL) {
+		err = -EOPNOTSUPP;
+		goto exit;
+	}
+
 	if (copy_from_user(input, wdata.data.pointer, input_len)) {
 		err = -EFAULT;
 		goto exit;
@@ -12508,11 +12515,6 @@ static int _rtw_ioctl_wext_private(struct net_device *dev, union iwreq_data *wrq
 	input[input_len - 1] = '\0';
 	ptr = input;
 	len = input_len;
-
-	if (ptr == NULL) {
-		err = -EOPNOTSUPP;
-		goto exit;
-	}
 
 	sscanf(ptr, "%16s", cmdname);
 	cmdlen = strlen(cmdname);

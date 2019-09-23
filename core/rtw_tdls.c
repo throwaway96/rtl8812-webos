@@ -2016,8 +2016,7 @@ sint On_TDLS_Setup_Req(_adapter *padapter, union recv_frame *precv_frame, struct
 		rtw_tdls_process_wfd_ie(ptdlsinfo, ptr + FIXED_IE, parsing_length);
 #endif
 
-	} else
-		goto exit;
+	}
 
 	_rtw_memcpy(txmgmt.peer, prx_pkt_attrib->src, ETH_ALEN);
 

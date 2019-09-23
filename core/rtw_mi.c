@@ -27,6 +27,7 @@ void rtw_mi_update_union_chan_inf(_adapter *adapter, u8 ch, u8 offset , u8 bw)
 	iface_state->union_offset = offset;
 }
 
+#ifdef DBG_IFACE_STATUS
 #ifdef CONFIG_P2P
 static u8 _rtw_mi_p2p_listen_scan_chk(_adapter *adapter)
 {
@@ -46,6 +47,8 @@ static u8 _rtw_mi_p2p_listen_scan_chk(_adapter *adapter)
 	return p2p_listen_scan_state;
 }
 #endif
+#endif
+
 u8 rtw_mi_stayin_union_ch_chk(_adapter *adapter)
 {
 	u8 rst = _TRUE;
@@ -1252,14 +1255,15 @@ u8 rtw_mi_buddy_stay_in_p2p_mode(_adapter *padapter)
 _adapter *rtw_get_iface_by_id(_adapter *padapter, u8 iface_id)
 {
 	_adapter *iface = NULL;
-	struct dvobj_priv *dvobj = adapter_to_dvobj(padapter);
+	struct dvobj_priv *dvobj;
 
 	if ((padapter == NULL) || (iface_id >= CONFIG_IFACE_NUMBER)) {
 		rtw_warn_on(1);
 		return iface;
 	}
 
-	return  dvobj->padapters[iface_id];
+	dvobj = adapter_to_dvobj(padapter);
+	return dvobj->padapters[iface_id];
 }
 
 _adapter *rtw_get_iface_by_macddr(_adapter *padapter, u8 *mac_addr)
