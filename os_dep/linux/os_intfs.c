@@ -4155,7 +4155,9 @@ int rtw_suspend_free_assoc_resource(_adapter *padapter)
 				MAC_ARG(pmlmepriv->cur_network.network.MacAddress),
 				pmlmepriv->cur_network.network.Ssid.SsidLength,
 				pmlmepriv->assoc_ssid.SsidLength);
+			#ifndef LGE_PRIVATE
 			rtw_set_to_roam(padapter, 1);
+			#endif
 		}
 	}
 
