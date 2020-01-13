@@ -4162,7 +4162,15 @@ int rtw_suspend_free_assoc_resource(_adapter *padapter)
 	}
 
 	if (check_fwstate(pmlmepriv, WIFI_STATION_STATE) && check_fwstate(pmlmepriv, _FW_LINKED)) {
+#ifdef LGE_PRIVATE
+		_adapter *padapter_primary = GET_PRIMARY_ADAPTER(padapter);
+
+		if (adapter_wdev_data(padapter_primary)->delay_disconnect == _FALSE) {
+			rtw_disassoc_cmd(padapter, 0, RTW_CMDF_DIRECTLY);
+		}
+#else
 		rtw_disassoc_cmd(padapter, 0, RTW_CMDF_DIRECTLY);
+#endif
 		/* s2-2.  indicate disconnect to os */
 		rtw_indicate_disconnect(padapter, 0, _FALSE);
 		
@@ -4472,6 +4480,8 @@ int rtw_suspend_normal(_adapter *padapter)
 #ifdef LGE_PRIVATE
 	if (adapter_wdev_data(padapter)->idle_mode == 0)
 		rtw_mi_suspend_free_assoc_resource(padapter);
+	else
+		rtw_disassoc_cmd(padapter, 0, RTW_CMDF_DIRECTLY);
 #else
 	rtw_mi_suspend_free_assoc_resource(padapter);
 #endif /* LGE_PRIVATE */
@@ -5084,8 +5094,8 @@ int rtw_resume_common(_adapter *padapter)
 #ifdef LGE_PRIVATE
 	if (adapter_wdev_data(padapter)->idle_mode) {
 		rtw_hal_sreset_reset(padapter);
-		rtw_init_pwrctrl_priv_reset(padapter);
 		adapter_wdev_data(padapter)->delay_disconnect = _TRUE;
+		rtw_init_pwrctrl_priv_reset(padapter);
 	}
 
 	adapter_wdev_data(padapter)->wowl = _FALSE;

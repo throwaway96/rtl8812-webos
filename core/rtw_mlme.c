@@ -1581,7 +1581,11 @@ void rtw_free_assoc_resources(_adapter *adapter, int lock_scanned_queue)
 		RTW_INFO("skip free disconnecting network of scanned_queue\n");
 		rtw_free_network_nolock(adapter, pwlan, _FALSE);
 #ifdef CONFIG_P2P
-		if (!rtw_p2p_chk_state(&adapter->wdinfo, P2P_STATE_NONE)) {
+		if (
+#ifdef LGE_PRIVATE
+			(adapter_wdev_data(adapter)->delay_disconnect == _FALSE) &&
+#endif
+			!rtw_p2p_chk_state(&adapter->wdinfo, P2P_STATE_NONE)) {
 			rtw_mi_set_scan_deny(adapter, 2000);
 			/* rtw_clear_scan_deny(adapter);			 */
 		}

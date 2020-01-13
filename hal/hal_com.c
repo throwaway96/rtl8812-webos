@@ -9591,12 +9591,32 @@ static void _rtw_hal_set_fw_rsvd_page(_adapter *adapter, bool finished, u8 *page
 
 	/* Prepare ReservedPagePacket */
 	if (page_num) {
+#if LGE_PRIVATE
+		if (!rtw_is_hw_init_completed(adapter)) {
+			ReservedPagePacket = rtw_zmalloc(MAX_CMDBUF_SZ);
+			if (!ReservedPagePacket) {
+				RTW_WARN("%s: alloc ReservedPagePacket fail!\n", __FUNCTION__);
+				*page_num = 0xFF;
+				return;
+			}
+		} else {
+			pcmdframe = rtw_alloc_cmdxmitframe(pxmitpriv);
+			if (pcmdframe == NULL) {
+				RTW_ERR("%s: alloc ReservedPagePacket fail!\n", __FUNCTION__);
+				*page_num = 0xFF;
+				return;
+			}
+
+			ReservedPagePacket = pcmdframe->buf_addr;
+		}
+#else
 		ReservedPagePacket = rtw_zmalloc(MAX_CMDBUF_SZ);
 		if (!ReservedPagePacket) {
 			RTW_WARN("%s: alloc ReservedPagePacket fail!\n", __FUNCTION__);
 			*page_num = 0xFF;
 			return;
 		}
+#endif
 	} else {
 		if (pwrctl->wowlan_mode == _TRUE || pwrctl->wowlan_ap_mode == _TRUE)
 			RsvdPageNum = rtw_hal_get_txbuff_rsvd_page_num(adapter, _TRUE);
@@ -9839,7 +9859,15 @@ static void _rtw_hal_set_fw_rsvd_page(_adapter *adapter, bool finished, u8 *page
 download_page:
 	if (page_num) {
 		*page_num = TotalPageNum;
+#if LGE_PRIVATE
+		if (!rtw_is_hw_init_completed(adapter)) {
+			rtw_mfree(ReservedPagePacket, MAX_CMDBUF_SZ);
+		} else {
+			rtw_free_xmitframe(pxmitpriv, pcmdframe);
+		}
+#else
 		rtw_mfree(ReservedPagePacket, MAX_CMDBUF_SZ);
+#endif
 		ReservedPagePacket = NULL;
 		return;
 	}

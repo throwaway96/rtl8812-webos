@@ -282,6 +282,20 @@ uint	 rtw_hal_init(_adapter *padapter)
 	} else {
 		rtw_set_hw_init_completed(padapter, _FALSE);
 		RTW_ERR("%s: fail\n", __func__);
+#ifdef LGE_PRIVATE
+		{
+			u32 val32;
+			int i = 0;
+
+			while (i++ < 10) {
+				val32 = rtw_read32(padapter, 0x10fc);
+				RTW_INFO("REG[0x10FC](%08X)\n", val32);
+				val32 = rtw_read32(padapter, 0x10f8);
+				RTW_INFO("REG[0x10F8](%08X)\n", val32);
+				rtw_msleep_os(5);
+			}
+		}
+#endif
 	}
 
 

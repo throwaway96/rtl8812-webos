@@ -84,7 +84,7 @@ u8 rtl8822b_phy_init_mac_register(PADAPTER adapter)
 			ret = _TRUE;
 	}
 	if (_FALSE == ret)
-		RTW_INFO("%s: Write MAC Reg Fail!!", __FUNCTION__);
+		RTW_INFO("%s: Write MAC Reg Fail!!\n", __FUNCTION__);
 
 	return ret;
 }

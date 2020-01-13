@@ -476,6 +476,16 @@ int _rtw_xmit_entry(_pkt *pkt, _nic_hdl pnetdev)
 		goto drop_packet;
 	}
 
+#ifdef LGE_PRIVATE
+	{
+		_adapter *padapter_primary = GET_PRIMARY_ADAPTER(padapter);
+
+		if (adapter_wdev_data(padapter_primary)->delay_disconnect) {
+			goto drop_packet;
+		}
+	}
+#endif
+
 	rtw_check_xmit_resource(padapter, pkt);
 
 #ifdef CONFIG_TX_MCAST2UNI
