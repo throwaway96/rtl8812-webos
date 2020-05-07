@@ -1324,7 +1324,8 @@ bool rtw_choose_shortest_waiting_ch(_adapter *adapter, u8 sel_ch, u8 max_bw, u8 
 void dump_country_chplan(void *sel, const struct country_chplan *ent)
 {
 #ifdef LGE_PRIVATE
-	_RTW_PRINT_SEL(sel, "\"%c%c/%d\", 0x%02X%s, bw:0x%02X\n"
+	_RTW_PRINT_SEL(sel, "%2u, \"%c%c/%d\", 0x%02X%s, bw:0x%02X\n"
+		, ent->wififrequency
 		, ent->alpha2[0], ent->alpha2[1]
 		, ent->version
 		, ent->chplan
@@ -1367,7 +1368,8 @@ void dump_country_chplan_list(void *sel, const struct country_chplan *ent)
 	_adapter *adapter = (_adapter *)rtw_netdev_priv(dev);
 	RT_CHANNEL_INFO channel_set[MAX_CHANNEL_NUM];
 
-	RTW_PRINT_SEL(sel, "\"%c%c/%d\", 0x%02X%s, bw:0x%02X, %6s,"
+	RTW_PRINT_SEL(sel, "%2u, \"%c%c/%d\", 0x%02X%s, bw:0x%02X, %6s,"
+		, ent->wififrequency
 		, ent->alpha2[0], ent->alpha2[1]
 		, ent->version
 		, ent->chplan

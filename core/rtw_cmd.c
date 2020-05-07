@@ -2250,32 +2250,44 @@ inline u8 rtw_set_country_cmd(_adapter *adapter, int flags, const char *country_
 {
 	const struct country_chplan *ent;
 
-	if (is_alpha(country_code[0]) == _FALSE
-	    || is_alpha(country_code[1]) == _FALSE
-	   ) {
-		RTW_PRINT("%s input country_code is not alpha2\n", __func__);
-		return _FAIL;
-	}
-
-	ent = rtw_get_chplan_from_country(country_code, version);
-
-	if (ent == NULL) {
 #ifdef LGE_PRIVATE
-		RTW_PRINT("%s unsupported country_code:\"%c%c/%u\"\n", __func__,
-			country_code[0], country_code[1], version);
-#else
-		RTW_PRINT("%s unsupported country_code:\"%c%c\"\n", __func__, country_code[0], country_code[1]);
-#endif /* LGE_PRIVATE */
-		return _FAIL;
-	}
+	if (country_code == NULL) {
+		ent = rtw_get_chplan_from_wififrequency(version);
+		if (ent == NULL) {
+			RTW_PRINT("%s unsupported country_code:\"%u\"\n",
+				__func__, version);
+			return _FAIL;
+		}
+	} else
+#endif
+	{
 
+		if (is_alpha(country_code[0]) == _FALSE
+			|| is_alpha(country_code[1]) == _FALSE
+		   ) {
+			RTW_PRINT("%s input country_code is not alpha2\n", __func__);
+			return _FAIL;
+		}
+
+		ent = rtw_get_chplan_from_country(country_code, version);
+
+		if (ent == NULL) {
+#ifdef LGE_PRIVATE
+			RTW_PRINT("%s unsupported country_code:\"%c%c/%u\"\n", __func__,
+				country_code[0], country_code[1], version);
+#else
+			RTW_PRINT("%s unsupported country_code:\"%c%c\"\n", __func__, country_code[0], country_code[1]);
+#endif /* LGE_PRIVATE */
+			return _FAIL;
+		}
+	}
 #ifdef LGE_PRIVATE
 	adapter_wdev_data(adapter)->ccode_version = ent->version;
-	strncpy(adapter_wdev_data(adapter)->country, country_code, 3);
+	strncpy(adapter_wdev_data(adapter)->country, ent->alpha2, 2);
 	adapter_wdev_data(adapter)->country[2] = '\0';
 #endif /* LGE_PRIVATE */
 
-	RTW_PRINT("%s country_code:\"%c%c\" mapping to chplan:0x%02x\n", __func__, country_code[0], country_code[1], ent->chplan);
+	RTW_PRINT("%s country_code:\"%c%c\" mapping to chplan:0x%02x\n", __func__, ent->alpha2[0], ent->alpha2[1], ent->chplan);
 
 	return _rtw_set_chplan_cmd(adapter, flags, RTW_CHPLAN_UNSPECIFIED, ent, swconfig);
 }

@@ -583,11 +583,12 @@ const u8 _rf_type_to_rf_rx_cnt[] = {
 
 #ifdef LGE_PRIVATE
 /* has def_module_flags specified, used by common map and HAL dfference map */
-#define COUNTRY_CHPLAN_ENT2(_alpha2, _chplan, _bw, _en_11ac, _def_module_flags, _ver) \
+#define COUNTRY_CHPLAN_ENT2(_alpha2, _chplan, _bw, _en_11ac, _def_module_flags, _wififreq, _ver) \
 	{.alpha2 = (_alpha2), .chplan = (_chplan) \
 		COUNTRY_CHPLAN_ASSIGN_BW(_bw) \
 		COUNTRY_CHPLAN_ASSIGN_EN_11AC(_en_11ac) \
 		COUNTRY_CHPLAN_ASSIGN_DEF_MODULE_FLAGS(_def_module_flags) \
+		, .wififrequency = (_wififreq) \
 		, .version = (_ver) \
 	}
 #endif /* LGE_PRIVATE */
@@ -1044,6 +1045,26 @@ const struct country_chplan *rtw_get_chplan_from_country(const char *country_cod
 	if (exc_ent)
 		ent = exc_ent;
 	#endif
+
+	return ent;
+}
+
+const struct country_chplan *rtw_get_chplan_from_wififrequency(const u8 wififrequency)
+{
+	const struct country_chplan *ent = NULL;
+	const struct country_chplan *map = NULL;
+	u16 map_sz = 0;
+	int i;
+
+	map = CUSTOMIZED_country_chplan_map;
+	map_sz = sizeof(CUSTOMIZED_country_chplan_map) / sizeof(struct country_chplan);
+
+	for (i = 0; i < map_sz; i++) {
+		if (wififrequency == map[i].wififrequency) {
+			ent = &map[i];
+			break;
+		}
+	}
 
 	return ent;
 }

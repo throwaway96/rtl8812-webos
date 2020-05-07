@@ -4789,6 +4789,7 @@ int rtw_lge_parse_country(_adapter *padapter, u8 *list_str)
 	char *pch, *pnext, *pend,
 		*country = NULL, *ccode_ver = NULL;
 	u8 index = 0, chplan_id = 0x7f;
+	int wififrequency = 0xff;
 
 	pch = list_str;
 
@@ -4801,6 +4802,14 @@ int rtw_lge_parse_country(_adapter *padapter, u8 *list_str)
 		pnext = strstr(pch, "CountryCode=");
 		if (pnext != NULL) {
 			pch = pnext + 12;
+
+			if (*pch >= '0' && *pch <= '9') {
+				pend = strstr(pch, "\n");
+				*pend = '\0';
+				wififrequency = rtw_atoi(pch);
+				break;
+			}
+
 			pend = strstr(pch, " ");
 			*pend = '\0';
 			country = pch;
@@ -4813,8 +4822,11 @@ int rtw_lge_parse_country(_adapter *padapter, u8 *list_str)
 			break;
 	}
 
-	if (country != NULL) {
-
+	if (wififrequency != 0xff) {
+		RTW_INFO("%s country wifisetting [%d]\n", __func__, wififrequency);
+		if (rtw_set_country(padapter, NULL, wififrequency) == _FAIL)
+			rtw_set_country(padapter, "DC", COUNTRY_DEFAULT_VER);
+	} else if (country != NULL) {
 		if (strlen(country) == 3) {
 			RTW_INFO("%s country [%s -> %s, %s]\n", __func__
 				, country, (country + 1), ccode_ver);
@@ -4823,10 +4835,10 @@ int rtw_lge_parse_country(_adapter *padapter, u8 *list_str)
 			RTW_INFO("%s country [%s, %s]\n", __func__, country, ccode_ver);
 
 		if (rtw_set_country(padapter, country, rtw_atoi(ccode_ver)) == _FAIL)
-			rtw_set_country(padapter, "DC", 3);
+			rtw_set_country(padapter, "DC", COUNTRY_DEFAULT_VER);
 	} else {
-		RTW_INFO("%s can not load the country setting. Apply to [DC,3]\n", __func__);
-		rtw_set_country(padapter, "DC", 3);
+		RTW_INFO("%s can not load the country setting. Apply to [DC,%d]\n", __func__, COUNTRY_DEFAULT_VER);
+		rtw_set_country(padapter, "DC", COUNTRY_DEFAULT_VER);
 	}
 
 	return 0;

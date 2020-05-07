@@ -173,6 +173,9 @@ struct country_chplan {
 #if RTW_DEF_MODULE_REGULATORY_CERT
 	u16 def_module_flags; /* RTW_MODULE_RTLXXX */
 #endif
+#ifdef LGE_PRIVATE
+	u8 wififrequency;
+#endif
 	u8 version;
 };
 
@@ -189,6 +192,7 @@ struct country_chplan {
 #endif
 
 const struct country_chplan *rtw_get_chplan_from_country(const char *country_code, const u8 version);
+const struct country_chplan *rtw_get_chplan_from_wififrequency(const u8 wififrequency);
 
 struct rf_ctl_t;
 
