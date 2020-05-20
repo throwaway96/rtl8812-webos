@@ -3051,7 +3051,7 @@ static int cfg80211_rtw_scan(struct wiphy *wiphy
 #ifdef LGE_PRIVATE
 	ssid_exist = _FALSE;
 	is_wildcard_ssid = _FALSE;
-#endif /*ÅLGE_PRIVATE */
+#endif /*?LGE_PRIVATE */
 	/* parsing request ssids, n_ssids */
 	for (i = 0; i < request->n_ssids && i < RTW_SSID_SCAN_AMOUNT; i++) {
 		#ifdef CONFIG_DEBUG_CFG80211
@@ -9814,7 +9814,7 @@ int rtw_wdev_alloc(_adapter *padapter, struct wiphy *wiphy)
 
 #ifdef LGE_PRIVATE
 	strncpy(pwdev_priv->country, "DC", 3);
-	pwdev_priv->ccode_version = 1;
+	pwdev_priv->ccode_version = COUNTRY_DEFAULT_VER;
 	pwdev_priv->mchan_sched_mode = 0;
 	pwdev_priv->mchan_sched_dyn = 0;
 	pwdev_priv->wowl = _FALSE;
