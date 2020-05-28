@@ -4603,7 +4603,6 @@ void p2p_ps_wk_hdl(_adapter *padapter, u8 p2p_ps_state)
 			if (MCC_EN(padapter)) {
 				if (rtw_hal_check_mcc_status(padapter, MCC_STATUS_DOING_MCC)) {
 					RTW_INFO("P2P PS enble under MCC\n");
-					rtw_warn_on(1);
 				}
 
 			}

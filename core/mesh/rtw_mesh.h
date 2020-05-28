@@ -426,7 +426,7 @@ void dump_mesh_cto_mgate_blacklist_settings(void *sel, _adapter *adapter);
 void dump_mesh_peer_sel_policy(void *sel, _adapter *adapter);
 void dump_mesh_networks(void *sel, _adapter *adapter);
 
-int rtw_sae_check_frames(_adapter *adapter, const u8 *buf, u32 len, u8 tx);
+void rtw_mesh_sae_check_frames(_adapter *adapter, const u8 *buf, u32 len, u8 tx, u16 alg, u16 seq, u16 status);
 int rtw_mesh_check_frames_tx(_adapter *adapter, const u8 **buf, size_t *len);
 int rtw_mesh_check_frames_rx(_adapter *adapter, const u8 *buf, size_t len);
 

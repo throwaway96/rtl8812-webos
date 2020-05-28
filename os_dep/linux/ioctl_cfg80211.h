@@ -323,6 +323,24 @@ void rtw_cfg80211_rx_action(_adapter *adapter, union recv_frame *rframe, const c
 void rtw_cfg80211_rx_mframe(_adapter *adapter, union recv_frame *rframe, const char *msg);
 void rtw_cfg80211_rx_probe_request(_adapter *padapter, union recv_frame *rframe);
 
+enum external_auth_action {
+	EXTERNAL_AUTH_START,
+	EXTERNAL_AUTH_ABORT,
+};
+
+struct rtw_external_auth_params {
+	enum external_auth_action action;
+	u8 bssid[ETH_ALEN]__aligned(2);
+	struct cfg80211_ssid ssid;
+	unsigned int key_mgmt_suite;
+	u16 status;
+	u8 pmkid[PMKID_LEN];
+};
+
+void rtw_cfg80211_external_auth_request(_adapter *padapter, union recv_frame *rframe);
+void rtw_cfg80211_external_auth_status(struct wiphy *wiphy, struct net_device *dev,
+	struct rtw_external_auth_params *params);
+
 int rtw_cfg80211_set_mgnt_wpsp2pie(struct net_device *net, char *buf, int len, int type);
 
 bool rtw_cfg80211_pwr_mgmt(_adapter *adapter);
@@ -391,7 +409,7 @@ void rtw_cfg80211_deinit_rfkill(struct wiphy *wiphy);
 #endif
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 5, 0))
-u8 rtw_cfg80211_ch_switch_notify(_adapter *adapter, u8 ch, u8 bw, u8 offset, u8 ht);
+u8 rtw_cfg80211_ch_switch_notify(_adapter *adapter, u8 ch, u8 bw, u8 offset, u8 ht, bool started);
 #endif
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 26)) && (LINUX_VERSION_CODE < KERNEL_VERSION(4, 7, 0))

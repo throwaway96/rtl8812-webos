@@ -1615,13 +1615,10 @@ int rtw_os_ndev_alloc(_adapter *adapter)
 #if defined(CONFIG_IOCTL_CFG80211)
 	if (rtw_cfg80211_ndev_res_alloc(adapter) != _SUCCESS) {
 		rtw_warn_on(1);
-		goto free_ndev;
-	}
+	} else
 #endif
-
 	ret = _SUCCESS;
 
-free_ndev:
 	if (ret != _SUCCESS && ndev)
 		rtw_free_netdev(ndev);
 exit:
@@ -1691,7 +1688,9 @@ int rtw_os_ndev_register(_adapter *adapter, const char *name)
 	}
 #endif
 
+#if defined(CONFIG_IOCTL_CFG80211)
 exit:
+#endif
 #ifdef CONFIG_RTW_NAPI
 	if (ret != _SUCCESS)
 		netif_napi_del(&adapter->napi);
@@ -1789,8 +1788,7 @@ int rtw_os_ndevs_alloc(struct dvobj_priv *dvobj)
 #if defined(CONFIG_IOCTL_CFG80211)
 	if (rtw_cfg80211_dev_res_alloc(dvobj) != _SUCCESS) {
 		rtw_warn_on(1);
-		status = _FAIL;
-		goto exit;
+		return _FAIL;
 	}
 #endif
 
@@ -1829,7 +1827,6 @@ int rtw_os_ndevs_alloc(struct dvobj_priv *dvobj)
 	if (status != _SUCCESS)
 		rtw_cfg80211_dev_res_free(dvobj);
 #endif
-exit:
 	return status;
 }
 
@@ -3099,8 +3096,7 @@ int rtw_os_ndevs_register(struct dvobj_priv *dvobj)
 #if defined(CONFIG_IOCTL_CFG80211)
 	if (rtw_cfg80211_dev_res_register(dvobj) != _SUCCESS) {
 		rtw_warn_on(1);
-		status = _FAIL;
-		goto exit;
+		return _FAIL;
 	}
 #endif
 
@@ -3152,7 +3148,6 @@ int rtw_os_ndevs_register(struct dvobj_priv *dvobj)
 	if (status != _SUCCESS)
 		rtw_cfg80211_dev_res_unregister(dvobj);
 #endif
-exit:
 	return status;
 }
 
@@ -4745,6 +4740,11 @@ int rtw_resume_process_wow(_adapter *padapter)
 
 		/* start netif queue */
 		rtw_mi_netif_wake_queue(padapter);
+
+#ifdef LGE_PRIVATE
+		if (psta)
+			rtw_sta_ba_flush(padapter, psta, 0);
+#endif
 
 	} else
 

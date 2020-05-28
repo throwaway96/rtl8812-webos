@@ -26,7 +26,7 @@
 
 
 #define MCC_SWCH_FW_EARLY_TIME 10 /* ms */
-#define MCC_EXPIRE_TIME 50 /* ms */
+#define MCC_EXPIRE_TIME 1000 /* ms */
 #define MCC_TOLERANCE_TIME 2 /* 2*2 = 4s */
 #define MCC_UPDATE_PARAMETER_THRESHOLD 5 /* ms */
 
