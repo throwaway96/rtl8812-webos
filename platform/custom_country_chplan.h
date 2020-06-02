@@ -51,5 +51,43 @@ static const struct country_chplan CUSTOMIZED_country_chplan_map[] = {
 	COUNTRY_CHPLAN_ENT2("UA", 0x38, 0x20, 1, 0x1FB, 19, 1), /* Ukraine */
 	COUNTRY_CHPLAN_ENT2("US", 0x39, 0x20, 1, 0x1FF,  8, 1), /* United States of America (USA) */
 };
+
+static const struct country_chplan CUSTOMIZED_country_chplan_map_WEBOS6[] = {
+/* COUNTRY_CHPLAN_ENT2(_alpha2, _chplan, _bw, _en_11ac, _def_module_flags, _wififreq, _ver) */
+	COUNTRY_CHPLAN_ENT2("AU", 0x22, 0x20, 1, 0x1FB, 17, 1), /* Australia */
+	COUNTRY_CHPLAN_ENT2("BO", 0x23, 0x20, 1, 0x1F1, 26, 1), /* Bolivia */
+	COUNTRY_CHPLAN_ENT2("BZ", 0x24, 0x20, 1, 0x000,  7, 1), /* Brazil, Peru, Philippines, Comlumbia */
+	COUNTRY_CHPLAN_ENT2("CH", 0x25, 0x20, 1, 0x1FB,  3, 1), /* China */
+	COUNTRY_CHPLAN_ENT2("CL", 0x26, 0x20, 1, 0x1F1, 18, 1), /* Chile, Paraguay, Uruguay,Ecuador */
+	COUNTRY_CHPLAN_ENT2("CU", 0x3c, 0x00, 0, 0x1F1, 28, 1), /* Cuba */
+	COUNTRY_CHPLAN_ENT2("DC", 0x27, 0x20, 1, 0x1FB, 32, 3), /* LGE Default CE */
+	COUNTRY_CHPLAN_ENT2("DC", 0x28, 0x20, 1, 0x1FB, 33, 4), /* LGE Default v1 FCC */
+	COUNTRY_CHPLAN_ENT2("EC", 0x29, 0x20, 1, 0x1F1,  5, 1), /* Barbados, Honduras, El Salvador, Guatemala, Costa Rica, Venezuela, Nicaragua, Panama */
+	COUNTRY_CHPLAN_ENT2("EG", 0x31, 0x00, 0, 0x1F1, 21, 1), /* Egypt */
+	COUNTRY_CHPLAN_ENT2("EU", 0x2a, 0x20, 1, 0x1FB, 12, 1), /* HongKong, EU, United Kingdom */
+	COUNTRY_CHPLAN_ENT2("HN", 0x19, 0x20, 1, 0x1F1, 24, 1), /* Honduras */
+	COUNTRY_CHPLAN_ENT2("ID", 0x2c, 0x00, 0, 0x1F3, 20, 1), /* Indonesia, Bangladesh */
+	COUNTRY_CHPLAN_ENT2("IR", 0x2d, 0x20, 1, 0x1F3, 25, 1), /* Iran */
+	COUNTRY_CHPLAN_ENT2("JP", 0x2e, 0x20, 1, 0x1FF, 11, 1), /* Japan- Telec */
+	COUNTRY_CHPLAN_ENT2("KR", 0x3a, 0x20, 1, 0x1FB, 10, 1), /* South Korea */
+	COUNTRY_CHPLAN_ENT2("KZ", 0x21, 0x20, 1, 0x100, 23, 1), /* Uzbekistan, Kyrgyzstan, Tajikistan, Turkmenistan, Mongolia, Georgia, Armenia, Azerbaijan */
+	COUNTRY_CHPLAN_ENT2("MM", 0x20, 0x20, 1, 0x000,  0, 1), /* Burma (Myanmar) */
+	COUNTRY_CHPLAN_ENT2("MR", 0x31, 0x20, 1, 0x1F1, 13, 1), /* Morocco */
+	COUNTRY_CHPLAN_ENT2("MX", 0x32, 0x20, 1, 0x1F1, 15, 1), /* Mexico */
+	COUNTRY_CHPLAN_ENT2("IN", 0x25, 0x20, 1, 0x1F1,  6, 1), /* India */
+	COUNTRY_CHPLAN_ENT2("MY", 0x3e, 0x20, 1, 0x1F1, 31, 1), /* Malaysia */
+	COUNTRY_CHPLAN_ENT2("NP", 0x33, 0x20, 1, 0x1FB, 27, 1), /* Nepal */
+	COUNTRY_CHPLAN_ENT2("NZ", 0x25, 0x20, 1, 0x1FB, 16, 1), /* Singapore */
+	COUNTRY_CHPLAN_ENT2("PK", 0x34, 0x20, 1, 0x1F1,  1, 1), /* Pakistan */
+	COUNTRY_CHPLAN_ENT2("RU", 0x3b, 0x20, 1, 0x1FB, 22, 1), /* Russia(fac/gost), Belararus, Republic of Moldova, Kaliningrad */
+	COUNTRY_CHPLAN_ENT2("SA", 0x02, 0x20, 1, 0x1F1,  2, 1), /* South Africa, Cambodia, Myanmar */
+	COUNTRY_CHPLAN_ENT2("SU", 0x36, 0x20, 1, 0x1FB,  4, 1), /* Saudi Arabia */
+	COUNTRY_CHPLAN_ENT2("TW", 0x37, 0x20, 1, 0x1FF,  9, 1), /* Taiwan, Canada */
+	COUNTRY_CHPLAN_ENT2("UA", 0x3f, 0x20, 1, 0x1FB, 19, 1), /* Ukraine */
+	COUNTRY_CHPLAN_ENT2("US", 0x39, 0x20, 1, 0x1FF,  8, 1), /* United States of America (USA) */
+	COUNTRY_CHPLAN_ENT2("AR", 0x37, 0x20, 1, 0x1FF,  29, 1), /* Argentina */
+	COUNTRY_CHPLAN_ENT2("KZ", 0x3d, 0x20, 1, 0x1FB, 30, 1), /* Kazahstahn */
+};
+
 #endif /* LGE_PRIVATE */
 

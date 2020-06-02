@@ -1056,8 +1056,8 @@ const struct country_chplan *rtw_get_chplan_from_wififrequency(const u8 wififreq
 	u16 map_sz = 0;
 	int i;
 
-	map = CUSTOMIZED_country_chplan_map;
-	map_sz = sizeof(CUSTOMIZED_country_chplan_map) / sizeof(struct country_chplan);
+	map = CUSTOMIZED_country_chplan_map_WEBOS6;
+	map_sz = sizeof(CUSTOMIZED_country_chplan_map_WEBOS6) / sizeof(struct country_chplan);
 
 	for (i = 0; i < map_sz; i++) {
 		if (wififrequency == map[i].wififrequency) {
