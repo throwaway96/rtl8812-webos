@@ -74,7 +74,7 @@ static const struct country_chplan CUSTOMIZED_country_chplan_map_WEBOS6[] = {
    COUNTRY_CHPLAN_ENT2("MM", 0x20, 0x20, 1, 0x000,  0, 1), /* Burma (Myanmar) */
    COUNTRY_CHPLAN_ENT2("MR", 0x31, 0x20, 1, 0x1F1, 13, 1), /* Morocco, Israel, Algeria, Tunisia, Sudan, Yemen, Bahrain, Afganistan, Oman, Kuwait, Syrian Arab Republic */
    COUNTRY_CHPLAN_ENT2("MX", 0x32, 0x20, 1, 0x1F1, 15, 1), /* Mexico */
-   COUNTRY_CHPLAN_ENT2("IN", 0x25, 0x20, 1, 0x1F1,  6, 1), /* India */
+   COUNTRY_CHPLAN_ENT2("IA", 0x25, 0x20, 1, 0x1F1,  6, 1), /* India */
    COUNTRY_CHPLAN_ENT2("MY", 0x3e, 0x20, 1, 0x1F1, 20, 1), /* Malaysia */
    COUNTRY_CHPLAN_ENT2("ID", 0x33, 0x20, 1, 0x1FB, 27, 1), /* Indonesia, Nepal */
    COUNTRY_CHPLAN_ENT2("PK", 0x34, 0x20, 1, 0x1F1,  1, 1), /* Pakistan, Nigeria, Bangladesh */
@@ -84,7 +84,7 @@ static const struct country_chplan CUSTOMIZED_country_chplan_map_WEBOS6[] = {
    COUNTRY_CHPLAN_ENT2("TW", 0x37, 0x20, 1, 0x1FF,  9, 1), /* Taiwan, Canada */
    COUNTRY_CHPLAN_ENT2("NZ", 0x3f, 0x20, 1, 0x1FB, 19, 1), /* Ukraine, New Zealand, Sri Lanka, Thailand, Lao People's Democratic Republic, UAE, Vietnam */
    COUNTRY_CHPLAN_ENT2("US", 0x39, 0x20, 1, 0x1FF,  8, 1), /* United States of America (USA), Dominican Republic */
-   COUNTRY_CHPLAN_ENT2("AR", 0x37, 0x20, 1, 0x1FF,  29, 1),/* Argentina */
+   COUNTRY_CHPLAN_ENT2("AR", 0x37, 0x20, 1, 0x1FF, 29, 1),/* Argentina */
    COUNTRY_CHPLAN_ENT2("KZ", 0x3d, 0x20, 1, 0x1FB, 16, 1), /* Kyrgzstan, Tajikistan, Turkmenistan, Mongolisa, Kazahstahn, */
 };
 
