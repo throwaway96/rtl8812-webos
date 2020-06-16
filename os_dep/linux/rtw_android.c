@@ -1108,11 +1108,20 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 		char event_name[] = "WIFI_STATUS=suspend";
 		char *envp[] = { event_name, NULL };
 
-		sscanf(command, "SET_WOWL %u", (unsigned int *)&val);
+		if (sscanf(command, "SET_WOWL %u", (unsigned int *)&val) >= 1)
+			adapter_wdev_data(padapter)->wowl = val;
 
-		LGE_MSG("[WLAN] Private cmd - SET_WOWL (%u) received", val);
+		LGE_MSG("[WLAN] Private cmd - SET_WOWL (%d) received", val);
 
-		adapter_wdev_data(padapter)->wowl = (val & 0x1);
+		if ((padapter->iface_id == IFACE_ID2)) {
+			if (rtw_mi_check_status(padapter, MI_AP_MODE)) {
+				rtw_set_802_11_infrastructure_mode(padapter, Ndis802_11Infrastructure);
+				rtw_setopmode_cmd(padapter, Ndis802_11Infrastructure, RTW_CMDF_WAIT_ACK);
+			} else {
+				rtw_mi_suspend_free_assoc_resource(padapter);
+			}
+		}
+
 		snprintf(command, 3, "OK");
 		bytes_written = strlen("OK");
 
