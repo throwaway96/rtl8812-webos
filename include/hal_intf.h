@@ -271,6 +271,7 @@ struct hal_ops {
 	u32(*hal_power_on)(_adapter *padapter);
 	void	(*hal_power_off)(_adapter *padapter);
 	u32(*hal_init)(_adapter *padapter);
+	u32(*hal_init_post)(_adapter *padapter);
 	u32(*hal_deinit)(_adapter *padapter);
 	void	(*dm_init)(_adapter *padapter);
 	void	(*dm_deinit)(_adapter *padapter);

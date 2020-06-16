@@ -344,6 +344,7 @@ void rtl8822bu_set_hal_ops(PADAPTER padapter)
 	ops = &padapter->hal_func;
 
 	ops->hal_init = rtl8822bu_init;
+	ops->hal_init_post = rtl8822bu_init_post;
 	ops->hal_deinit = rtl8822bu_deinit;
 
 	ops->inirp_init = rtl8822bu_inirp_init;

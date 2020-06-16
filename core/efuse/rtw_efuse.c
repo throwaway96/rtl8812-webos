@@ -2928,7 +2928,9 @@ void EFUSE_ShadowMapUpdate(
 
 	rtw_mask_map_read(pAdapter, 0x00, mapLen, pHalData->efuse_eeprom_data);
 
+#ifndef LGE_PRIVATE
 	rtw_dump_cur_efuse(pAdapter);
+#endif
 } /* EFUSE_ShadowMapUpdate */
 
 const u8 _mac_hidden_max_bw_to_hal_bw_cap[MAC_HIDDEN_MAX_BW_NUM] = {

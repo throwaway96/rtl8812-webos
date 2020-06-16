@@ -253,7 +253,48 @@ void rtl8822b_init_misc(PADAPTER adapter)
 		rtw_write8(adapter, REG_WMAC_TRXPTCL_CTL_8822B, v8);
 	}
 }
+#ifdef LGE_PRIVATE
+u32 rtl8822b_init(PADAPTER adapter)
+{
+	u8 ok = _TRUE;
+	PHAL_DATA_TYPE hal;
 
+	hal = GET_HAL_DATA(adapter);
+
+	ok = rtl8822b_hal_init(adapter);
+	if (_FALSE == ok)
+		return _FAIL;
+
+	return _SUCCESS;
+}
+
+u32 rtl8822bu_init_post(PADAPTER adapter)
+{
+	u8 ok = _TRUE;
+	PHAL_DATA_TYPE hal;
+
+	hal = GET_HAL_DATA(adapter);
+
+	rtl8822b_phy_init_haldm(adapter);
+#ifdef CONFIG_BEAMFORMING
+	rtl8822b_phy_bf_init(adapter);
+#endif
+
+#ifdef CONFIG_BT_COEXIST
+	/* Init BT hw config. */
+	if (_TRUE == hal->EEPROMBluetoothCoexist)
+		rtw_btcoex_HAL_Initialize(adapter, _FALSE);
+	else
+		rtw_btcoex_wifionly_hw_config(adapter);
+#else /* CONFIG_BT_COEXIST */
+	rtw_btcoex_wifionly_hw_config(adapter);
+#endif /* CONFIG_BT_COEXIST */
+
+	rtl8822b_init_misc(adapter);
+
+	return _SUCCESS;
+}
+#else
 u32 rtl8822b_init(PADAPTER adapter)
 {
 	u8 ok = _TRUE;
@@ -284,6 +325,7 @@ u32 rtl8822b_init(PADAPTER adapter)
 
 	return _SUCCESS;
 }
+#endif
 
 u32 rtl8822b_deinit(PADAPTER adapter)
 {

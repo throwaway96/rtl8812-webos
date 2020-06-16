@@ -4113,6 +4113,9 @@ static s32 rtw_mp_cmd_hdl(_adapter *padapter, u8 mp_cmd_id)
 				ret = H2C_REJECTED;
 				goto exit;
 			}
+#ifdef LGE_PRIVATE
+			padapter->hal_func.hal_init_post(padapter);
+#endif
 #ifndef RTW_HALMAC
 			rtw_intf_start(padapter);
 #endif /* !RTW_HALMAC */
@@ -4164,6 +4167,9 @@ static s32 rtw_mp_cmd_hdl(_adapter *padapter, u8 mp_cmd_id)
 				ret = H2C_REJECTED;
 				goto exit;
 			}
+#ifdef LGE_PRIVATE
+			padapter->hal_func.hal_init_post(padapter);
+#endif
 #ifndef RTW_HALMAC
 			rtw_intf_start(padapter);
 #endif /* !RTW_HALMAC */

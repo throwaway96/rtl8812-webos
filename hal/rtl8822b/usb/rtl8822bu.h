@@ -27,6 +27,7 @@
 
 /* rtl8822bu_halinit.c */
 u32 rtl8822bu_init(PADAPTER);
+u32 rtl8822bu_init_post(PADAPTER);
 u32 rtl8822bu_deinit(PADAPTER);
 u32 rtl8822bu_inirp_init(PADAPTER);
 u32 rtl8822bu_inirp_deinit(PADAPTER);

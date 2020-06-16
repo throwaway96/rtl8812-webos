@@ -3264,6 +3264,7 @@ int _netdev_open(struct net_device *pnetdev)
 #ifdef CONFIG_BT_COEXIST_SOCKET_TRX
 	HAL_DATA_TYPE		*pHalData = GET_HAL_DATA(padapter);
 #endif /* CONFIG_BT_COEXIST_SOCKET_TRX */
+	int init_post = _FALSE;
 
 
 	RTW_INFO(FUNC_NDEV_FMT" , bup=%d\n", FUNC_NDEV_ARG(pnetdev), padapter->bup);
@@ -3298,6 +3299,7 @@ int _netdev_open(struct net_device *pnetdev)
 		if (status == _FAIL) {
 			goto netdev_open_error;
 		}
+		init_post = _TRUE;
 #if 0/*#ifdef CONFIG_MI_WITH_MBSSID_CAM*/
 		rtw_hal_set_hwreg(padapter, HW_VAR_MAC_ADDR, adapter_mac_addr(padapter)); /* set mac addr to mac register */
 #endif
@@ -3410,6 +3412,9 @@ netdev_open_normal_process:
 		LGE_MSG("[WIFI] WIFI_STATUS=ready");
 	}
 
+	if (init_post == _TRUE)
+		padapter->hal_func.hal_init_post(padapter);
+
 #endif /* LGE_PRIVATE */
 
 	RTW_INFO("-871x_drv - drv_open, bup=%d\n", padapter->bup);
@@ -3504,6 +3509,9 @@ int  ips_netdrv_open(_adapter *padapter)
 	if (status == _FAIL) {
 		goto netdev_open_error;
 	}
+#ifdef LGE_PRIVATE
+	padapter->hal_func.hal_init_post(padapter);
+#endif
 #if 0
 	rtw_restore_mac_addr(padapter);
 #endif

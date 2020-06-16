@@ -535,6 +535,18 @@ static struct dvobj_priv *usb_dvobj_init(struct usb_interface *usb_intf, const s
 		if (phost_endp) {
 			pendp_desc = &phost_endp->desc;
 
+#ifdef LGE_PRIVATE
+			if (RT_usb_endpoint_is_bulk_in(pendp_desc)) {
+				pdvobjpriv->RtInPipe[pdvobjpriv->RtNumInPipes] = RT_usb_endpoint_num(pendp_desc);
+				pdvobjpriv->RtNumInPipes++;
+			} else if (RT_usb_endpoint_is_int_in(pendp_desc)) {
+				pdvobjpriv->RtInPipe[pdvobjpriv->RtNumInPipes] = RT_usb_endpoint_num(pendp_desc);
+				pdvobjpriv->RtNumInPipes++;
+			} else if (RT_usb_endpoint_is_bulk_out(pendp_desc)) {
+				pdvobjpriv->RtOutPipe[pdvobjpriv->RtNumOutPipes] = RT_usb_endpoint_num(pendp_desc);
+				pdvobjpriv->RtNumOutPipes++;
+			}
+#else
 			RTW_INFO("\nusb_endpoint_descriptor(%d):\n", i);
 			RTW_INFO("bLength=%x\n", pendp_desc->bLength);
 			RTW_INFO("bDescriptorType=%x\n", pendp_desc->bDescriptorType);
@@ -558,6 +570,7 @@ static struct dvobj_priv *usb_dvobj_init(struct usb_interface *usb_intf, const s
 				pdvobjpriv->RtOutPipe[pdvobjpriv->RtNumOutPipes] = RT_usb_endpoint_num(pendp_desc);
 				pdvobjpriv->RtNumOutPipes++;
 			}
+#endif
 			pdvobjpriv->ep_num[i] = RT_usb_endpoint_num(pendp_desc);
 		}
 	}

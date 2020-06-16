@@ -267,7 +267,9 @@ struct dbg_rx_counter {
 
 #ifdef CONFIG_MBSSID_CAM
 	#define DBG_MBID_CAM_DUMP
-
+#ifdef LGE_PRIVATE
+	#undef DBG_MBID_CAM_DUMP
+#endif
 	void rtw_mbid_cam_init(struct dvobj_priv *dvobj);
 	void rtw_mbid_cam_deinit(struct dvobj_priv *dvobj);
 	void rtw_mbid_cam_reset(_adapter *adapter);
