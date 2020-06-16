@@ -3207,6 +3207,19 @@ void rtw_iface_dynamic_check_timer_handlder(_adapter *adapter)
 	}
 #endif /*CONFIG_AP_MODE*/
 
+#ifdef LGE_PRIVATE
+	if (adapter_wdev_data(adapter)->delay_disconnect) {
+		static u8 chk_cnt = 0;
+
+		if (chk_cnt++ >= 1) {
+			/* report disconnect to uplayer */
+			RTW_INFO("indicate disconnet !!!\n");
+			rtw_mi_suspend_free_assoc_resource(adapter);
+			adapter_wdev_data(adapter)->delay_disconnect = _FALSE;
+			chk_cnt = 0;
+		}
+	}
+#endif
 
 #ifdef CONFIG_BR_EXT
 
