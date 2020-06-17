@@ -1250,6 +1250,17 @@ void rtw_cfg80211_indicate_disconnect(_adapter *padapter, u16 reason, u8 locally
 			rtw_cfg80211_disconnected(pwdev, reason, NULL, 0, locally_generated, GFP_ATOMIC);
 		}
 		#endif
+
+#if LGE_PRIVATE
+		if (reason == WLAN_STATUS_INVALID_PMKID) {
+			struct security_priv *psecuritypriv = &padapter->securitypriv;
+
+			RTW_INFO("flush PMKID\n");
+
+			_rtw_memset(&psecuritypriv->PMKIDList[0], 0x00, sizeof(RT_PMKID_LIST) * NUM_PMKID_CACHE);
+			psecuritypriv->PMKIDIndex = 0;
+		}
+#endif
 	}
 
 	rtw_wdev_free_connect_req(pwdev_priv);

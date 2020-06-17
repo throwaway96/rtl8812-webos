@@ -2044,7 +2044,7 @@ static void rtw_joinbss_update_network(_adapter *padapter, struct wlan_network *
  * if join_res > 0, update "cur_network->network" from "pnetwork->network" if (ptarget_wlan !=NULL).
  */
 /* #define REJOIN */
-void rtw_joinbss_event_prehandle(_adapter *adapter, u8 *pbuf)
+void rtw_joinbss_event_prehandle(_adapter *adapter, u8 *pbuf, u16 status)
 {
 	_irqL irqL, irqL2;
 	static u8 retry = 0;
@@ -2170,6 +2170,7 @@ void rtw_joinbss_event_prehandle(_adapter *adapter, u8 *pbuf)
 
 	} else if (pnetwork->join_res == -4) {
 		rtw_reset_securitypriv(adapter);
+		pmlmepriv->join_status = status;
 		_set_timer(&pmlmepriv->assoc_timer, 1);
 
 		/* rtw_free_assoc_resources(adapter, 1); */
@@ -2195,7 +2196,7 @@ void rtw_joinbss_event_prehandle(_adapter *adapter, u8 *pbuf)
 			rtw_indicate_connect(adapter);
 		} else {
 #endif
-
+			pmlmepriv->join_status = status;
 			_set_timer(&pmlmepriv->assoc_timer, 1);
 			/* rtw_free_assoc_resources(adapter, 1); */
 			_clr_fwstate_(pmlmepriv, _FW_UNDER_LINKING);
@@ -2957,7 +2958,7 @@ void rtw_join_timeout_handler(void *ctx)
 				rtw_ft_clr_flags(adapter, RTW_FT_PEER_EN|RTW_FT_PEER_OTD_EN);
 				rtw_ft_reset_status(adapter);
 #endif
-				rtw_indicate_disconnect(adapter, 0, _FALSE);
+				rtw_indicate_disconnect(adapter, pmlmepriv->join_status, _FALSE);
 				pmlmeinfo->disconnect_occurred_time = rtw_systime_to_ms(rtw_get_current_time());
 				pmlmeinfo->disconnect_code = DISCONNECTION_BY_DRIVER_DUE_TO_JOINBSS_TIMEOUT;
 				pmlmeinfo->wifi_reason_code = WLAN_REASON_UNSPECIFIED;
@@ -2968,7 +2969,7 @@ void rtw_join_timeout_handler(void *ctx)
 	} else
 #endif
 	{
-		rtw_indicate_disconnect(adapter, 0, _FALSE);
+		rtw_indicate_disconnect(adapter, pmlmepriv->join_status, _FALSE);
 		pmlmeinfo->disconnect_occurred_time = rtw_systime_to_ms(rtw_get_current_time());
 		pmlmeinfo->disconnect_code = DISCONNECTION_BY_DRIVER_DUE_TO_JOINBSS_TIMEOUT;
 		pmlmeinfo->wifi_reason_code = WLAN_REASON_UNSPECIFIED;
@@ -2976,10 +2977,12 @@ void rtw_join_timeout_handler(void *ctx)
 
 #ifdef CONFIG_IOCTL_CFG80211
 		/* indicate disconnect for the case that join_timeout and check_fwstate != FW_LINKED */
-		rtw_cfg80211_indicate_disconnect(adapter, 0, _FALSE);
+		rtw_cfg80211_indicate_disconnect(adapter, pmlmepriv->join_status, _FALSE);
 #endif /* CONFIG_IOCTL_CFG80211 */
 
 	}
+
+	pmlmepriv->join_status = 0; /* reset */
 
 	_exit_critical_bh(&pmlmepriv->lock, &irqL);
 

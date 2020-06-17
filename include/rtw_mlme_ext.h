@@ -495,6 +495,7 @@ struct mlme_ext_info {
 	u32	link_count;
 	u32	auth_seq;
 	u32	auth_algo;	/* 802.11 auth, could be open, shared, auto */
+	u16 auth_status;
 	u32	authModeToggle;
 	u32	enc_algo;/* encrypt algorithm; */
 	u32	key_index;	/* this is only valid for legendary wep, 0~3 for key id. */
@@ -982,7 +983,7 @@ bool rtw_tim_map_anyone_be_set(_adapter *padapter, const u8 *map);
 bool rtw_tim_map_anyone_be_set_exclude_aid0(_adapter *padapter, const u8 *map);
 #endif /* CONFIG_AP_MODE */
 
-u32 report_join_res(_adapter *padapter, int res);
+u32 report_join_res(_adapter *padapter, int aid_res, u16 status);
 void report_survey_event(_adapter *padapter, union recv_frame *precv_frame);
 void report_surveydone_event(_adapter *padapter);
 u32 report_del_sta_event(_adapter *padapter, unsigned char *MacAddr, unsigned short reason, bool enqueue, u8 locally_generated);

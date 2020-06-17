@@ -3018,6 +3018,7 @@ normal:
 			/* pmlmeinfo->reauth_count = 0; */
 		}
 
+		pmlmeinfo->auth_status = status;
 		set_link_timer(pmlmeext, 1);
 		goto authclnt_fail;
 	}
@@ -3538,7 +3539,7 @@ report_assoc_result:
 	else
 		rtw_buf_free(&pmlmepriv->assoc_rsp, &pmlmepriv->assoc_rsp_len);
 
-	report_join_res(padapter, res);
+	report_join_res(padapter, res, status);
 
 #if defined(CONFIG_LAYER2_ROAMING) && defined(CONFIG_RTW_80211K)
 	rtw_roam_nb_discover(padapter, _TRUE);
@@ -11802,7 +11803,7 @@ void start_create_ibss(_adapter *padapter)
 		/* issue beacon */
 		if (send_beacon(padapter) == _FAIL) {
 
-			report_join_res(padapter, -1);
+			report_join_res(padapter, -1, WLAN_STATUS_UNSPECIFIED_FAILURE);
 			pmlmeinfo->state = WIFI_FW_NULL_STATE;
 		} else {
 			rtw_hal_set_hwreg(padapter, HW_VAR_BSSID, padapter->registrypriv.dev_network.MacAddress);
@@ -11810,7 +11811,7 @@ void start_create_ibss(_adapter *padapter)
 			rtw_hal_set_hwreg(padapter, HW_VAR_MLME_JOIN, (u8 *)(&join_type));
 			rtw_hal_rcr_set_chk_bssid(padapter, MLME_ADHOC_STARTED);
 
-			report_join_res(padapter, 1);
+			report_join_res(padapter, 1, WLAN_STATUS_SUCCESS);
 			pmlmeinfo->state |= WIFI_FW_ASSOC_SUCCESS;
 			rtw_indicate_connect(padapter);
 		}
@@ -11945,7 +11946,7 @@ void start_clnt_join(_adapter *padapter)
 
 		pmlmeinfo->state = WIFI_FW_ADHOC_STATE;
 
-		report_join_res(padapter, 1);
+		report_join_res(padapter, 1, WLAN_STATUS_SUCCESS);
 	} else {
 		/* RTW_INFO("marc: invalid cap:%x\n", caps); */
 		return;
@@ -12038,7 +12039,7 @@ unsigned int receive_disconnect(_adapter *padapter, unsigned char *MacAddr, unsi
 			if (report_del_sta_event(padapter, MacAddr, reason, _TRUE, locally_generated) != _FAIL)
 				pmlmeinfo->state = WIFI_FW_NULL_STATE;
 		} else if (pmlmeinfo->state & WIFI_FW_LINKING_STATE) {
-			if (report_join_res(padapter, -2) != _FAIL)
+			if (report_join_res(padapter, -2, reason) != _FAIL)
 				pmlmeinfo->state = WIFI_FW_NULL_STATE;
 		} else
 			RTW_INFO(FUNC_ADPT_FMT" - End to Disconnect\n", FUNC_ADPT_ARG(padapter));
@@ -12442,7 +12443,7 @@ void report_surveydone_event(_adapter *padapter)
 
 }
 
-u32 report_join_res(_adapter *padapter, int res)
+u32 report_join_res(_adapter *padapter, int aid_res, u16 status)
 {
 	struct cmd_obj *pcmd_obj;
 	u8	*pevtcmd;
@@ -12481,12 +12482,12 @@ u32 report_join_res(_adapter *padapter, int res)
 
 	pjoinbss_evt = (struct joinbss_event *)(pevtcmd + sizeof(struct C2HEvent_Header));
 	_rtw_memcpy((unsigned char *)(&(pjoinbss_evt->network.network)), &(pmlmeinfo->network), sizeof(WLAN_BSSID_EX));
-	pjoinbss_evt->network.join_res	= pjoinbss_evt->network.aid = res;
+	pjoinbss_evt->network.join_res	= pjoinbss_evt->network.aid = aid_res;
 
-	RTW_INFO("report_join_res(%d)\n", res);
+	RTW_INFO("report_join_res(%d, %u)\n", aid_res, status);
 
 
-	rtw_joinbss_event_prehandle(padapter, (u8 *)&pjoinbss_evt->network);
+	rtw_joinbss_event_prehandle(padapter, (u8 *)&pjoinbss_evt->network, status);
 
 
 	ret = rtw_enqueue_cmd(pcmdpriv, pcmd_obj);
@@ -13696,21 +13697,25 @@ void link_timer_hdl(void *ctx)
 	if (pmlmeext->join_abort && pmlmeinfo->state != WIFI_FW_NULL_STATE) {
 		RTW_INFO(FUNC_ADPT_FMT" join abort\n", FUNC_ADPT_ARG(padapter));
 		pmlmeinfo->state = WIFI_FW_NULL_STATE;
-		report_join_res(padapter, -4);
+		report_join_res(padapter, -4, WLAN_STATUS_UNSPECIFIED_FAILURE);
 		goto exit;
 	}
 
 	if (pmlmeinfo->state & WIFI_FW_AUTH_NULL) {
 		RTW_INFO("link_timer_hdl:no beacon while connecting\n");
 		pmlmeinfo->state = WIFI_FW_NULL_STATE;
-		report_join_res(padapter, -3);
+		report_join_res(padapter, -3, WLAN_STATUS_UNSPECIFIED_FAILURE);
 	} else if (pmlmeinfo->state & WIFI_FW_AUTH_STATE) {
 		/* re-auth timer */
 		if (++pmlmeinfo->reauth_count > REAUTH_LIMIT) {
 			/* if (pmlmeinfo->auth_algo != dot11AuthAlgrthm_Auto) */
 			/* { */
 			pmlmeinfo->state = 0;
-			report_join_res(padapter, -1);
+			if (pmlmeinfo->auth_status) {
+				report_join_res(padapter, -1, pmlmeinfo->auth_status);
+				pmlmeinfo->auth_status = 0; /* reset */
+			} else
+				report_join_res(padapter, -1, WLAN_STATUS_UNSPECIFIED_FAILURE);
 			return;
 			/* } */
 			/* else */
@@ -13741,7 +13746,7 @@ void link_timer_hdl(void *ctx)
 					rtw_free_stainfo(padapter,  psta);
 			}
 #endif
-			report_join_res(padapter, -2);
+			report_join_res(padapter, -2, WLAN_STATUS_UNSPECIFIED_FAILURE);
 			return;
 		}
 
@@ -14600,7 +14605,7 @@ u8 join_cmd_hdl(_adapter *padapter, u8 *pbuf)
 		return H2C_PARAMETERS_ERROR;
 
 	if (pnetwork->IELength < 2) {
-		report_join_res(padapter, (-4));
+		report_join_res(padapter, (-4), WLAN_STATUS_UNSPECIFIED_FAILURE);
 		return H2C_SUCCESS;
 	}
 	_rtw_memcpy(pnetwork->IEs, ((WLAN_BSSID_EX *)pbuf)->IEs, pnetwork->IELength);
@@ -14681,7 +14686,7 @@ u8 join_cmd_hdl(_adapter *padapter, u8 *pbuf)
 
 	/* check channel, bandwidth, offset and switch */
 	if (rtw_chk_start_clnt_join(padapter, &u_ch, &u_bw, &u_offset) == _FAIL) {
-		report_join_res(padapter, (-4));
+		report_join_res(padapter, (-4), WLAN_STATUS_UNSPECIFIED_FAILURE);
 		return H2C_SUCCESS;
 	}
 
