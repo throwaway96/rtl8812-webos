@@ -3409,7 +3409,7 @@ netdev_open_normal_process:
 		kobject_uevent_env(&padapter->pnetdev->dev.kobj, KOBJ_CHANGE, envp);
 		RTW_INFO("%s Completed Sending WIFI Ready \n", __func__);
 #endif
-		LGE_MSG("[WIFI] WIFI_STATUS=ready");
+		LGE_MSG("[WLAN] WIFI_STATUS=ready");
 	}
 
 	if (init_post == _TRUE)
@@ -4481,7 +4481,7 @@ int rtw_suspend_normal(_adapter *padapter)
 	rtw_mi_netif_caroff_qstop(padapter);
 
 #ifdef LGE_PRIVATE
-	if (adapter_wdev_data(padapter)->idle_mode == 0)
+	if (adapter_wdev_data(padapter)->idle_mode == _FALSE)
 		rtw_mi_suspend_free_assoc_resource(padapter);
 	else
 		rtw_disassoc_cmd(padapter, 0, RTW_CMDF_DIRECTLY);
@@ -5101,8 +5101,10 @@ int rtw_resume_common(_adapter *padapter)
 
 #ifdef LGE_PRIVATE
 	if (adapter_wdev_data(padapter)->idle_mode) {
+		pwrpriv->bInSuspend = _TRUE;
 		rtw_hal_sreset_reset(padapter);
 		adapter_wdev_data(padapter)->delay_disconnect = _TRUE;
+		/* pwrctrl reset will clear bInSupspend */
 		rtw_init_pwrctrl_priv_reset(padapter);
 	}
 

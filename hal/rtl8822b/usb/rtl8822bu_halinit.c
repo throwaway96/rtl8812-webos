@@ -231,7 +231,7 @@ exit:
 		kobject_uevent_env(&padapter->pnetdev->dev.kobj, KOBJ_CHANGE, envp);
 		RTW_INFO("%s Completed Sending WIFI Ready \n", __func__);
 #endif
-		LGE_MSG("[WIFI] WIFI_STATUS=ready");
+		LGE_MSG("[WLAN] WIFI_STATUS=ready");
 	}
 #endif /* LGE_PRIVATE */
 	return status;

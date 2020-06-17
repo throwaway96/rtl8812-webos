@@ -3287,6 +3287,204 @@ exit:
 }
 
 #ifdef LGE_PRIVATE
+static int rtw_driver_status(
+	struct net_device *dev,
+	struct iw_request_info *info,
+	union iwreq_data *wrqu, char *extra)
+{
+	u8 buf1[256] = { 0 };
+	u8 buf2[256] = { 0 };
+	u32 len;
+	u8 *pbuf;
+	PADAPTER padapter = rtw_netdev_priv(dev);
+	_adapter *padapter_primary = GET_PRIMARY_ADAPTER(padapter);
+	struct mlme_ext_priv *pmlmeext = &padapter_primary->mlmeextpriv;
+	struct recv_priv *precvpriv = &(padapter_primary->recvpriv);
+	struct rf_ctl_t *rfctl = adapter_to_rfctl(padapter_primary);
+	u8 in_suspend = adapter_to_pwrctl(padapter_primary)->bInSuspend;
+	u8 surprise_removed = rtw_is_surprise_removed(padapter_primary);
+	u8 concurreny = 0, chk_primary, chk_buddy = 0;
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	struct xmit_priv *pxmitpriv = &padapter->xmitpriv;
+	struct hw_xmit *phwxmit;
+	u16 vo_params[4], vi_params[4], be_params[4], bk_params[4];
+	_irqL irqL;
+	struct wlan_network *cur_network = &(pmlmepriv->cur_network);
+
+	RTW_INFO("+%s\n", __func__);
+
+	if (
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0))
+	    !access_ok(wrqu->data.pointer, wrqu->data.length)
+#else
+	    !access_ok(VERIFY_READ, wrqu->data.pointer, wrqu->data.length)
+#endif
+	    ) {
+		RTW_INFO("%s: failed to access memory\n", __func__);
+		return -EFAULT;
+	}
+
+	len = wrqu->data.length;
+
+	pbuf = (u8 *)rtw_zmalloc(len + 1);
+	if (pbuf == NULL) {
+		RTW_INFO("%s: no memory!\n", __func__);
+		return -ENOMEM;
+	}
+
+	if (copy_from_user(pbuf, wrqu->data.pointer, len)) {
+		rtw_mfree(pbuf, len + 1);
+		RTW_INFO("%s: copy from user fail!\n", __func__);
+		return -EFAULT;
+	}
+
+	pbuf[len] = '\0';
+
+	RTW_INFO("%s: string=\"%s\"\n", __func__, pbuf);
+
+	if (strcmp(pbuf, "status") != 0) {
+		RTW_INFO("%s: Invalid paramter for driver command\n", __func__);
+		rtw_mfree(pbuf, len + 1);
+		pbuf = NULL;
+	} else {
+		if (in_suspend == _FALSE) {
+
+			char p2p_opch[8] = "N/A";
+
+			rtw_mfree(pbuf, len + 1);
+			pbuf = NULL;
+
+			pbuf = (u8 *)rtw_zmalloc(4096);
+			if (pbuf == NULL)
+				return -ENOMEM;
+
+			snprintf(buf1, 256,
+				"\n\t\tSSID=%s\n"
+				"\t\tfree_xmitbuf_cnt=%d, free_xmitframe_cnt=%d\n"
+				"\t\tfree_ext_xmitbuf_cnt=%d, free_xframe_ext_cnt=%d\n"
+				"\t\tfree_recvframe_cnt=%d\n",
+				cur_network->network.Ssid.Ssid,
+				pxmitpriv->free_xmitbuf_cnt, pxmitpriv->free_xmitframe_cnt,
+				pxmitpriv->free_xmit_extbuf_cnt, pxmitpriv->free_xframe_ext_cnt,
+				precvpriv->free_recvframe_cnt
+				);
+
+			strcat(pbuf, buf1);
+			_rtw_memset(buf1, 0, 256);
+
+			snprintf(buf1, 256,
+				"\t\tRX: Count of Packets dropped by Driver: %llu\n"
+				"\t\tRx: Counts of Packets Whose Seq_Num Less Than Reorder Control Seq_Num: %llu\n"
+				"\t\tRx: Reorder Time-out Trigger Counts: %llu\n"
+				"\t\tRx: Packet Loss Counts: %llu\n"
+				"\t\tRx: Duplicate Management Frame Drop Count: %llu\n",
+				(unsigned long long)precvpriv->dbg_rx_drop_count,
+				(unsigned long long)precvpriv->dbg_rx_ampdu_drop_count,
+				(unsigned long long)precvpriv->dbg_rx_ampdu_forced_indicate_count,
+				(unsigned long long)precvpriv->dbg_rx_ampdu_loss_count,
+				(unsigned long long)precvpriv->dbg_rx_dup_mgt_frame_drop_count
+				);
+
+			strcat(pbuf, buf1);
+			_rtw_memset(buf1, 0, 256);
+			precvpriv->store_law_data_flag = _TRUE;
+
+			snprintf(buf1, 256,
+				"\t\tCcode\t: R%c%c\n"
+				"\t\tCcodeRev\t: %u\n"
+				"\t\tChannel\t: %u\n",
+				rfctl->country_ent->alpha2[0],
+				rfctl->country_ent->alpha2[1],
+				rfctl->country_ent->version,
+				pmlmeext->cur_channel
+				);
+
+			strcat(pbuf, buf1);
+
+			if (!surprise_removed) {
+				rtw_hal_set_odm_var(padapter_primary, HAL_ODM_RX_Dframe_INFO, buf2, _TRUE);
+			}
+
+			if (strlen(buf2) == 0) {
+				snprintf(buf2, 256,
+					"\t\tMCS\t: N/A\n"
+					"\t\tMIMO\t: N/A\n"
+					"\t\tRate\t: N/A\n"
+					"\t\tRSSI\t: N/A\n"
+					"\t\tNoise\t: N/A\n"
+					"\t\tTxpwr\t: N/A\n"
+					"\t\tNss\t: N/A\n"
+					"\t\tBW\t: N/A\n"
+					);
+			}
+			strcat(pbuf, buf2);
+
+#ifdef CONFIG_CONCURRENT_MODE
+			chk_primary = rtw_mi_check_fwstate(padapter_primary, MI_LINKED);
+			chk_buddy = rtw_mi_buddy_check_fwstate(padapter_primary, MI_LINKED);
+
+			if (chk_buddy == 1) {
+				_adapter *padapter_p2p = GET_ADAPTER(padapter, IFACE_ID2);
+				struct mlme_ext_priv *pmlmeext = &padapter_p2p->mlmeextpriv;
+
+				sprintf(p2p_opch, "%d", pmlmeext->cur_channel);
+			}
+
+			if (chk_primary == 2) {
+				concurreny = 1;
+#ifdef CONFIG_MCC_MODE
+				if (MCC_EN(padapter_primary)) {
+					if (rtw_hal_check_mcc_status(padapter_primary, MCC_STATUS_DOING_MCC))
+						concurreny = 2;
+				}
+#endif /* CONFIG_MCC_MODE */
+			}
+#endif /*CONFIG_CONCURRENT_MODE*/
+
+			_rtw_memset(buf2, 0, 256);
+			rtw_dump_fw_version(buf2, padapter_primary);
+
+			_rtw_memset(buf1, 0, 256);
+			snprintf(buf1, 256,
+				"\t\tP2P OP Channel\t: %s\n"
+				"\t\tConcurrency\t: %s\n"
+				"\t\tTDLS\t: %s\n"
+				"\t\tFW Version\t: %s\n"
+				"\t\tFW State\t: %s\n"
+				"\t\tMin RSSI\t: %d dBm\n"
+				"\t\tMin MCS\t: %u\n"
+				"\t\tMin Rate\t: %u mbps\n"
+				"\t\tMin Noise\t: %d dBm\n",
+				p2p_opch,
+				(concurreny == 0) ? "N/A" :
+				(concurreny == 1) ? "SCC" : "MCC", /* Concurrency */
+				(padapter_primary->tdlsinfo.link_established == _TRUE) ? "Setup" : "N/A",
+				buf2,
+				"OK",
+				-40,
+				0,
+				1,
+				-100
+				);
+
+			strcat(pbuf, buf1);
+			RTW_INFO("%s", pbuf);
+			wrqu->data.length = strlen(pbuf) + 1;
+
+			RTW_INFO("%s: wrqu->data.length=%d\n", __func__, wrqu->data.length);
+
+			sprintf(extra, pbuf);
+		} else
+			RTW_INFO("You are trying to read driver status during suspend\n");
+
+	}
+free_buf:
+	if (pbuf)
+		rtw_mfree(pbuf, 4096);
+	pbuf = NULL;
+	return 0;
+}
+
 static int rtw_usb_disconnect(
 	struct net_device *dev,
 	struct iw_request_info *info,
@@ -12195,6 +12393,11 @@ static const struct iw_priv_args rtw_private_args[] = {
 		IW_PRIV_TYPE_CHAR | 40,
 		IW_PRIV_TYPE_CHAR | 0x7FF, "usb_disconnect"
 	},
+	{
+		SIOCIWFIRSTPRIV + 0x1F,
+		IW_PRIV_TYPE_CHAR | 40,
+		IW_PRIV_TYPE_CHAR | 0x7FF, "driver"
+	},
 #else
 #ifdef CONFIG_INTEL_WIDI
 	{
@@ -12346,6 +12549,7 @@ static iw_handler rtw_private_handler[] = {
 	rtw_test,						/* 0x1D */
 #ifdef LGE_PRIVATE
 	rtw_usb_disconnect,				/* 0x1E */
+	rtw_driver_status,				/* 0x1F */
 #else	
 #ifdef CONFIG_INTEL_WIDI
 	rtw_widi_set,					/* 0x1E */

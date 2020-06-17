@@ -969,7 +969,7 @@ static int rtw_suspend(struct usb_interface *pusb_intf, pm_message_t message)
 
 		kobject_uevent_env(&padapter->pnetdev->dev.kobj, KOBJ_CHANGE, envp);
 #endif
-		LGE_MSG("[WIFI] WIFI_STATUS=suspend");
+		LGE_MSG("[WLAN] WIFI_STATUS=suspend");
 	}
 #endif /* LGE_PRIVATE */
 exit:
@@ -1136,7 +1136,7 @@ static int rtw_resume(struct usb_interface *pusb_intf)
 
 		kobject_uevent_env(&padapter->pnetdev->dev.kobj, KOBJ_CHANGE, envp);
 #endif
-		LGE_MSG("[WIFI] WIFI_STATUS=ready");
+		LGE_MSG("[WLAN] WIFI_STATUS=ready");
 	}
 #endif /* LGE_PRIVATE */
 	return ret;
