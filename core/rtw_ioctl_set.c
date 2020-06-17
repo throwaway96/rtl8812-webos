@@ -905,7 +905,22 @@ void lge_set_abnormal(_adapter *adapter, LGE_ABNOR abnor)
 
 		kobject_uevent_env(&adapter->pnetdev->dev.kobj, KOBJ_CHANGE, envp);
 #endif
-		LGE_MSG("[WIFI] WIFI_STATUS=stall");
+		LGE_MSG("[WLAN] WIFI_STATUS=stall");
+	}
+		break;
+	case LGE_ABNOR_FW_STUCK: /* Make F/W to stall */
+	{
+		u8 val8 = 0;
+
+		val8 = rtw_read8(adapter, REG_SYS_FUNC_EN + 1);
+		val8 &= ~BIT(2);
+		rtw_write8(adapter, REG_SYS_FUNC_EN + 1, val8);
+
+		rtw_msleep_os(1000);
+
+		val8 = rtw_read8(adapter, REG_SYS_FUNC_EN + 1);
+		val8 |= BIT(2);
+		rtw_write8(adapter, REG_SYS_FUNC_EN + 1, val8);
 	}
 		break;
 	default:

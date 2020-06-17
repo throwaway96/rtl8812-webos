@@ -68,6 +68,7 @@ int rtw_set_band(_adapter *adapter, u8 band);
 
 typedef enum {
 	LGE_ABNOR_FW_STALL = 1,
+	LGE_ABNOR_FW_STUCK = 2,
 	LGE_ABNOR_MAX
 }LGE_ABNOR;
 
