@@ -9787,10 +9787,8 @@ void rtw_cfg80211_external_auth_status(struct wiphy *wiphy, struct net_device *d
 		psta->state |= WIFI_FW_AUTH_SUCCESS;
 		psta->expire_to = padapter->stapriv.assoc_to;
 
-		if (params->pmkid != NULL) {
-			/* RTW_INFO_DUMP("PMKID:", params->pmkid, PMKID_LEN); */
-			_rtw_set_pmksa(dev, params->bssid, params->pmkid);
-		}
+		/* RTW_INFO_DUMP("PMKID:", params->pmkid, PMKID_LEN); */
+		_rtw_set_pmksa(dev, params->bssid, params->pmkid);
 
 		_enter_critical_bh(&psta->lock, &irqL);
 		if ((psta->auth_len != 0) && (psta->pauth_frame != NULL)) {
@@ -9817,16 +9815,18 @@ void rtw_cfg80211_external_auth_status(struct wiphy *wiphy, struct net_device *d
 
 				RTW_INFO("SAE: Tx auth Confirm\n");
 				rtw_mgnt_tx_cmd(padapter, pmlmeext->cur_channel, 1, buf, len, 0, RTW_CMDF_DIRECTLY);
-
-				rtw_mfree(buf, len);
-				buf = NULL;
-				len = 0;
 			}
 			rtw_ps_deny_cancel(padapter, PS_DENY_MGNT_TX);
 		}
 	} else {
 		/* STA mode */
 		psecuritypriv->extauth_status = params->status;
+	}
+
+	if (buf) {
+		rtw_mfree(buf, len);
+		buf = NULL;
+		len = 0;
 	}
 }
 

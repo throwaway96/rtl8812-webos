@@ -853,8 +853,10 @@ int rtw_parse_wpa2_ie(u8 *rsn_ie, int rsn_ie_len, int *group_cipher,
 
 	if (akm) {
 		*akm = 0;
-		for (i = 0; i < info.akm_cnt; i++)
-			*akm |= rtw_get_akm_suite_bitmap(info.akm_list + 4 * i);
+		if (info.akm_list) {
+			for (i = 0; i < info.akm_cnt; i++)
+				*akm |= rtw_get_akm_suite_bitmap(info.akm_list + 4 * i);
+		}
 	}
 
 	if (mfp_opt) {
