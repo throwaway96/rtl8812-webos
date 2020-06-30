@@ -3714,20 +3714,8 @@ u8 ap_free_sta(_adapter *padapter, struct sta_info *psta, bool active, u16 reaso
 #endif
 	}
 
-	report_del_sta_event(padapter, psta->cmn.mac_addr, reason, enqueue, _FALSE);
-
 	beacon_updated = bss_cap_update_on_sta_leave(padapter, psta);
-
-#ifdef LGE_PRIVATE
-	if (enqueue == 0) {
-		rtw_free_stainfo(padapter, psta);
-	}
-#else
-	/* _enter_critical_bh(&(pstapriv->sta_hash_lock), &irqL);					 */
-	rtw_free_stainfo(padapter, psta);
-	/* _exit_critical_bh(&(pstapriv->sta_hash_lock), &irqL); */
-#endif /* LGE_PRIVATE */
-
+	report_del_sta_event(padapter, psta->cmn.mac_addr, reason, enqueue, _FALSE);
 
 	return beacon_updated;
 
