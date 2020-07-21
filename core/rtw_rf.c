@@ -1003,13 +1003,13 @@ static const struct country_chplan country_chplan_map[] = {
 *
 * Return pointer of struct country_chplan entry or NULL when unsupported country_code is given
 */
-const struct country_chplan *rtw_get_chplan_from_country(const char *country_code, const u8 version)
+struct country_chplan *rtw_get_chplan_from_country(const char *country_code, const u8 version)
 {
 #if RTW_DEF_MODULE_REGULATORY_CERT
-	const struct country_chplan *exc_ent = NULL;
+	struct country_chplan *exc_ent = NULL;
 #endif
-	const struct country_chplan *ent = NULL;
-	const struct country_chplan *map = NULL;
+	struct country_chplan *ent = NULL;
+	struct country_chplan *map = NULL;
 	u16 map_sz = 0;
 	char code[2];
 	int i;
@@ -1049,15 +1049,27 @@ const struct country_chplan *rtw_get_chplan_from_country(const char *country_cod
 	return ent;
 }
 
-const struct country_chplan *rtw_get_chplan_from_wififrequency(const u8 wififrequency)
+struct country_chplan *rtw_get_chplan_from_wififrequency(const u8 wififrequency)
 {
-	const struct country_chplan *ent = NULL;
-	const struct country_chplan *map = NULL;
+	struct country_chplan *ent = NULL;
+	struct country_chplan *map = NULL;
 	u16 map_sz = 0;
 	int i;
 
+#if (LGE_LOAD_COUNTRIES == 0)
 	map = CUSTOMIZED_country_chplan_map_WEBOS6;
 	map_sz = sizeof(CUSTOMIZED_country_chplan_map_WEBOS6) / sizeof(struct country_chplan);
+
+	if (wififrequency < map_sz)
+		for (i = 0; i < map_sz; i++) {
+			if (wififrequency == map[i].wififrequency) {
+				ent = &map[i];
+				break;
+			}
+		}
+#else
+	map = CUSTOMIZED_country_chplan_map;
+	map_sz = sizeof(CUSTOMIZED_country_chplan_map) / sizeof(struct country_chplan);
 
 	for (i = 0; i < map_sz; i++) {
 		if (wififrequency == map[i].wififrequency) {
@@ -1065,6 +1077,7 @@ const struct country_chplan *rtw_get_chplan_from_wififrequency(const u8 wififreq
 			break;
 		}
 	}
+#endif
 
 	return ent;
 }

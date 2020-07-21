@@ -191,8 +191,8 @@ struct country_chplan {
 #define COUNTRY_CHPLAN_DEF_MODULE_FALGS(_ent) 0
 #endif
 
-const struct country_chplan *rtw_get_chplan_from_country(const char *country_code, const u8 version);
-const struct country_chplan *rtw_get_chplan_from_wififrequency(const u8 wififrequency);
+struct country_chplan *rtw_get_chplan_from_country(const char *country_code, const u8 version);
+struct country_chplan *rtw_get_chplan_from_wififrequency(const u8 wififrequency);
 
 struct rf_ctl_t;
 

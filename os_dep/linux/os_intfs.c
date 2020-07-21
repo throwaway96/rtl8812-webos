@@ -724,6 +724,10 @@ MODULE_PARM_DESC(rtw_dynamic_soml_delay, "SOML training delay");
 char *rtw_lge_file_path = "/mnt/lg/cmn_data/network/factory_settings";
 module_param(rtw_lge_file_path, charp, 0644);
 MODULE_PARM_DESC(rtw_lge_file_path, "LGE Network Setting");
+
+char *rtw_ext_country_path = "/lib/firmware/country_tables.txt";
+module_param(rtw_ext_country_path, charp, 0644);
+MODULE_PARM_DESC(rtw_ext_country_path, "External Network Setting");
 #endif /* LGE_PRIVATE */
 
 int _netdev_open(struct net_device *pnetdev);
@@ -3389,16 +3393,64 @@ netdev_open_normal_process:
 #endif /* CONFIG_RTW_CFGVEDNOR_LLSTATS */
 
 #ifdef LGE_PRIVATE
+{
+	HAL_DATA_TYPE *hal_data = GET_HAL_DATA(padapter);
+	u8 entry[5] = {0};
+
+#if (LGE_LOAD_COUNTRIES == 1)
+	if (hal_data->txpwr_limit_from_file == 0) {
+		LGE_MSG("[WLAN] Tx Power Table does not exist");
+		LGE_MSG("[WLAN] WIFI_STATUS=fail");
+		goto netdev_open_error;
+	}
+
 	if (rtw_is_file_readable(rtw_lge_file_path) == _TRUE) {
 		RTW_INFO("%s acquire Settings from file:%s\n", __func__, rtw_lge_file_path);
-		rtw_lge_load_setting(padapter, rtw_lge_file_path);
+		rtw_lge_load_setting(padapter, rtw_lge_file_path, 0, entry);
+	} else {
+		/* default */
+		entry[0] = 0;
+		entry[1] = COUNTRY_DEFAULT_CCODE;
+	}
+
+	if (rtw_is_file_readable(rtw_ext_country_path) == _TRUE) {
+		RTW_INFO("%s acquire Settings from file:%s\n", __func__, rtw_ext_country_path);
+		if (rtw_lge_load_setting(padapter, rtw_ext_country_path, 1, entry) == -2) {
+			LGE_MSG("[WLAN] there is no powertable on powerdb");
+			LGE_MSG("[WLAN] WIFI_STATUS=fail");
+			goto netdev_open_error;
+		}
+		if ((entry[0] == 0) && (rtw_set_country(padapter, NULL, entry[1]) == _TRUE)) {
+			/* Pass Throught */
+		} else {
+			/* apply initial fail */
+			LGE_MSG("[WLAN] Apply Country Table fail");
+			LGE_MSG("[WLAN] WIFI_STATUS=fail");
+			goto netdev_open_error;
+		}
+	} else {
+		LGE_MSG("[WLAN] ccode Table does not exist");
+		LGE_MSG("[WLAN] WIFI_STATUS=fail");
+		goto netdev_open_error;
+	}
+#else
+	if (rtw_is_file_readable(rtw_lge_file_path) == _TRUE) {
+		RTW_INFO("%s acquire Settings from file:%s\n", __func__, rtw_lge_file_path);
+		rtw_lge_load_setting(padapter, rtw_lge_file_path, 0, entry);
+		if ((entry[0] == 0) && (rtw_set_country(padapter, NULL, entry[1]) == _TRUE)) {
+			/* Pass Throught */
+		} else if ((entry[0] == 1) && (rtw_set_country(padapter, (entry + 1), entry[4]) == _TRUE)) {
+			/* Pass Throught */
+		} else {
+			rtw_set_country(padapter, "DC", COUNTRY_DEFAULT_VER);
+		}
 	} else {
 		RTW_INFO("%s file is not exist:%s\n", __func__, rtw_lge_file_path);
 		RTW_INFO("%s can not load the private settings\n", __func__);
-		rtw_set_country(padapter,
-			adapter_wdev_data(padapter)->country,
-			adapter_wdev_data(padapter)->ccode_version);
+		rtw_set_country(padapter, "DC", COUNTRY_DEFAULT_VER);
 	}
+#endif
+}
 
 	if ((status == _SUCCESS) &&
 		(!pwrctrlpriv->bInSuspend)) {
@@ -3422,6 +3474,9 @@ netdev_open_normal_process:
 	return 0;
 
 netdev_open_error:
+#ifdef LGE_PRIVATE
+	rtw_hal_deinit(padapter);
+#endif
 
 	padapter->bup = _FALSE;
 

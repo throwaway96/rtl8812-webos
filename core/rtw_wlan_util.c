@@ -4784,7 +4784,7 @@ void rtw_dev_pno_debug(struct net_device *net)
 #endif /* CONFIG_PNO_SUPPORT */
 
 #ifdef LGE_PRIVATE
-int rtw_lge_parse_country(_adapter *padapter, u8 *list_str)
+static int rtw_lge_parse_country(_adapter *padapter, u8 *list_str, u8 *entry)
 {
 	char *pch, *pnext, *pend,
 		*country = NULL, *ccode_ver = NULL;
@@ -4793,7 +4793,7 @@ int rtw_lge_parse_country(_adapter *padapter, u8 *list_str)
 
 	pch = list_str;
 
-	if (list_str == NULL) {
+	if (list_str == NULL && entry == NULL) {
 		RTW_INFO("%s error paramters\n", __func__);
 		return -1;
 	}
@@ -4811,21 +4811,29 @@ int rtw_lge_parse_country(_adapter *padapter, u8 *list_str)
 			}
 
 			pend = strstr(pch, " ");
-			*pend = '\0';
-			country = pch;
+			if (pend != NULL) {
+				*pend = '\0';
+				country = pch;
+				pch = pend + 1;
+			}
 
-			pch = pend + 1;
 			pend = strstr(pch, "\n");
-			*pend = '\0';
-			ccode_ver = pch;
+			if (pend != NULL) {
+				*pend = '\0';
+				ccode_ver = pch;
+			}
 		} else
 			break;
 	}
 
 	if (wififrequency != 0xff) {
 		RTW_INFO("%s country wifisetting [%d]\n", __func__, wififrequency);
+		*entry = 0;
+		*(entry+1) = wififrequency;
+		#if 0
 		if (rtw_set_country(padapter, NULL, wififrequency) == _FAIL)
 			rtw_set_country(padapter, "DC", COUNTRY_DEFAULT_VER);
+		#endif
 	} else if (country != NULL) {
 		if (strlen(country) == 3) {
 			RTW_INFO("%s country [%s -> %s, %s]\n", __func__
@@ -4834,24 +4842,299 @@ int rtw_lge_parse_country(_adapter *padapter, u8 *list_str)
 		} else
 			RTW_INFO("%s country [%s, %s]\n", __func__, country, ccode_ver);
 
+		*entry = 1;
+		*(entry+1) = *country;
+		*(entry+2) = *(country+1);
+		*(entry+3) = *(country+2);
+		*(entry+4) = rtw_atoi(ccode_ver);
+		#if 0
 		if (rtw_set_country(padapter, country, rtw_atoi(ccode_ver)) == _FAIL)
 			rtw_set_country(padapter, "DC", COUNTRY_DEFAULT_VER);
+		#endif
 	} else {
-		RTW_INFO("%s can not load the country setting. Apply to [DC,%d]\n", __func__, COUNTRY_DEFAULT_VER);
-		rtw_set_country(padapter, "DC", COUNTRY_DEFAULT_VER);
+		RTW_INFO("%s can not load the country setting. Will be apply to CountryCode(%u)\n",
+			__func__, COUNTRY_DEFAULT_CCODE);
+		*entry = 0;
+		*(entry+1) = COUNTRY_DEFAULT_CCODE;
 	}
 
 	return 0;
 }
 
-int rtw_lge_load_setting(_adapter *padapter, char *path)
+static u8* _rtw_lge_parse_ext_channel(int band, u8 *list_str, u8 *ch_list, u8 *bw)
+{
+	char *pch, *ptch, *pnext, *pend;
+	u8 num = 0;
+
+	pch = list_str;
+	pend = strstr(pch, "\n");
+	*pend = '\0';
+
+	pnext = strstr(pch, "] ");
+	if (pnext != NULL) {
+		pch = pch + 1;
+		*(pnext) = '\0';
+		if (rtw_atoi(pch) == 0)
+			return (pend + 1);
+		num = *ch_list;
+		*ch_list += rtw_atoi(pch);
+		//printk("num->%d\n", *ch_list);
+		pch = pnext + 1;
+	}
+
+	pnext = strstr(pch, "] ");
+	if (pnext != NULL) {
+		pch = pch + 2;
+		*(pnext) = '\0';
+		//printk("ch->%s\n", pch);
+		while ((ptch = strstr(pch, ", ")) != NULL) {
+			*ptch = '\0';
+			//printk("%d\n", rtw_atoi(pch));
+			*(ch_list + ++num) = rtw_atoi(pch);
+			pch = ptch + 2;
+		}
+		//printk("last : '%s'\n", pch);
+		*(ch_list + ++num) = rtw_atoi(pch);
+
+		pch = pnext + 2;
+	}
+
+	pnext = strstr(pch, "] ");
+	if (pnext != NULL) {
+		pch = pch + 1;
+		*(pnext) = '\0';
+		// 0: 20 MHz, 1: 40 MHz, 2: 80 MHz, 3: 160MHz, 4: 80+80MHz
+		// 2.4G use bit 0 ~ 3, 5G use bit 4 ~ 7
+		// 0x21 means enable 2.4G 40MHz & 5G 80MHz
+		if (rtw_atoi(pch) == 40)
+			*bw |= (band) ? (1 << 4) : (1);
+		else if (rtw_atoi(pch) == 80)
+			*bw |= (band) ? (2 << 4) : (2);
+		else if (rtw_atoi(pch) == 160)
+			*bw |= (band) ? (3 << 4) : (3);
+		pch = pnext + 2;
+	}
+
+	//printk("flag->%s\n", pch);
+
+	return (pend + 1);
+}
+
+static int rtw_lge_parse_country_table(_adapter *padapter, u8 *list_str, u8 *entry)
+{
+	char *pch, *ptch, *pnext, *pend,
+		*country = NULL, *ccode_ver = NULL, *power = NULL;
+	u8 index = 0, chplan_id = 0x7f;
+	u8 ac = 0, bw = 0;
+	u8 ch_list_2g[15] = { 0 }, ch_list_5g[26] = { 0 };
+	int wififrequency = 0xff;
+	int i, ret = -1;
+
+	pch = list_str;
+
+	if (list_str == NULL) {
+		RTW_INFO("%s error paramters\n", __func__);
+		return ret;
+	}
+
+	while (strlen(pch) != 0) {
+		pnext = strstr(pch, "CountryCode: ");
+		if (pnext != NULL) {
+			pch = pnext + 13;
+
+			if (*pch >= '0' && *pch <= '9') {
+				pend = strstr(pch, "\n");
+				*pend = '\0';
+				wififrequency = rtw_atoi(pch);
+				pch = pend + 1;
+			}
+
+			if ((entry[0] == 0) && (entry[1] != wififrequency)) {
+				//printk("!! e(%d,%d) c(%d)\n", entry[0], entry[1], wififrequency);
+				continue;
+			}
+
+			pnext = strstr(pch, "CountryRegion: ");
+			if (pnext != NULL) {
+				pch = pnext + 15;
+				pend = strstr(pch, "/");
+				*pend = '\0';
+				country = pch;
+				if (strlen(country) == 3)
+					country = (country + 1);
+
+				pch = pend + 1;
+				pend = strstr(pch, "\n");
+				*pend = '\0';
+				ccode_ver = pch;
+				//printk("(%s,%s)\n", country, ccode_ver);
+				pch = pend + 1;
+			} else
+				continue;
+
+			if ((entry[0] == 0) || ((entry[0] == 1) && (entry[4] == rtw_atoi(ccode_ver)) &&
+				((entry[1] == country[0]) && (entry[2] == country[1])))) {
+				//printk("e(%d,%s,%d) c(%s,%d)\n", entry[0], &entry[1], entry[4], country, rtw_atoi(ccode_ver));
+				/* Pass Throught */
+			} else {
+				//printk("!! e(%d,%s,%d) c(%s,%d)\n", entry[0], &entry[1], entry[4], country, rtw_atoi(ccode_ver));
+				continue;
+			}
+
+			pnext = strstr(pch, "PowerSetting: ");
+			if (pnext != NULL) {
+				pch = pnext + 14;
+				pend = strstr(pch, "\n");
+				*pend = '\0';
+				power = pch;
+				pch = pend + 1;
+			} else
+				continue;
+
+			pnext = strstr(pch, "Flags:");
+			if (pnext != NULL) {
+				pch = pnext + 6;
+
+				pnext = strstr(pch, "AC");
+				if (pnext != NULL)
+					ac = 1;
+				else
+					ac = 0;
+				pend = strstr(pch, "\n");
+				*pend = '\0';
+				pch = pend + 1;
+			} else
+				continue;
+
+			ch_list_2g[0] = 0;
+			ch_list_5g[0] = 0;
+			bw = 0;
+
+			pnext = strstr(pch, "2.4GHz_1: ");
+			if (pnext != NULL) {
+				pch = _rtw_lge_parse_ext_channel(0, pnext + 10, ch_list_2g, &bw);
+			} else
+				continue;
+			pnext = strstr(pch, "2.4GHz_2: ");
+			if (pnext != NULL) {
+				pch = _rtw_lge_parse_ext_channel(0, pnext + 10, ch_list_2g, &bw);
+			} else
+				continue;
+			pnext = strstr(pch, "2.4GHz_3: ");
+			if (pnext != NULL) {
+				pch = _rtw_lge_parse_ext_channel(0, pnext + 10, ch_list_2g, &bw);
+			} else
+				continue;
+
+			pnext = strstr(pch, "5GHz_Band1: ");
+			if (pnext != NULL) {
+				pch = _rtw_lge_parse_ext_channel(1, pnext + 12, ch_list_5g, &bw);
+			} else
+				continue;
+			pnext = strstr(pch, "5GHz_Band2: ");
+			if (pnext != NULL) {
+				pch = _rtw_lge_parse_ext_channel(1, pnext + 12, ch_list_5g, &bw);
+			} else
+				continue;
+			pnext = strstr(pch, "5GHz_Band3: ");
+			if (pnext != NULL) {
+				pch = _rtw_lge_parse_ext_channel(1, pnext + 12, ch_list_5g, &bw);
+			} else
+				continue;
+			pnext = strstr(pch, "5GHz_Band4: ");
+			if (pnext != NULL) {
+				pch = _rtw_lge_parse_ext_channel(1, pnext + 12, ch_list_5g, &bw);
+			} else
+				continue;
+
+			#if 0
+			printk("wififrequency = %d\n", wififrequency);
+			printk("(%s,%s,%d)\n", country, ccode_ver, ac);
+			printk("power setting %s\n", power);
+			printk("num->%d %d\n", ch_list_2g[0], ch_list_5g[0]);
+			for (i = 0; i <= ch_list_2g[0]; i++) {
+				printk("%d, ", ch_list_2g[i]);
+			}
+			printk("\n");
+			for (i = 0; i <= ch_list_5g[0]; i++) {
+				printk("%d, ", ch_list_5g[i]);
+			}
+			printk("\n");
+			printk("bw->%02X\n", bw);
+			#endif
+
+			switch (power[0]) {
+			case 'C': /* CE */
+				/* Pass Through */
+			case 'F': /* FCC */
+				/* Pass Through */
+			case 'K': /* KCC */
+				/* Pass Through */
+			case 'T': /* TELE */
+				break;
+			default:
+				ret = -2;
+				return ret;
+			}
+
+			rtw_chplan_set_ext_entry(country, rtw_atoi(ccode_ver), ac, bw);
+
+			if (power[0] == 'F')
+				rtw_chplan_set_ext_reg(TXPWR_LMT_FCC);
+			else if (power[0] == 'K')
+				rtw_chplan_set_ext_reg(TXPWR_LMT_KCC);
+			else if (power[0] == 'T')
+				rtw_chplan_set_ext_reg(TXPWR_LMT_MKK);
+			else
+				rtw_chplan_set_ext_reg(TXPWR_LMT_ETSI);
+
+			rtw_chplan_set_ext_2gband(ch_list_2g);
+			rtw_chplan_set_ext_5gband(ch_list_5g);
+
+			ret = 0;
+		} else
+			break;
+	}
+
+	return ret;
+}
+
+int rtw_lge_load_setting(_adapter *padapter, char *path, int mode, u8 *entry)
 {
 	struct file *fp;
 	mm_segment_t fs;
 	loff_t pos = 0;
 	u8 *source = NULL;
 	long len = 0;
+	int rlen = 0;
+	int ret = 0;
 
+#if 1
+	source = rtw_zvmalloc(25600);
+	if (source == NULL)
+		RTW_INFO("%s source alloc fail !\n", __FUNCTION__);
+
+	rlen = rtw_retrieve_from_file(path, source, 25600);
+	if (rlen > 0) {
+		if (mode == 0) {
+			/* factory_settings */
+			rtw_lge_parse_country(padapter, source, entry);
+		} else if (mode == 1) {
+			/* external country tables */
+			ret = rtw_lge_parse_country_table(padapter, source, entry);
+			if (ret == 0) {
+				entry[0] = 0;
+				entry[1] = 32;
+			} else {
+				entry[0] = 2;
+			}
+		}
+	}
+
+	if (source) {
+		rtw_vmfree(source, 25600);
+	}
+#else
 	fp = filp_open(path, O_RDONLY,  0644);
 	if (IS_ERR(fp)) {
 		RTW_INFO("Error, %s doesn't exist. using default value.\n", path);
@@ -4860,14 +5143,15 @@ int rtw_lge_load_setting(_adapter *padapter, char *path)
 
 	len = i_size_read(fp->f_path.dentry->d_inode);
 	if (len < 0 || len > 2048) {
-		RTW_INFO("Error, file size is bigger than 2048. using default value.\n");
-		return 0;
+		RTW_INFO("Error, file size is bigger than 25600. using default value.\n");
+		len = 2048;
+		//return 0;
 	}
 
 	fs = get_fs();
 	set_fs(KERNEL_DS);
 
-	source = rtw_zmalloc(2048);
+	source = rtw_zvmalloc(len);//rtw_zmalloc(2048);
 
 	if (source != NULL) {
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0))
@@ -4877,13 +5161,20 @@ int rtw_lge_load_setting(_adapter *padapter, char *path)
 #else
 		len = vfs_read(fp, source, len, &pos);
 #endif
-		rtw_lge_parse_country(padapter, source);
-		rtw_mfree(source, 2048);
+		if (mode == 0) {
+			/* factory_settings */
+			rtw_lge_parse_country(padapter, source);
+		} else if (mode == 1) {
+			/* external country tables */
+			rtw_lge_parse_country_table(padapter, source);
+
+		}
+		rtw_mfree(source, len);
 	}
 
 	set_fs(fs);
 	filp_close(fp, NULL);
-
-	return 0;
+#endif
+	return ret;
 }
 #endif /* LGE_PRIVATE */

@@ -221,10 +221,11 @@ typedef enum _RT_CHANNEL_DOMAIN {
 	RTW_CHPLAN_ETSI1_ETSI2_KCC = 0x3a,
 	RTW_CHPLAN_ETSI1_ETSI24 = 0x3b,
 	RTW_CHPLAN_FCC2_NULL = 0x3c,
-    RTW_CHPLAN_ETSI1_ETSI26 =0x3d,
-    RTW_CHPLAN_ETSI1_ETSI27 =0x3e,
-    RTW_CHPLAN_ETSI1_ETSI28 =0x3f,
-	RTW_CHPLAN_GLOBAL_NULL = 0x40,
+	RTW_CHPLAN_ETSI1_ETSI26 = 0x3d,
+	RTW_CHPLAN_ETSI1_ETSI27 = 0x3e,
+	RTW_CHPLAN_ETSI1_ETSI28 = 0x3f,
+	RTW_CHPLAN_EXTERNAL = 0x40,
+	RTW_CHPLAN_GLOBAL_NULL = 0x41,
 #endif /* LGE_PRIVATE */
 	RTW_CHPLAN_MAX,
 	RTW_CHPLAN_REALTEK_DEFINE = 0x7F,
@@ -608,8 +609,15 @@ enum {
 
 bool rtw_choose_shortest_waiting_ch(_adapter *adapter, u8 sel_ch, u8 max_bw, u8 *dec_ch, u8 *dec_bw, u8 *dec_offset, u8 d_flags);
 
+#ifdef LGE_PRIVATE
+void rtw_chplan_set_ext_2gband(u8 *chl);
+void rtw_chplan_set_ext_5gband(u8 *chl);
+void rtw_chplan_set_ext_reg(int regd);
+void rtw_chplan_set_ext_entry(u8 *ccode, u8 cver, u8 ac, u8 bw);
+#endif
+
 void dump_country_chplan(void *sel, const struct country_chplan *ent);
-void dump_country_chplan_map(void *sel);
+void dump_country_chplan_map(void *sel, int mode);
 void dump_chplan_id_list(void *sel);
 void dump_chplan_test(void *sel);
 void dump_chset(void *sel, RT_CHANNEL_INFO *ch_set);

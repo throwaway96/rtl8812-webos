@@ -156,7 +156,7 @@ enum rtw_rd_2g {
 	RTW_RD_2G_FCC2 = 8,		/* US */
 	RTW_RD_2G_IC1 = 9,		/* Canada */
 	RTW_RD_2G_WORLD1 = 10,	/* Worldwide 11 */
-
+	RTW_RD_2G_EXT = 11,	/* External */
 	RTW_RD_2G_MAX,
 };
 
@@ -223,12 +223,13 @@ enum rtw_rd_5g {
 	RTW_RD_5G_ETSI23 = 58,	/* LGE */
 	RTW_RD_5G_ETSI24 = 59,	/* LGE */
 	RTW_RD_5G_ETSI25 = 60,	/* LGE */
-	RTW_RD_5G_FCC19 = 61,	/* LGE */
-	RTW_RD_5G_FCC20 = 62,	/* LGE */
-	RTW_RD_5G_FCC21 = 63,	/* LGE */
-	RTW_RD_5G_ETSI26 = 64,	/* LGE */
-	RTW_RD_5G_ETSI27 =65,   /* LGE */
-    RTW_RD_5G_ETSI28 = 66,  /* LGE */
+	RTW_RD_5G_FCC19 = 61, /* LGE */
+	RTW_RD_5G_FCC20 = 62, /* LGE */
+	RTW_RD_5G_FCC21 = 63, /* LGE */
+	RTW_RD_5G_ETSI26 = 64, /* LGE */
+	RTW_RD_5G_ETSI27 = 65, /* LGE */
+	RTW_RD_5G_ETSI28 = 66, /* LGE */
+	RTW_RD_5G_EXT = 67, /* LGE */
 	/* === Below are driver defined for legacy channel plan compatible, DON'T assign index ==== */
 	RTW_RD_5G_OLD_FCC1,
 	RTW_RD_5G_OLD_NCC1,
@@ -249,6 +250,7 @@ static struct ch_list_t RTW_ChannelPlan2G[] = {
 	/* 8, RTW_RD_2G_FCC2 */		CH_LIST_ENT(13, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13),
 	/* 9, RTW_RD_2G_IC1 */		CH_LIST_ENT(13, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13),
 	/* 10, RTW_RD_2G_WORLD1 */	CH_LIST_ENT(11, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
+	/* 11, RTW_RD_2G_EXT */		CH_LIST_ENT(14, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14),
 };
 
 #ifdef CONFIG_IEEE80211_BAND_5GHZ
@@ -318,9 +320,10 @@ static struct ch_list_t RTW_ChannelPlan5G[] = {
 	/* 61, RTW_RD_5G_FCC19 */	CH_LIST_ENT(9, 52, 56, 60, 64, 149, 153, 157, 161, 165),
 	/* 62, RTW_RD_5G_FCC20 */	CH_LIST_ENT(22, 36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 132, 136, 140, 144, 149, 153, 157, 161, 165),
 	/* 63, RTW_RD_5G_FCC21 */	CH_LIST_ENT(14, 36, 40, 44, 48, 52, 56, 60, 64, 144, 149, 153, 157, 161, 165),
-    /* 64, RTW_RD_5G_ETSI26 */	CH_LIST_ENT(12, 36, 40, 44, 48, 52, 56, 60, 64, 132, 136, 140, 144), 
-    /* 65, RTW_RD_5G_ETSI27 */	CH_LIST_ENT(19, 36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 132, 149, 153, 157, 161, 165),
-    /* 66, RTW_RD_5G_ETSI28 */	CH_LIST_ENT(25, 36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144, 149, 153, 157, 161, 165),
+	/* 64, RTW_RD_5G_ETSI26 */	CH_LIST_ENT(12, 36, 40, 44, 48, 52, 56, 60, 64, 132, 136, 140, 144),
+	/* 65, RTW_RD_5G_ETSI27 */	CH_LIST_ENT(19, 36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 132, 149, 153, 157, 161, 165),
+	/* 66, RTW_RD_5G_ETSI28 */	CH_LIST_ENT(25, 36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144, 149, 153, 157, 161, 165),
+	/* 67, RTW_RD_5G_EXT */		CH_LIST_ENT(25, 36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144, 149, 153, 157, 161, 165),
 	/* === Below are driver defined for legacy channel plan compatible, NO static index assigned ==== */
 	/* RTW_RD_5G_OLD_FCC1 */	CH_LIST_ENT(20, 36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 136, 140, 149, 153, 157, 161, 165),
 	/* RTW_RD_5G_OLD_NCC1 */	CH_LIST_ENT(15, 56, 60, 64, 100, 104, 108, 112, 116, 136, 140, 149, 153, 157, 161, 165),
@@ -492,15 +495,16 @@ static RT_CHANNEL_PLAN_MAP	RTW_ChannelPlanMap[RTW_CHPLAN_MAX] = {
 	CHPLAN_ENT(RTW_RD_2G_ETSI1,		RTW_RD_5G_ETSI2,	TXPWR_LMT_KCC),		/* 0x3a, RTW_CHPLAN_ETSI1_ETSI2_KCC */
 	CHPLAN_ENT(RTW_RD_2G_ETSI1,		RTW_RD_5G_ETSI25,	TXPWR_LMT_ETSI),	/* 0x3b, RTW_CHPLAN_ETSI1_ETSI24 */
 	CHPLAN_ENT(RTW_RD_2G_FCC2,		RTW_RD_5G_NULL,		TXPWR_LMT_FCC),		/* 0x3c, RTW_CHPLAN_FCC2_NULL */
-    /*KZ */
-    CHPLAN_ENT(RTW_RD_2G_ETSI1,		RTW_RD_5G_ETSI26,	TXPWR_LMT_ETSI),	/* 0x3d, RTW_CHPLAN_ETSI1_ETSI26 */
-
-    /*MY */
-    CHPLAN_ENT(RTW_RD_2G_ETSI1,		RTW_RD_5G_ETSI27,	TXPWR_LMT_ETSI),	/* 0x3e, RTW_CHPLAN_ETSI1_ETSI27 */
-    /* NZ */
-    CHPLAN_ENT(RTW_RD_2G_ETSI1,		RTW_RD_5G_ETSI28,	TXPWR_LMT_ETSI),	/* 0x3f, RTW_CHPLAN_ETSI1_ETSI28 */
+	/* KZ */
+	CHPLAN_ENT(RTW_RD_2G_ETSI1,		RTW_RD_5G_ETSI26,	TXPWR_LMT_ETSI),	/* 0x3d, RTW_CHPLAN_ETSI1_ETSI26 */
+	/* MY */
+	CHPLAN_ENT(RTW_RD_2G_ETSI1,		RTW_RD_5G_ETSI27,	TXPWR_LMT_ETSI),	/* 0x3e, RTW_CHPLAN_ETSI1_ETSI27 */
+	/* NZ */
+	CHPLAN_ENT(RTW_RD_2G_ETSI1,		RTW_RD_5G_ETSI28,	TXPWR_LMT_ETSI),	/* 0x3f, RTW_CHPLAN_ETSI1_ETSI28 */
+	/* External only*/
+	CHPLAN_ENT(RTW_RD_2G_EXT,		RTW_RD_5G_EXT,		TXPWR_LMT_ETSI),	/* 0x40, RTW_CHPLAN_EXERNAL */
 	/* keep this end of map */
-	CHPLAN_ENT(RTW_RD_2G_GLOBAL,		RTW_RD_5G_NULL,		TXPWR_LMT_WW),		/* 0x40, RTW_CHPLAN_GLOBAL_NULL */
+	CHPLAN_ENT(RTW_RD_2G_GLOBAL,		RTW_RD_5G_NULL,		TXPWR_LMT_WW),		/* 0x41, RTW_CHPLAN_GLOBAL_NULL */
 
 #endif /* LGE_PRIVATE */
 };
@@ -1351,6 +1355,48 @@ void dump_country_chplan(void *sel, const struct country_chplan *ent)
 }
 
 #ifdef LGE_PRIVATE
+void rtw_chplan_set_ext_2gband(u8 *chl)
+{
+	int i;
+
+	CH_LIST_LEN(RTW_ChannelPlan2G[RTW_RD_2G_EXT]) = *chl;
+	if (*chl) {
+		for (i = 0; i < *chl; i++)
+			CH_LIST_CH(RTW_ChannelPlan2G[RTW_RD_2G_EXT], i) = chl[i+1];
+	}
+}
+
+void rtw_chplan_set_ext_5gband(u8 *chl)
+{
+	int i;
+
+	CH_LIST_LEN(RTW_ChannelPlan5G[RTW_RD_5G_EXT]) = *chl;
+	if (*chl) {
+		for (i = 0; i < *chl; i++)
+			CH_LIST_CH(RTW_ChannelPlan5G[RTW_RD_5G_EXT], i) = chl[i+1];
+	}
+}
+
+void rtw_chplan_set_ext_reg(int regd)
+{
+	if (regd < TXPWR_LMT_WW)
+		RTW_ChannelPlanMap[RTW_CHPLAN_EXTERNAL].regd = regd;
+}
+
+void rtw_chplan_set_ext_entry(u8 *ccode, u8 cver, u8 ac, u8 bw)
+{
+	struct country_chplan *ent;
+
+	ent = rtw_get_chplan_from_wififrequency(32);
+	if (ent != NULL) {
+		ent->alpha2[0] = ccode[0];
+		ent->alpha2[1] = ccode[1];
+		ent->version = cver;
+		ent->en_11ac = ac;
+		ent->bandwidth = bw;
+	}
+}
+
 u8 rtw_chplan_get_default_regd(u8 id)
 {
 	u8 regd;
@@ -1394,15 +1440,14 @@ void dump_country_chplan_list(void *sel, const struct country_chplan *ent)
 }
 #endif /* LGE_PRIVATE */
 
-void dump_country_chplan_map(void *sel)
+void dump_country_chplan_map(void *sel, int mode)
 {
 
 #define CC_VER_INIT 1
 #define COUNTRY_VER_MAX 4
 
 	const struct country_chplan *ent;
-	int version;
-	u8 code[2];
+
 
 #if RTW_DEF_MODULE_REGULATORY_CERT
 	RTW_PRINT_SEL(sel, "RTW_DEF_MODULE_REGULATORY_CERT:0x%x\n", RTW_DEF_MODULE_REGULATORY_CERT);
@@ -1411,18 +1456,36 @@ void dump_country_chplan_map(void *sel)
 	RTW_PRINT_SEL(sel, "CONFIG_CUSTOMIZED_COUNTRY_CHPLAN_MAP\n");
 #endif
 
-	for (code[0] = 'A'; code[0] <= 'Z'; code[0]++) {
-		for (code[1] = 'A'; code[1] <= 'Z'; code[1]++) {
-			for (version = CC_VER_INIT; version <= COUNTRY_VER_MAX; version++) {
-				ent = rtw_get_chplan_from_country(code, version);
-				if (!ent)
-					continue;
+	if (mode == 0) {
+		int version;
+		u8 code[2];
 
-				if (((struct seq_file *)(sel))->private == NULL)
-					dump_country_chplan(sel, ent);
-				else
-					dump_country_chplan_list(sel, ent);
+		for (code[0] = 'A'; code[0] <= 'Z'; code[0]++) {
+			for (code[1] = 'A'; code[1] <= 'Z'; code[1]++) {
+				for (version = CC_VER_INIT; version <= COUNTRY_VER_MAX; version++) {
+					ent = rtw_get_chplan_from_country(code, version);
+					if (!ent)
+						continue;
+
+					if (((struct seq_file *)(sel))->private == NULL)
+						dump_country_chplan(sel, ent);
+					else
+						dump_country_chplan_list(sel, ent);
+				}
 			}
+		}
+	} else if (mode == 1) {
+		int i;
+
+		for (i = 0; i < 128; i++) {
+			ent = rtw_get_chplan_from_wififrequency(i);
+			if (!ent)
+				continue;
+
+			if (((struct seq_file *)(sel))->private == NULL)
+			dump_country_chplan(sel, ent);
+			else
+				dump_country_chplan_list(sel, ent);
 		}
 	}
 }

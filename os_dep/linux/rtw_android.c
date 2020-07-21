@@ -1002,10 +1002,10 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 				"\t\tCcode\t: R%c%c\n"
 				"\t\tCcodeRev\t: %u\n"
 				"\t\tChannel\t: %u\n",
-				surprise_removed == _TRUE ? "N/A" : DRIVERVERSION,
-				rfctl->country_ent->alpha2[0],
-				rfctl->country_ent->alpha2[1],
-				rfctl->country_ent->version,
+				((surprise_removed == _TRUE) | !(rfctl && rfctl->country_ent)) ? "N/A" : DRIVERVERSION,
+				(rfctl && rfctl->country_ent) ? rfctl->country_ent->alpha2[0] : 'D',
+				(rfctl && rfctl->country_ent) ? rfctl->country_ent->alpha2[1] : 'C',
+				(rfctl && rfctl->country_ent) ? rfctl->country_ent->version : 0,
 				pmlmeext->cur_channel
 				);
 			strcat(command, buf1);

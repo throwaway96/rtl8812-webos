@@ -1684,6 +1684,10 @@ static void _config_beamformer_mu(PADAPTER adapter, struct beamformer_entry *bfe
 	val8 |= BIT_CTRLFLT4EN_8822B | BIT_CTRLFLT5EN_8822B;
 	rtw_write8(adapter, REG_RXFLTMAP1_8822B, val8);
 
+	/* Enable port sel for MU */
+	val8 = rtw_read8(adapter, REG_WMAC_MU_BF_OPTION_8822B);
+	val8 |= BIT_WMAC_MU_BFEE_PORT_SEL_8822B(rtw_hal_get_port(adapter));
+
 	/* for B-Cut */
 	if (IS_B_CUT(hal->version_id)) {
 		phy_set_bb_reg(adapter, REG_RXFLTMAP0_8822B, BIT(20), 0);

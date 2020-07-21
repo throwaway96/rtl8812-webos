@@ -143,7 +143,13 @@ static int proc_get_mstat(struct seq_file *m, void *v)
 
 static int proc_get_country_chplan_map(struct seq_file *m, void *v)
 {
-	dump_country_chplan_map(m);
+	dump_country_chplan_map(m, 0);
+	return 0;
+}
+
+static int proc_get_country_chplan_map_by_idx(struct seq_file *m, void *v)
+{
+	dump_country_chplan_map(m, 1);
 	return 0;
 }
 
@@ -186,6 +192,7 @@ const struct rtw_proc_hdl drv_proc_hdls[] = {
 	RTW_PROC_HDL_SSEQ("mstat", proc_get_mstat, NULL),
 #endif /* DBG_MEM_ALLOC */
 	RTW_PROC_HDL_SSEQ("country_chplan_map", proc_get_country_chplan_map, NULL),
+	RTW_PROC_HDL_SSEQ("country_chplan_map_by_idx", proc_get_country_chplan_map_by_idx, NULL),
 	RTW_PROC_HDL_SSEQ("chplan_id_list", proc_get_chplan_id_list, NULL),
 	RTW_PROC_HDL_SSEQ("chplan_test", proc_get_chplan_test, NULL),
 #ifdef RTW_HALMAC
@@ -1005,7 +1012,14 @@ static int proc_get_chan_plan(struct seq_file *m, void *v)
 
 static int proc_get_chan_plan_map(struct seq_file *m, void *v)
 {
-	dump_country_chplan_map(m);
+	dump_country_chplan_map(m, 0);
+
+	return 0;
+}
+
+static int proc_get_chan_plan_map_by_idx(struct seq_file *m, void *v)
+{
+	dump_country_chplan_map(m, 1);
 
 	return 0;
 }
@@ -3273,6 +3287,7 @@ const struct rtw_proc_hdl adapter_proc_hdls[] = {
 	RTW_PROC_HDL_SSEQ("country_code", proc_get_country_code, proc_set_country_code),
 	RTW_PROC_HDL_SSEQ("chan_plan", proc_get_chan_plan, proc_set_chan_plan),
 	RTW_PROC_HDL_SSEQ("chplan_map", proc_get_chan_plan_map, NULL),
+	RTW_PROC_HDL_SSEQ("chplan_map_by_idx", proc_get_chan_plan_map_by_idx, NULL),
 #if CONFIG_RTW_MACADDR_ACL
 	RTW_PROC_HDL_SSEQ("macaddr_acl", proc_get_macaddr_acl, proc_set_macaddr_acl),
 #endif

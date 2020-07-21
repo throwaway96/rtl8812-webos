@@ -1740,7 +1740,7 @@ int rtw_suspend_free_assoc_resource(_adapter *padapter);
 #endif
 
 #ifdef LGE_PRIVATE
-	int rtw_lge_load_setting(_adapter *padapter, char *path);
+	int rtw_lge_load_setting(_adapter *padapter, char *path, int mode, u8 *entry);
 #endif /* LGE_PRIVATE */
 
 /* HCI Related header file */
