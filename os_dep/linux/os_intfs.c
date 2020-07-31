@@ -725,9 +725,17 @@ char *rtw_lge_file_path = "/mnt/lg/cmn_data/network/factory_settings";
 module_param(rtw_lge_file_path, charp, 0644);
 MODULE_PARM_DESC(rtw_lge_file_path, "LGE Network Setting");
 
-char *rtw_ext_country_path = "/lib/firmware/country_tables.txt";
-module_param(rtw_ext_country_path, charp, 0644);
-MODULE_PARM_DESC(rtw_ext_country_path, "External Network Setting");
+char *rtw_ext_path = "/lib/firmware/country_tables.txt";
+module_param(rtw_ext_path, charp, 0644);
+MODULE_PARM_DESC(rtw_ext_path, "External Network Setting");
+
+char *rtw_ext_path2 = "/mnt/lg/res/lglib/country_tables.txt";
+module_param(rtw_ext_path2, charp, 0644);
+MODULE_PARM_DESC(rtw_ext_path2, "External Network Setting");
+
+char *rtw_ext_path3 = "/mnt/lg/res/lglib/TXPWR_LMT.txt";
+module_param(rtw_ext_path3, charp, 0644);
+MODULE_PARM_DESC(rtw_ext_path3, "External Network Setting");
 #endif /* LGE_PRIVATE */
 
 int _netdev_open(struct net_device *pnetdev);
@@ -3413,12 +3421,24 @@ netdev_open_normal_process:
 		entry[1] = COUNTRY_DEFAULT_CCODE;
 	}
 
-	if (rtw_is_file_readable(rtw_ext_country_path) == _TRUE) {
-		RTW_INFO("%s acquire Settings from file:%s\n", __func__, rtw_ext_country_path);
-		if (rtw_lge_load_setting(padapter, rtw_ext_country_path, 1, entry) == -2) {
-			LGE_MSG("[WLAN] there is no powertable on powerdb");
-			LGE_MSG("[WLAN] WIFI_STATUS=fail");
-			goto netdev_open_error;
+	if ((rtw_is_file_readable(rtw_ext_path) == _TRUE) ||
+	    (rtw_is_file_readable(rtw_ext_path2) == _TRUE)){
+		if (rtw_is_file_readable(rtw_ext_path2) == _TRUE) {
+			RTW_INFO("%s acquire Settings from file:%s\n", __func__, rtw_ext_path2);
+			if (rtw_lge_load_setting(padapter, rtw_ext_path2, 1, entry) == -2) {
+				LGE_MSG("[WLAN] there is no powertable on powerdb");
+				LGE_MSG("[WLAN] WIFI_STATUS=fail");
+				goto netdev_open_error;
+			}
+		} else if (rtw_is_file_readable(rtw_ext_path) == _TRUE) {
+			RTW_INFO("%s acquire Settings from file:%s\n", __func__, rtw_ext_path);
+			if (rtw_lge_load_setting(padapter, rtw_ext_path, 1, entry) == -2) {
+				LGE_MSG("[WLAN] there is no powertable on powerdb");
+				LGE_MSG("[WLAN] WIFI_STATUS=fail");
+				goto netdev_open_error;
+			}
+		} else {
+			/* Pass Throught */
 		}
 		if ((entry[0] == 0) && (rtw_set_country(padapter, NULL, entry[1]) == _TRUE)) {
 			/* Pass Throught */
