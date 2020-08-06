@@ -267,7 +267,11 @@ int rtw_get_phy_file_path(_adapter *adapter, const char *file_name);
 #define PHY_FILE_RADIO_C		"RadioC.txt"
 #define PHY_FILE_RADIO_D		"RadioD.txt"
 #define PHY_FILE_TXPWR_TRACK	"TxPowerTrack.txt"
+#ifdef LGE_PRIVATE
+#define PHY_FILE_TXPWR_LMT		"TxPwrLimit_RT8812.dat"
+#else
 #define PHY_FILE_TXPWR_LMT		"TXPWR_LMT.txt"
+#endif
 
 #define PHY_FILE_WIFI_ANT_ISOLATION	"wifi_ant_isolation.txt"
 

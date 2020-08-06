@@ -5120,7 +5120,12 @@ int rtw_lge_load_setting(_adapter *padapter, char *path, int mode, u8 *entry)
 			/* factory_settings */
 			rtw_lge_parse_country(padapter, source, entry);
 		} else if (mode == 1) {
-			/* external country tables */
+			/* external country tables
+			 * return
+			 * 0: entry found
+			 * -1: load error
+			 * -2: error power setting
+			 */
 			ret = rtw_lge_parse_country_table(padapter, source, entry);
 			if (ret == 0) {
 				entry[0] = 0;

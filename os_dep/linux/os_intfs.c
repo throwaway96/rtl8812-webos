@@ -725,15 +725,16 @@ char *rtw_lge_file_path = "/mnt/lg/cmn_data/network/factory_settings";
 module_param(rtw_lge_file_path, charp, 0644);
 MODULE_PARM_DESC(rtw_lge_file_path, "LGE Network Setting");
 
-char *rtw_ext_path = "/lib/firmware/country_tables.txt";
-module_param(rtw_ext_path, charp, 0644);
-MODULE_PARM_DESC(rtw_ext_path, "External Network Setting");
+char *rtw_ext_path1 = "/lib/firmware/CcodeTable_RT8812_21Y";
+module_param(rtw_ext_path1, charp, 0644);
+MODULE_PARM_DESC(rtw_ext_path1, "External Network Setting");
 
-char *rtw_ext_path2 = "/mnt/lg/res/lglib/country_tables.txt";
+char *rtw_ext_path2 = "/mnt/lg/res/lglib/CcodeTable_RT8812";
 module_param(rtw_ext_path2, charp, 0644);
 MODULE_PARM_DESC(rtw_ext_path2, "External Network Setting");
 
-char *rtw_ext_path3 = "/mnt/lg/res/lglib/TXPWR_LMT.txt";
+/* PHY_FILE_TXPWR_LMT */
+char *rtw_ext_path3 = "/mnt/lg/res/lglib/TxPwrLimit_RT8812.dat";
 module_param(rtw_ext_path3, charp, 0644);
 MODULE_PARM_DESC(rtw_ext_path3, "External Network Setting");
 #endif /* LGE_PRIVATE */
@@ -3404,52 +3405,83 @@ netdev_open_normal_process:
 {
 	HAL_DATA_TYPE *hal_data = GET_HAL_DATA(padapter);
 	u8 entry[5] = {0};
+	int ret = 0, load_default_table = 0;
 
 #if (LGE_LOAD_COUNTRIES == 1)
 	if (hal_data->txpwr_limit_from_file == 0) {
-		LGE_MSG("[WLAN] Tx Power Table does not exist");
+		/* will not happen */
+		LGE_MSG("[WLAN] TxPwrLimit is not exist in /lib/firmware");
 		LGE_MSG("[WLAN] WIFI_STATUS=fail");
 		goto netdev_open_error;
 	}
 
-	if (rtw_is_file_readable(rtw_lge_file_path) == _TRUE) {
+	if (rtw_is_file_readable(rtw_ext_path1) == _FALSE) {
+		/* will not happen */
+		LGE_MSG("[WLAN] ccode Table is not exist in /lib/firmware");
+		LGE_MSG("[WLAN] WIFI_STATUS=fail");
+		goto netdev_open_error;
+	}
+
+	if (rtw_is_file_readable(rtw_ext_path3) == _FALSE) {
+		LGE_MSG("[WLAN] TxPwrLimit is not exist, apply CountryCode(10,KR)");
+		/* default */
+		entry[0] = 0;
+		entry[1] = COUNTRY_DEFAULT_CCODE;
+	} else if (rtw_is_file_readable(rtw_lge_file_path) == _TRUE) {
 		RTW_INFO("%s acquire Settings from file:%s\n", __func__, rtw_lge_file_path);
 		rtw_lge_load_setting(padapter, rtw_lge_file_path, 0, entry);
 	} else {
+		LGE_MSG("[WLAN] factory_settigns is not exist, apply CountryCode(10,KR)");
 		/* default */
 		entry[0] = 0;
 		entry[1] = COUNTRY_DEFAULT_CCODE;
 	}
 
-	if ((rtw_is_file_readable(rtw_ext_path) == _TRUE) ||
-	    (rtw_is_file_readable(rtw_ext_path2) == _TRUE)){
-		if (rtw_is_file_readable(rtw_ext_path2) == _TRUE) {
-			RTW_INFO("%s acquire Settings from file:%s\n", __func__, rtw_ext_path2);
-			if (rtw_lge_load_setting(padapter, rtw_ext_path2, 1, entry) == -2) {
-				LGE_MSG("[WLAN] there is no powertable on powerdb");
-				LGE_MSG("[WLAN] WIFI_STATUS=fail");
-				goto netdev_open_error;
+	if (rtw_is_file_readable(rtw_ext_path2) == _FALSE) {
+		LGE_MSG("[WLAN] CcodeTable is not exist, apply CountryCode(10,KR)");
+		/* default */
+		entry[0] = 0;
+		entry[1] = COUNTRY_DEFAULT_CCODE;
+		load_default_table = 1;
+	} else {
+		RTW_INFO("%s acquire Settings from file:%s\n", __func__, rtw_ext_path2);
+		ret = rtw_lge_load_setting(padapter, rtw_ext_path2, 1, entry);
+		if (ret != 0) {
+			if (ret == -2) {
+				LGE_MSG("[WLAN] No match PowerSetting on CcodeTable, apply CountryCode(10,KR)");
+
+			} else {
+				/* will not happen */
+				LGE_MSG("[WLAN] Apply Country Table fail, apply CountryCode(10,KR)");
 			}
-		} else if (rtw_is_file_readable(rtw_ext_path) == _TRUE) {
-			RTW_INFO("%s acquire Settings from file:%s\n", __func__, rtw_ext_path);
-			if (rtw_lge_load_setting(padapter, rtw_ext_path, 1, entry) == -2) {
-				LGE_MSG("[WLAN] there is no powertable on powerdb");
-				LGE_MSG("[WLAN] WIFI_STATUS=fail");
-				goto netdev_open_error;
-			}
-		} else {
-			/* Pass Throught */
+			/* default */
+			entry[0] = 0;
+			entry[1] = COUNTRY_DEFAULT_CCODE;
+			load_default_table = 1;
 		}
-		if ((entry[0] == 0) && (rtw_set_country(padapter, NULL, entry[1]) == _TRUE)) {
-			/* Pass Throught */
-		} else {
+	}
+
+	if (load_default_table == 1) {
+		RTW_INFO("%s acquire Settings from file:%s\n", __func__, rtw_ext_path1);
+		ret = rtw_lge_load_setting(padapter, rtw_ext_path1, 1, entry);
+		if (ret != 0) {
+			/* will not happen */
+			if (ret == -2) {
+				LGE_MSG("[WLAN] No match PowerSetting on CcodeTable in /lib/firmware");
+			}
 			/* apply initial fail */
 			LGE_MSG("[WLAN] Apply Country Table fail");
 			LGE_MSG("[WLAN] WIFI_STATUS=fail");
 			goto netdev_open_error;
 		}
+	}
+
+	if ((entry[0] == 0) && (rtw_set_country(padapter, NULL, entry[1]) == _TRUE)) {
+		/* Pass Throught */
 	} else {
-		LGE_MSG("[WLAN] ccode Table does not exist");
+		/* will not happen */
+		/* apply initial fail */
+		LGE_MSG("[WLAN] Apply Country Table fail");
 		LGE_MSG("[WLAN] WIFI_STATUS=fail");
 		goto netdev_open_error;
 	}

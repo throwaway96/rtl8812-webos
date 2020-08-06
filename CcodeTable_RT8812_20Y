@@ -1,5 +1,5 @@
 CountryCode: 0
-CountryRegion: RMM/1
+CountryRegion: MM/1
 PowerSetting: CE
 Flags:[ AC ]
 2.4GHz_1: [11] [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] [20] []
@@ -11,7 +11,7 @@ Flags:[ AC ]
 5GHz_Band4: [0] [] [80] []
 
 CountryCode: 1
-CountryRegion: RPK/1
+CountryRegion: PK/1
 PowerSetting: CE
 Flags:[ AC ]
 2.4GHz_1: [11] [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] [20] []
@@ -23,7 +23,7 @@ Flags:[ AC ]
 5GHz_Band4: [5] [149, 153, 157, 161, 165] [80] []
 
 CountryCode: 2
-CountryRegion: RSA/1
+CountryRegion: SA/1
 PowerSetting: CE
 Flags:[ AC ]
 2.4GHz_1: [11] [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] [20] []
@@ -35,7 +35,7 @@ Flags:[ AC ]
 5GHz_Band4: [0] [] [80] []
 
 CountryCode: 3
-CountryRegion: RCH/1
+CountryRegion: CH/1
 PowerSetting: CE
 Flags:[ AC ]
 2.4GHz_1: [11] [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] [20] []
@@ -47,7 +47,7 @@ Flags:[ AC ]
 5GHz_Band4: [5] [149, 153, 157, 161, 165] [80] []
 
 CountryCode: 4
-CountryRegion: RSU/1
+CountryRegion: SU/1
 PowerSetting: CE
 Flags:[ AC ]
 2.4GHz_1: [11] [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] [20] []
@@ -59,7 +59,7 @@ Flags:[ AC ]
 5GHz_Band4: [4] [149, 153, 157, 161] [80] []
 
 CountryCode: 5
-CountryRegion: REC/1
+CountryRegion: EC/1
 PowerSetting: FCC
 Flags:[ AC ]
 2.4GHz_1: [11] [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] [20] []
@@ -71,7 +71,7 @@ Flags:[ AC ]
 5GHz_Band4: [5] [149, 153, 157, 161, 165] [80] []
 
 CountryCode: 6
-CountryRegion: RIA/1
+CountryRegion: MY/1
 PowerSetting: CE
 Flags:[ AC ]
 2.4GHz_1: [11] [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] [20] []
@@ -83,7 +83,7 @@ Flags:[ AC ]
 5GHz_Band4: [5] [149, 153, 157, 161, 165] [80] []
 
 CountryCode: 7
-CountryRegion: RBZ/1
+CountryRegion: BZ/1
 PowerSetting: FCC
 Flags:[ AC ]
 2.4GHz_1: [11] [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] [20] []
@@ -95,7 +95,7 @@ Flags:[ AC ]
 5GHz_Band4: [5] [149, 153, 157, 161, 165] [80] []
 
 CountryCode: 8
-CountryRegion: RUS/1
+CountryRegion: US/1
 PowerSetting: FCC
 Flags:[ AC ]
 2.4GHz_1: [11] [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] [20] []
@@ -107,7 +107,7 @@ Flags:[ AC ]
 5GHz_Band4: [5] [149, 153, 157, 161, 165] [80] []
 
 CountryCode: 9
-CountryRegion: RTW/1
+CountryRegion: TW/1
 PowerSetting: FCC
 Flags:[ AC ]
 2.4GHz_1: [11] [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] [20] []
@@ -119,7 +119,7 @@ Flags:[ AC ]
 5GHz_Band4: [5] [149, 153, 157, 161, 165] [80] []
 
 CountryCode: 10
-CountryRegion: RKR/1
+CountryRegion: KR/1
 PowerSetting: KCC
 Flags:[ AC ]
 2.4GHz_1: [11] [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] [20] []
@@ -131,7 +131,7 @@ Flags:[ AC ]
 5GHz_Band4: [5] [149, 153, 157, 161, 165] [80] []
 
 CountryCode: 11
-CountryRegion: RJP/1
+CountryRegion: JP/1
 PowerSetting: TELEC
 Flags:[ AC ]
 2.4GHz_1: [11] [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] [20] []
@@ -143,7 +143,7 @@ Flags:[ AC ]
 5GHz_Band4: [0] [] [80] []
 
 CountryCode: 12
-CountryRegion: REU/1
+CountryRegion: EU/1
 PowerSetting: CE
 Flags:[ AC ]
 2.4GHz_1: [11] [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] [20] []
@@ -155,7 +155,7 @@ Flags:[ AC ]
 5GHz_Band4: [5] [149, 153, 157, 161, 165] [80] []
 
 CountryCode: 13
-CountryRegion: RMR/1
+CountryRegion: MR/1
 PowerSetting: CE
 Flags:[ AC ]
 2.4GHz_1: [11] [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] [20] []
@@ -167,7 +167,7 @@ Flags:[ AC ]
 5GHz_Band4: [0] [] [80] []
 
 CountryCode: 14
-CountryRegion: RHK/1
+CountryRegion: HK/1
 PowerSetting: CE
 Flags:[ AC ]
 2.4GHz_1: [11] [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] [20] []
@@ -179,7 +179,7 @@ Flags:[ AC ]
 5GHz_Band4: [5] [149, 153, 157, 161, 165] [80] []
 
 CountryCode: 15
-CountryRegion: RMX/1
+CountryRegion: MX/1
 PowerSetting: FCC
 Flags:[ AC ]
 2.4GHz_1: [11] [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] [20] []
@@ -191,7 +191,7 @@ Flags:[ AC ]
 5GHz_Band4: [5] [149, 153, 157, 161, 165] [80] []
 
 CountryCode: 16
-CountryRegion: RKZ/1
+CountryRegion: NZ/1
 PowerSetting: CE
 Flags:[ AC ]
 2.4GHz_1: [11] [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] [20] []
@@ -199,11 +199,11 @@ Flags:[ AC ]
 2.4GHz_3: [0] [] [20] []
 5GHz_Band1: [4] [36, 40, 44, 48] [80] []
 5GHz_Band2: [4] [52, 56, 60, 64] [80] [PASSIVE_SCAN]
-5GHz_Band3: [3] [132, 136, 140] [80] [PASSIVE_SCAN]
-5GHz_Band4: [0] [] [80] []
+5GHz_Band3: [9] [100, 104, 108, 112, 116, 132, 136, 140, 144] [80] [PASSIVE_SCAN]
+5GHz_Band4: [5] [149, 153, 157, 161, 165] [80] []
 
 CountryCode: 17
-CountryRegion: RAU/1
+CountryRegion: AU/1
 PowerSetting: CE
 Flags:[ AC ]
 2.4GHz_1: [11] [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] [20] []
@@ -215,7 +215,7 @@ Flags:[ AC ]
 5GHz_Band4: [5] [149, 153, 157, 161, 165] [80] []
 
 CountryCode: 18
-CountryRegion: RCL/1
+CountryRegion: CL/1
 PowerSetting: FCC
 Flags:[ AC ]
 2.4GHz_1: [11] [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] [20] []
@@ -227,7 +227,7 @@ Flags:[ AC ]
 5GHz_Band4: [5] [149, 153, 157, 161, 165] [80] []
 
 CountryCode: 19
-CountryRegion: RNZ/1
+CountryRegion: UA/1
 PowerSetting: CE
 Flags:[ AC ]
 2.4GHz_1: [11] [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] [20] []
@@ -235,23 +235,23 @@ Flags:[ AC ]
 2.4GHz_3: [0] [] [20] []
 5GHz_Band1: [4] [36, 40, 44, 48] [80] []
 5GHz_Band2: [4] [52, 56, 60, 64] [80] [PASSIVE_SCAN]
-5GHz_Band3: [12] [100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144] [80] [PASSIVE_SCAN]
+5GHz_Band3: [9] [100, 104, 108, 112, 116, 120, 124, 128, 132] [80] [PASSIVE_SCAN]
 5GHz_Band4: [5] [149, 153, 157, 161, 165] [80] []
 
 CountryCode: 20
-CountryRegion: RMY/1
+CountryRegion: ID/1
 PowerSetting: CE
 Flags:[ AC ]
 2.4GHz_1: [11] [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] [20] []
 2.4GHz_2: [2] [12, 13] [20] []
 2.4GHz_3: [0] [] [20] []
-5GHz_Band1: [4] [36, 40, 44, 48] [80] []
-5GHz_Band2: [4] [52, 56, 60, 64] [80] [PASSIVE_SCAN]
-5GHz_Band3: [8] [100, 104, 108, 112, 116, 120, 124, 128] [80] [PASSIVE_SCAN]
-5GHz_Band4: [5] [149, 153, 157, 161, 165] [80] []
+5GHz_Band1: [0] [] [80] []
+5GHz_Band2: [0] [] [80] [PASSIVE_SCAN]
+5GHz_Band3: [0] [] [80] [PASSIVE_SCAN]
+5GHz_Band4: [4] [149, 153, 157, 161] [80] []
 
 CountryCode: 21
-CountryRegion: REG/1
+CountryRegion: EG/1
 PowerSetting: CE
 Flags:[  ]
 2.4GHz_1: [11] [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] [20] []
@@ -263,7 +263,7 @@ Flags:[  ]
 5GHz_Band4: [0] [] [40] []
 
 CountryCode: 22
-CountryRegion: RRU/1
+CountryRegion: RU/1
 PowerSetting: CE
 Flags:[ AC ]
 2.4GHz_1: [11] [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] [20] []
@@ -275,7 +275,7 @@ Flags:[ AC ]
 5GHz_Band4: [5] [149, 153, 157, 161, 165] [80] []
 
 CountryCode: 23
-CountryRegion: RUZ/1
+CountryRegion: KZ/1
 PowerSetting: CE
 Flags:[ AC ]
 2.4GHz_1: [11] [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] [20] []
@@ -287,7 +287,7 @@ Flags:[ AC ]
 5GHz_Band4: [0] [] [80] []
 
 CountryCode: 24
-CountryRegion: RHN/1
+CountryRegion: HN/1
 PowerSetting: FCC
 Flags:[ AC ]
 2.4GHz_1: [11] [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] [20] []
@@ -299,7 +299,7 @@ Flags:[ AC ]
 5GHz_Band4: [5] [149, 153, 157, 161, 165] [80] []
 
 CountryCode: 25
-CountryRegion: RIR/1
+CountryRegion: IR/1
 PowerSetting: CE
 Flags:[ AC ]
 2.4GHz_1: [11] [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] [20] []
@@ -311,7 +311,7 @@ Flags:[ AC ]
 5GHz_Band4: [4] [149, 153, 157, 161] [80] []
 
 CountryCode: 26
-CountryRegion: RBO/1
+CountryRegion: BO/1
 PowerSetting: FCC
 Flags:[ AC ]
 2.4GHz_1: [11] [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] [20] []
@@ -323,7 +323,7 @@ Flags:[ AC ]
 5GHz_Band4: [5] [149, 153, 157, 161, 165] [80] []
 
 CountryCode: 27
-CountryRegion: RID/1
+CountryRegion: NP/1
 PowerSetting: CE
 Flags:[ AC ]
 2.4GHz_1: [11] [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] [20] []
@@ -335,7 +335,7 @@ Flags:[ AC ]
 5GHz_Band4: [4] [149, 153, 157, 161] [80] []
 
 CountryCode: 28
-CountryRegion: RCU/1
+CountryRegion: CU/1
 PowerSetting: FCC
 Flags:[ AC ]
 2.4GHz_1: [11] [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] [20] []
@@ -346,20 +346,8 @@ Flags:[ AC ]
 5GHz_Band3: [0] [] [80] [PASSIVE_SCAN]
 5GHz_Band4: [0] [] [80] []
 
-CountryCode: 29
-CountryRegion: RAG/1
-PowerSetting: FCC
-Flags:[ AC ]
-2.4GHz_1: [11] [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] [20] []
-2.4GHz_2: [2] [12, 13] [20] []
-2.4GHz_3: [0] [] [20] []
-5GHz_Band1: [4] [36, 40, 44, 48] [80] []
-5GHz_Band2: [4] [52, 56, 60, 64] [80] [PASSIVE_SCAN]
-5GHz_Band3: [12] [100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144] [80] [PASSIVE_SCAN]
-5GHz_Band4: [5] [149, 153, 157, 161, 165] [80] []
-
 CountryCode: 30
-CountryRegion: RDC/1
+CountryRegion: DC/3
 PowerSetting: CE
 Flags:[ AC ]
 2.4GHz_1: [11] [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] [20] []
@@ -371,7 +359,7 @@ Flags:[ AC ]
 5GHz_Band4: [5] [149, 153, 157, 161, 165] [80] [PASSIVE_SCAN]
 
 CountryCode: 31
-CountryRegion: RDC/2
+CountryRegion: DC/4
 PowerSetting: FCC
 Flags:[ AC ]
 2.4GHz_1: [11] [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] [20] []
@@ -381,3 +369,4 @@ Flags:[ AC ]
 5GHz_Band2: [4] [52, 56, 60, 64] [80] [PASSIVE_SCAN]
 5GHz_Band3: [12] [100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144] [80] [PASSIVE_SCAN]
 5GHz_Band4: [5] [149, 153, 157, 161, 165] [80] [PASSIVE_SCAN]
+
