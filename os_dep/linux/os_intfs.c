@@ -725,7 +725,9 @@ char *rtw_lge_file_path = "/mnt/lg/cmn_data/network/factory_settings";
 module_param(rtw_lge_file_path, charp, 0644);
 MODULE_PARM_DESC(rtw_lge_file_path, "LGE Network Setting");
 
-char *rtw_ext_path1 = "/lib/firmware/CcodeTable_RT8812_21Y";
+char _rtw_ext_path1[] = "/lib/firmware/CcodeTable_RT8812_21Y";
+
+char *rtw_ext_path1 = _rtw_ext_path1;
 module_param(rtw_ext_path1, charp, 0644);
 MODULE_PARM_DESC(rtw_ext_path1, "External Network Setting");
 
@@ -3415,13 +3417,6 @@ netdev_open_normal_process:
 		goto netdev_open_error;
 	}
 
-	if (rtw_is_file_readable(rtw_ext_path1) == _FALSE) {
-		/* will not happen */
-		LGE_MSG("[WLAN] ccode Table is not exist in /lib/firmware");
-		LGE_MSG("[WLAN] WIFI_STATUS=fail");
-		goto netdev_open_error;
-	}
-
 	if (rtw_is_file_readable(rtw_ext_path3) == _FALSE) {
 		LGE_MSG("[WLAN] TxPwrLimit is not exist, apply CountryCode(10,KR)");
 		/* default */
@@ -3462,6 +3457,22 @@ netdev_open_normal_process:
 	}
 
 	if (load_default_table == 1) {
+		if (rtw_is_file_readable(rtw_ext_path1) == _FALSE) {
+			int i, _len, cc = '9';
+
+			_len = strlen(rtw_ext_path1);
+
+			for (i = 0; i<10; i++) {
+				*(rtw_ext_path1 + _len - 2) = cc--;
+				if (rtw_is_file_readable(rtw_ext_path1) == _TRUE)
+					break;
+			}
+			/* will not happen */
+			LGE_MSG("[WLAN] ccode Table is not exist in /lib/firmware");
+			LGE_MSG("[WLAN] WIFI_STATUS=fail");
+			goto netdev_open_error;
+		}
+
 		RTW_INFO("%s acquire Settings from file:%s\n", __func__, rtw_ext_path1);
 		ret = rtw_lge_load_setting(padapter, rtw_ext_path1, 1, entry);
 		if (ret != 0) {

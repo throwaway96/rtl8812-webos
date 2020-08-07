@@ -5360,9 +5360,6 @@ PHY_ConfigRFWithPowerLimitTableParaFile(
 		if (rtw_is_file_readable(rtw_phy_para_file_path) == _TRUE) {
 			rlen = rtw_retrieve_from_file(rtw_phy_para_file_path, pHalData->para_file_buf, MAX_PARA_FILE_BUF_LEN);
 			if (rlen > 0) {
-#ifdef LGE_PRIVATE
-				LGE_MSG("[WLAN] Tx Power Table does not exist %s ", rtw_ext_path3);
-#endif
 				rtStatus = _SUCCESS;
 				pHalData->rf_tx_pwr_lmt = rtw_zvmalloc(rlen);
 				if (pHalData->rf_tx_pwr_lmt) {
