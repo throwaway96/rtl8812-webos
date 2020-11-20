@@ -80,6 +80,10 @@
 	#endif
 #endif
 
+#ifdef LGE_PRIVATE
+extern u8 gLGE_p2pListenChannel;
+#endif
+
 struct rtw_wdev_invit_info {
 	u8 state; /* 0: req, 1:rep */
 	u8 peer_mac[ETH_ALEN];

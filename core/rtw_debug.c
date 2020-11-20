@@ -47,6 +47,13 @@ void dump_drv_version(void *sel)
 #endif
 }
 
+#ifdef LGE_PRIVATE
+void dump_lge_p2pListenChannel(void *sel)
+{
+	RTW_PRINT_SEL(sel, "%u\n", gLGE_p2pListenChannel);
+}
+#endif
+
 void dump_drv_cfg(void *sel)
 {
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 24))

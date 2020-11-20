@@ -6733,6 +6733,10 @@ static s32 cfg80211_rtw_remain_on_channel(struct wiphy *wiphy,
 #endif
 	}
 
+#ifdef LGE_PRIVATE
+	gLGE_p2pListenChannel = remain_ch;
+#endif
+
 	rtw_p2p_set_state(pwdinfo, P2P_STATE_LISTEN);
 
 	#ifdef RTW_ROCH_DURATION_ENLARGE

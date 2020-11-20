@@ -28,7 +28,11 @@ inline struct proc_dir_entry *get_rtw_drv_proc(void)
 	return rtw_proc;
 }
 
+#ifdef LGE_PRIVATE
+#define RTW_PROC_NAME "wlan"
+#else
 #define RTW_PROC_NAME DRV_NAME
+#endif
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 9, 0))
 #define file_inode(file) ((file)->f_dentry->d_inode)
@@ -180,6 +184,14 @@ static int proc_get_halmac_info(struct seq_file *m, void *v)
 }
 #endif
 
+#ifdef LGE_PRIVATE
+static int proc_get_p2pListenChannel(struct seq_file *m, void *v)
+{
+	dump_lge_p2pListenChannel(m);
+	return 0;
+}
+#endif
+
 /*
 * rtw_drv_proc:
 * init/deinit when register/unregister driver
@@ -198,6 +210,9 @@ const struct rtw_proc_hdl drv_proc_hdls[] = {
 #ifdef RTW_HALMAC
 	RTW_PROC_HDL_SSEQ("halmac_info", proc_get_halmac_info, NULL),
 #endif /* RTW_HALMAC */
+#ifdef LGE_PRIVATE
+	RTW_PROC_HDL_SSEQ("p2pListenChannel", proc_get_p2pListenChannel, NULL),
+#endif
 };
 
 const int drv_proc_hdls_num = sizeof(drv_proc_hdls) / sizeof(struct rtw_proc_hdl);

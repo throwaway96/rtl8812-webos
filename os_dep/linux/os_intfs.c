@@ -264,6 +264,10 @@ int rtw_low_power = 0;
 int rtw_special_rf_path = 0; /* 0: 2T2R ,1: only turn on path A 1T1R */
 
 #ifdef LGE_PRIVATE
+u8 gLGE_p2pListenChannel = 0;
+#endif
+
+#ifdef LGE_PRIVATE
 char rtw_country_unspecified[] = {0x44, 0x43, 0x00};
 #else
 char rtw_country_unspecified[] = {0xFF, 0xFF, 0x00};

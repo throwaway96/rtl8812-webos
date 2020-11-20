@@ -274,6 +274,10 @@ void dump_drv_version(void *sel);
 void dump_log_level(void *sel);
 void dump_drv_cfg(void *sel);
 
+#ifdef LGE_PRIVATE
+void dump_lge_p2pListenChannel(void *sel);
+#endif
+
 #ifdef CONFIG_SDIO_HCI
 void sd_f0_reg_dump(void *sel, _adapter *adapter);
 void sdio_local_reg_dump(void *sel, _adapter *adapter);
@@ -633,6 +637,9 @@ int proc_get_disconnect_info(struct seq_file *m, void *v);
 #define _module_rtl8712_led_c_		BIT(31)
 
 #ifdef LGE_PRIVATE
+
+extern u8 gLGE_p2pListenChannel;
+
 #define LGE_DEBUG 0
 
 #if LGE_DEBUG
