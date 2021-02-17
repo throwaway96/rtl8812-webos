@@ -3462,19 +3462,27 @@ netdev_open_normal_process:
 
 	if (load_default_table == 1) {
 		if (rtw_is_file_readable(rtw_ext_path1) == _FALSE) {
-			int i, _len, cc = '9';
+			int i, _len, cc = '9', exist = 0;
 
 			_len = strlen(rtw_ext_path1);
 
-			for (i = 0; i<10; i++) {
+			for (i = 0; i < 10; i++) {
 				*(rtw_ext_path1 + _len - 2) = cc--;
-				if (rtw_is_file_readable(rtw_ext_path1) == _TRUE)
+				if (rtw_is_file_readable(rtw_ext_path1) == _TRUE) {
+					exist = 1;
 					break;
+				}
 			}
-			/* will not happen */
-			LGE_MSG("[WLAN] ccode Table is not exist in /lib/firmware");
-			LGE_MSG("[WLAN] WIFI_STATUS=fail");
-			goto netdev_open_error;
+
+			if (exist == 0) {
+				*(rtw_ext_path1 + _len - 4) = '\0';
+				if (rtw_is_file_readable(rtw_ext_path1) == _FALSE) {
+					/* will not happen */
+					LGE_MSG("[WLAN] ccode Table is not exist in /lib/firmware");
+					LGE_MSG("[WLAN] WIFI_STATUS=fail");
+					goto netdev_open_error;
+				}
+			}
 		}
 
 		RTW_INFO("%s acquire Settings from file:%s\n", __func__, rtw_ext_path1);
