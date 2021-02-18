@@ -4219,6 +4219,7 @@ static void _rtw_set_pmksa(struct net_device *ndev,
 
 			_rtw_memcpy(psecuritypriv->PMKIDList[index].PMKID, pmkid, WLAN_PMKID_LEN);
 			psecuritypriv->PMKIDList[index].bUsed = _TRUE;
+			psecuritypriv->PMKIDIndex = index + 1;
 			blInserted = _TRUE;
 			break;
 		}

@@ -1505,6 +1505,7 @@ static int rtw_wx_set_pmkid(struct net_device *dev,
 
 				_rtw_memcpy(psecuritypriv->PMKIDList[j].PMKID, pPMK->pmkid, IW_PMKID_LEN);
 				psecuritypriv->PMKIDList[j].bUsed = _TRUE;
+				psecuritypriv->PMKIDIndex = j + 1;
 				blInserted = _TRUE;
 				break;
 			}
