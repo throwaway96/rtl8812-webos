@@ -722,7 +722,9 @@ static int rtw_cfg80211_sync_iftype(_adapter *adapter)
 
 static u64 rtw_get_systime_us(void)
 {
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 39))
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 20, 0))
+	return ktime_to_us(ktime_get_boottime());
+#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 39))
 	struct timespec ts;
 	get_monotonic_boottime(&ts);
 	return ((u64)ts.tv_sec * 1000000) + ts.tv_nsec / 1000;
@@ -9958,11 +9960,12 @@ static struct cfg80211_ops rtw_cfg80211_ops = {
 #if defined(CONFIG_RTW_HOSTAPD_ACS) && (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 33))
 	.dump_survey = rtw_hostapd_acs_dump_survey,
 #endif
-};
 
 #if (KERNEL_VERSION(4, 17, 0) <= LINUX_VERSION_CODE)
 	.external_auth = cfg80211_rtw_external_auth,
 #endif
+
+};
 
 struct wiphy *rtw_wiphy_alloc(_adapter *padapter, struct device *dev)
 {
