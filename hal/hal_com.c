@@ -4684,11 +4684,6 @@ static u8 rtw_hal_set_wowlan_ctrl_cmd(_adapter *adapter, u8 enable, u8 change_un
 	    registry_par->wakeup_event & BIT(0))
 		magic_pkt = enable;
 
-	if ((registry_par->wakeup_event & BIT(1)) &&
-	    (psecpriv->dot11PrivacyAlgrthm == _WEP40_ ||
-	     psecpriv->dot11PrivacyAlgrthm == _WEP104_))
-			hw_unicast = 1;
-
 	if (registry_par->wakeup_event & BIT(2))
 		discont_wake = enable;
 
@@ -4830,6 +4825,10 @@ static u8 rtw_hal_set_remote_wake_ctrl_cmd(_adapter *adapter, u8 enable)
 			u1H2CRemoteWakeCtrlParm, enable);
 #endif /*CONFIG_IPV6*/
 
+		#if 1
+		SET_H2CCMD_REMOTE_WAKE_CTRL_ARP_ACTION(
+				u1H2CRemoteWakeCtrlParm, 0);
+		#else
 		if ((psecuritypriv->dot11PrivacyAlgrthm == _AES_) ||
 			(psecuritypriv->dot11PrivacyAlgrthm == _TKIP_) ||
 			(psecuritypriv->dot11PrivacyAlgrthm == _NO_PRIVACY_)) {
@@ -4839,7 +4838,7 @@ static u8 rtw_hal_set_remote_wake_ctrl_cmd(_adapter *adapter, u8 enable)
 			SET_H2CCMD_REMOTE_WAKE_CTRL_ARP_ACTION(
 				u1H2CRemoteWakeCtrlParm, 1);
 		}
-
+		#endif
 		if (psecuritypriv->dot11PrivacyAlgrthm == _TKIP_ &&
 		    psecuritypriv->ndisauthtype == Ndis802_11AuthModeWPA2PSK) {
 			SET_H2CCMD_REMOTE_WAKE_CTRL_TKIP_OFFLOAD_EN(
