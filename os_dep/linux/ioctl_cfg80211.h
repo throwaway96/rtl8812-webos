@@ -194,6 +194,7 @@ struct rtw_wdev_priv {
 	u8 wowl_activate;
 	u8 idle_mode;
 	u8 delay_disconnect;
+	u8 delay_disconnect_scan_ch;
 #endif /* LGE_PRIVATE */
 };
 

@@ -3134,6 +3134,15 @@ static int cfg80211_rtw_scan(struct wiphy *wiphy
 #endif /* LGE_PRIVATE */
 	parm.ssid_num = i;
 
+#ifdef LGE_PRIVATE
+	if (parm.ssid_num == 2 &&
+		adapter_wdev_data(padapter)->delay_disconnect_scan_ch != 0) {
+		request->n_channels = 1;
+		request->channels[0]->hw_value = adapter_wdev_data(padapter)->delay_disconnect_scan_ch;
+		adapter_wdev_data(padapter)->delay_disconnect_scan_ch = 0;
+	}
+#endif
+
 	/* no ssid entry, set the scan type as passvie */
 	if (request->n_ssids == 0)
 		parm.scan_mode = SCAN_PASSIVE;
@@ -10105,6 +10114,7 @@ int rtw_wdev_alloc(_adapter *padapter, struct wiphy *wiphy)
 	pwdev_priv->wowl_activate = _FALSE;
 	pwdev_priv->idle_mode = _FALSE;
 	pwdev_priv->delay_disconnect = _FALSE;
+	pwdev_priv->delay_disconnect_scan_ch = 0;
 #endif /* LGE_PRIVATE */
 
 #ifdef CONFIG_CONCURRENT_MODE
