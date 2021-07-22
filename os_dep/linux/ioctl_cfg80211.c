@@ -7068,7 +7068,7 @@ static int _cfg80211_rtw_mgmt_tx(_adapter *padapter, u8 tx_ch, u8 no_cck, const 
 	rtw_btcoex_ScanNotify(padapter, _TRUE);
 #endif
 
-#ifdef CONFIG_P2P
+#if 0//def CONFIG_P2P
 	if (rtw_cfg80211_get_is_roch(padapter) == _TRUE) {
 		#ifdef CONFIG_CONCURRENT_MODE
 		if (!check_fwstate(&padapter->mlmepriv, _FW_LINKED)) {
