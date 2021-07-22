@@ -310,6 +310,8 @@ static u8 rtw_chbw_to_cfg80211_chan_def(struct wiphy *wiphy, struct cfg80211_cha
 	struct ieee80211_channel *chan;
 	u8 ret = _FAIL;
 
+	_rtw_memset(chdef, 0, sizeof(*chdef));
+
 	freq = rtw_ch2freq(ch);
 	if (!freq)
 		goto exit;
@@ -340,7 +342,6 @@ static u8 rtw_chbw_to_cfg80211_chan_def(struct wiphy *wiphy, struct cfg80211_cha
 
 	chdef->chan = chan;
 	chdef->center_freq1 = cfreq;
-	chdef->center_freq2 = 0;
 
 	ret = _SUCCESS;
 
@@ -5766,6 +5767,8 @@ release_plink_ctl:
 					LGE_MSG("[WLAN] Connected - MAC("MAC_BFMT") SSID(%s)",
 						MAC_ARG(mac),
 						cur_network->network.Ssid.Ssid);
+				/* clear all scan */
+				rtw_mi_set_scan_deny(adapter, 100);
 			}
 		}
 
@@ -7439,11 +7442,20 @@ dump:
 		dump_cnt++;
 
 #ifdef LGE_PRIVATE
-		rtw_mi_set_scan_deny(padapter, 100);
+		{
+			struct mlme_priv *pmlmepriv = NULL;
+
+			pmlmepriv = &(padapter->mlmepriv);
+			rtw_mi_set_scan_deny(padapter, 100);
+
+			if ((!MLME_IS_AP(padapter)) ||
+				(check_fwstate(pmlmepriv, WIFI_UNDER_LINKING) == _TRUE))
+				rtw_mi_scan_abort(padapter, _TRUE);
+		}
 #else
 		rtw_mi_set_scan_deny(padapter, 1000);
-#endif /* LGE_PRIVATE */
 		rtw_mi_scan_abort(padapter, _TRUE);
+#endif /* LGE_PRIVATE */
 		tx_ret = rtw_mgnt_tx_cmd(padapter, tx_ch, no_cck, dump_buf, dump_len, wait_ack, RTW_CMDF_WAIT_ACK);
 		if (tx_ret == _SUCCESS
 			|| (dump_cnt >= dump_limit && rtw_get_passing_time_ms(start) >= retry_guarantee_ms))
@@ -9529,7 +9541,9 @@ static void rtw_cfg80211_preinit_wiphy(_adapter *adapter, struct wiphy *wiphy)
 	/* remove WIPHY_FLAG_OFFCHAN_TX, because we not support this feature */
 	/* wiphy->flags |= WIPHY_FLAG_OFFCHAN_TX | WIPHY_FLAG_HAVE_AP_SME; */
 #ifdef LGE_PRIVATE
-	wiphy->flags |= WIPHY_FLAG_OFFCHAN_TX;
+	/* remove it, because WebOS new WPAS don't support it */
+	/* wpa_supplicant v2.9-submissions/73.15.wee.1+ */
+	/* wiphy->flags |= WIPHY_FLAG_OFFCHAN_TX; */
 #endif /* LGE_PRIVATE */
 #endif
 

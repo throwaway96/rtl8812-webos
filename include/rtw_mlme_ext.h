@@ -476,7 +476,7 @@ typedef enum {
 	#define RTW_SCAN_NUM_OF_CH 2
 	#define RTW_BACK_OP_CH_MS 200
 #elif defined(LGE_PRIVATE)
-	#define RTW_SCAN_NUM_OF_CH 1
+	#define RTW_SCAN_NUM_OF_CH 3
 	#define RTW_BACK_OP_CH_MS 100
 #else
 	#define RTW_SCAN_NUM_OF_CH 3

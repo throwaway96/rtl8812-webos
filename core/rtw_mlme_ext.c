@@ -14988,7 +14988,7 @@ exit:
 	return ret_num;
 }
 
-#define SCANNING_TIMEOUT_EX	6000
+#define SCANNING_TIMEOUT_EX	10000
 u32 rtw_scan_timeout_decision(_adapter *padapter)
 {
 	u32 back_op_times= 0;
@@ -15019,7 +15019,12 @@ u32 rtw_scan_timeout_decision(_adapter *padapter)
 	#endif /*CONFIG_RTW_ACS*/
 		scan_ms = ss->scan_ch_ms;
 
+#ifdef LGE_PRIVATE
+	scan_ms = 130;
+	ss->scan_timeout_ms = (scan_ms * max_chan_num) + back_op_times*8 + SCANNING_TIMEOUT_EX;
+#else
 	ss->scan_timeout_ms = (scan_ms * max_chan_num) + back_op_times + SCANNING_TIMEOUT_EX;
+#endif
 	#ifdef DBG_SITESURVEY
 	RTW_INFO("%s , scan_timeout_ms = %d (ms)\n", __func__, ss->scan_timeout_ms);
 	#endif /*DBG_SITESURVEY*/

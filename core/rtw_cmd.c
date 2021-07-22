@@ -2467,6 +2467,12 @@ u8 traffic_status_watchdog(_adapter *padapter, u8 from_timer)
 		BusyThresholdHigh = 100;
 		BusyThresholdLow = 75;
 	}
+#ifdef LGE_PRIVATE
+	{
+		BusyThresholdHigh = 7000; /* 40Mbps */
+		BusyThresholdLow = 5000;
+	}
+#endif
 	BusyThreshold = BusyThresholdHigh;
 
 
