@@ -9889,6 +9889,8 @@ void _issue_assocreq(_adapter *padapter, u8 is_reassoc)
 #endif /* CONFIG_IOCTL_CFG80211 */
 
 				pframe = rtw_set_ie(pframe, EID_WPA2, pIE->Length, pIE->data, &(pattrib->pktlen));
+				/* tmp: update rsn's spp related opt. */
+				/* rtw_set_spp_amsdu_mode(padapter->registrypriv.amsdu_mode, pframe - (pIE->Length + 2), pIE->Length +2); */
 			}
 			break;
 #ifdef CONFIG_80211N_HT
@@ -10797,6 +10799,11 @@ static int issue_action_ba(_adapter *padapter, unsigned char *raddr, unsigned ch
 			else /* TX AMSDU disabled */
 				BA_para_set &= ~BIT(0);
 #endif
+			psta = rtw_get_stainfo(pstapriv, raddr);
+			if (psta != NULL) {
+				if (psta->flags & WLAN_STA_AMSDU_DISABLE)
+					BA_para_set &= ~BIT(0);
+			}
 			BA_para_set = cpu_to_le16(BA_para_set);
 			pframe = rtw_set_fixed_ie(pframe, 2, (unsigned char *)(&(BA_para_set)), &(pattrib->pktlen));
 
@@ -10839,6 +10846,12 @@ static int issue_action_ba(_adapter *padapter, unsigned char *raddr, unsigned ch
 					BA_para_set &= ~BIT(0);
 				else if (pregpriv->rx_ampdu_amsdu == 1) /* enabled */
 					BA_para_set |= BIT(0);
+			}
+
+			psta = rtw_get_stainfo(pstapriv, raddr);
+			if (psta != NULL) {
+				if (psta->flags & WLAN_STA_AMSDU_DISABLE)
+					BA_para_set &= ~BIT(0);
 			}
 
 			BA_para_set = cpu_to_le16(BA_para_set);
@@ -16081,6 +16094,18 @@ u8 setauth_hdl(_adapter *padapter, unsigned char *pbuf)
 	return	H2C_SUCCESS;
 }
 
+static u8 amsdu_spp_enable(_adapter *pdapter,u8 type)
+{
+	u8 ret = _FALSE;
+
+	if (pdapter->registrypriv.amsdu_mode == RTW_AMSDU_MODE_SPP) {
+		if (type == _AES_)
+			ret = _SUCCESS;
+	}
+
+	return ret;
+}
+
 /*
 SEC CAM Entry format (32 bytes)
 DW0 - MAC_ADDR[15:0] | Valid[15] | MFB[14:8] | RSVD[7]  | GK[6] | MIC_KEY[5] | SEC_TYPE[4:2] | KID[1:0]
@@ -16163,6 +16188,8 @@ u8 setkey_hdl(_adapter *padapter, u8 *pbuf)
 	RTW_PRINT("set group key camid:%d, addr:"MAC_FMT", kid:%d, type:%s\n"
 		, cam_id, MAC_ARG(addr), pparm->keyid, security_type_str(pparm->algorithm));
 
+	if (amsdu_spp_enable(padapter, pparm->algorithm) == _SUCCESS)
+		ctrl |= BIT(7);
 	write_cam(padapter, cam_id, ctrl, addr, pparm->key);
 
 	/* if ((cam_id > 3) && (((pmlmeinfo->state&0x03) == WIFI_FW_AP_STATE) || ((pmlmeinfo->state&0x03) == WIFI_FW_ADHOC_STATE)))*/
@@ -16302,7 +16329,13 @@ write_to_cam:
 		ctrl = BIT(15) | ((pparm->algorithm) << 2) | pparm->keyid;
 		if (pparm->gk)
 			ctrl |= BIT(6);
+
+		if (amsdu_spp_enable(padapter, pparm->algorithm) == _SUCCESS)
+			ctrl |= BIT(7);
+
 		write_cam(padapter, cam_id, ctrl, pparm->addr, pparm->key);
+		if (!(pparm->gk))
+			ATOMIC_INC(&psta->keytrack);	/*CVE-2020-24587*/
 	}
 	ret = H2C_SUCCESS_RSP;
 

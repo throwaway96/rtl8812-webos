@@ -1672,7 +1672,7 @@ void rtw_indicate_disconnect(_adapter *padapter, u16 reason, u8 locally_generate
 
 
 
-	_clr_fwstate_(pmlmepriv, _FW_UNDER_LINKING | WIFI_UNDER_WPS);
+	_clr_fwstate_(pmlmepriv, _FW_UNDER_LINKING | WIFI_UNDER_WPS | WIFI_UNDER_KEY_HANDSHAKE);
 
 	/* force to clear cur_network_scanned's SELECTED REGISTRAR */
 	if (pmlmepriv->cur_network_scanned) {
@@ -1915,6 +1915,7 @@ static struct sta_info *rtw_joinbss_update_stainfo(_adapter *padapter, struct wl
 			u8 *ie;
 			sint ie_len;
 			u8 mfp_opt = MFP_NO;
+			u8 spp_opt = 0;
 
 			padapter->securitypriv.binstallGrpkey = _FALSE;
 			padapter->securitypriv.busetkipkey = _FALSE;
@@ -1923,10 +1924,16 @@ static struct sta_info *rtw_joinbss_update_stainfo(_adapter *padapter, struct wl
 			ie = rtw_get_ie(pnetwork->network.IEs + _BEACON_IE_OFFSET_, WLAN_EID_RSN
 				, &ie_len, (pnetwork->network.IELength - _BEACON_IE_OFFSET_));
 			if (ie && ie_len > 0
-				&& rtw_parse_wpa2_ie(ie, ie_len + 2, NULL, NULL, NULL, &mfp_opt) == _SUCCESS
+				&& rtw_parse_wpa2_ie(ie, ie_len + 2, NULL, NULL, NULL, &mfp_opt, &spp_opt) == _SUCCESS
 			) {
 				if (padapter->securitypriv.mfp_opt >= MFP_OPTIONAL && mfp_opt >= MFP_OPTIONAL)
 					psta->flags |= WLAN_STA_MFP;
+			}
+
+			if (padapter->securitypriv.dot11PrivacyAlgrthm != _NO_PRIVACY_ ) {
+				/*check if amsdu is allowed */
+				if (rtw_check_amsdu_disable(padapter->registrypriv.amsdu_mode, spp_opt) == _TRUE)
+					psta->flags |= WLAN_STA_AMSDU_DISABLE;
 			}
 
 			psta->ieee8021x_blocked = _TRUE;
@@ -1977,11 +1984,11 @@ static struct sta_info *rtw_joinbss_update_stainfo(_adapter *padapter, struct wl
 static void rtw_joinbss_update_network(_adapter *padapter, struct wlan_network *ptarget_wlan, struct wlan_network  *pnetwork)
 {
 	struct mlme_priv	*pmlmepriv = &(padapter->mlmepriv);
+	struct security_priv *psecuritypriv = &padapter->securitypriv;
 	struct wlan_network  *cur_network = &(pmlmepriv->cur_network);
+	sint tmp_fw_state = 0x0;
 
 	RTW_INFO("%s\n", __FUNCTION__);
-
-
 
 	/* why not use ptarget_wlan?? */
 	_rtw_memcpy(&cur_network->network, &pnetwork->network, pnetwork->network.Length);
@@ -2016,13 +2023,15 @@ static void rtw_joinbss_update_network(_adapter *padapter, struct wlan_network *
 
 	switch (pnetwork->network.InfrastructureMode) {
 	case Ndis802_11Infrastructure:
+		/* Check encryption */
+		if (psecuritypriv->dot11AuthAlgrthm == dot11AuthAlgrthm_8021X)
+			tmp_fw_state = tmp_fw_state | WIFI_UNDER_KEY_HANDSHAKE;
 
-		if (pmlmepriv->fw_state & WIFI_UNDER_WPS)
-			/*pmlmepriv->fw_state = WIFI_STATION_STATE|WIFI_UNDER_WPS;*/
-			init_fwstate(pmlmepriv, WIFI_STATION_STATE | WIFI_UNDER_WPS);
-		else
-			/*pmlmepriv->fw_state = WIFI_STATION_STATE;*/
-			init_fwstate(pmlmepriv, WIFI_STATION_STATE);
+		if (check_fwstate(pmlmepriv, WIFI_UNDER_WPS))
+			tmp_fw_state = tmp_fw_state | WIFI_UNDER_WPS;
+
+		init_fwstate(pmlmepriv, WIFI_STATION_STATE | tmp_fw_state);
+
 		break;
 	case Ndis802_11IBSS:
 		/*pmlmepriv->fw_state = WIFI_ADHOC_STATE;*/

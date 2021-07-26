@@ -423,4 +423,5 @@
 #define CONFIG_IPS
 #endif
 #endif
+
 #endif /* __DRV_CONF_H__ */

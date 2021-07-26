@@ -1099,10 +1099,14 @@ void update_sta_info_apmode(_adapter *padapter, struct sta_info *psta)
 	rtw_hal_set_odm_var(padapter, HAL_ODM_STA_INFO, psta, _TRUE);
 
 	_enter_critical_bh(&psta->lock, &irqL);
+
+	/* Check encryption */
+	if (!MLME_IS_MESH(padapter) && psecuritypriv->dot11AuthAlgrthm == dot11AuthAlgrthm_8021X)
+		psta->state |= WIFI_UNDER_KEY_HANDSHAKE;
+
 	psta->state |= _FW_LINKED;
+
 	_exit_critical_bh(&psta->lock, &irqL);
-
-
 }
 
 static void update_ap_info(_adapter *padapter, struct sta_info *psta)
@@ -1893,9 +1897,9 @@ int rtw_check_beacon_data(_adapter *padapter, u8 *pbuf,  int len)
 	psecuritypriv->wpa2_pairwise_cipher = _NO_PRIVACY_;
 	p = rtw_get_ie(ie + _BEACON_IE_OFFSET_, _RSN_IE_2_, &ie_len, (pbss_network->IELength - _BEACON_IE_OFFSET_));
 	if (p && ie_len > 0) {
-		if (rtw_parse_wpa2_ie(p, ie_len + 2, &group_cipher, &pairwise_cipher, NULL, &mfp_opt) == _SUCCESS) {
+		if (rtw_parse_wpa2_ie(p, ie_len + 2, &group_cipher, &pairwise_cipher, NULL, &mfp_opt, NULL) == _SUCCESS) {
 			psecuritypriv->dot11AuthAlgrthm = dot11AuthAlgrthm_8021X;
-
+			psecuritypriv->ndisauthtype = Ndis802_11AuthModeWPA2PSK;
 			psecuritypriv->dot8021xalg = 1;/* psk,  todo:802.1x */
 			psecuritypriv->wpa_psk |= BIT(1);
 
@@ -1968,7 +1972,7 @@ int rtw_check_beacon_data(_adapter *padapter, u8 *pbuf,  int len)
 		if ((p) && (_rtw_memcmp(p + 2, OUI1, 4))) {
 			if (rtw_parse_wpa_ie(p, ie_len + 2, &group_cipher, &pairwise_cipher, NULL) == _SUCCESS) {
 				psecuritypriv->dot11AuthAlgrthm = dot11AuthAlgrthm_8021X;
-
+				psecuritypriv->ndisauthtype = Ndis802_11AuthModeWPAPSK;
 				psecuritypriv->dot8021xalg = 1;/* psk,  todo:802.1x */
 
 				psecuritypriv->wpa_psk |= BIT(0);
@@ -3690,7 +3694,7 @@ u8 ap_free_sta(_adapter *padapter, struct sta_info *psta, bool active, u16 reaso
 
 
 	_enter_critical_bh(&psta->lock, &irqL);
-	psta->state &= ~_FW_LINKED;
+	psta->state &= ~(_FW_LINKED | WIFI_UNDER_KEY_HANDSHAKE);
 
 	if ((psta->auth_len != 0) && (psta->pauth_frame != NULL)) {
 		rtw_mfree(psta->pauth_frame, psta->auth_len);
@@ -4501,7 +4505,7 @@ exit:
 	return changed;
 }
 
-u8 rtw_ap_sta_linking_state_check(_adapter *adapter)
+u8 rtw_ap_sta_states_check(_adapter *adapter)
 {
 	struct sta_info *psta;
 	struct mlme_priv *pmlmepriv = &adapter->mlmepriv;
@@ -4521,9 +4525,16 @@ u8 rtw_ap_sta_linking_state_check(_adapter *adapter)
 	phead = &pstapriv->asoc_list;
 	plist = get_next(phead);
 	while ((rtw_end_of_queue_search(phead, plist)) == _FALSE) {
+
 		psta = LIST_CONTAINOR(plist, struct sta_info, asoc_list);
 		plist = get_next(plist);
-		if (!(psta->state &_FW_LINKED)) {
+
+		if (!(psta->state & _FW_LINKED)) {
+			RTW_INFO(ADPT_FMT"- SoftAP/Mesh - sta under linking, its state = 0x%x\n", ADPT_ARG(adapter), psta->state);
+			rst = _TRUE;
+			break;
+		} else if (psta->state & WIFI_UNDER_KEY_HANDSHAKE) {
+			RTW_INFO(ADPT_FMT"- SoftAP/Mesh - sta under key handshaking, its state = 0x%x\n", ADPT_ARG(adapter), psta->state);
 			rst = _TRUE;
 			break;
 		}
@@ -4744,6 +4755,7 @@ u16 rtw_ap_parse_sta_security_ie(_adapter *adapter, struct sta_info *sta, struct
 	int group_cipher = 0, pairwise_cipher = 0;
 	u32 akm = 0;
 	u8 mfp_opt = MFP_NO;
+	u8 spp_opt = 0;
 	u16 status = _STATS_SUCCESSFUL_;
 
 	sta->dot8021xalg = 0;
@@ -4758,7 +4770,7 @@ u16 rtw_ap_parse_sta_security_ie(_adapter *adapter, struct sta_info *sta, struct
 		wpa_ie = elems->rsn_ie;
 		wpa_ie_len = elems->rsn_ie_len;
 
-		if (rtw_parse_wpa2_ie(wpa_ie - 2, wpa_ie_len + 2, &group_cipher, &pairwise_cipher, &akm, &mfp_opt) == _SUCCESS) {
+		if (rtw_parse_wpa2_ie(wpa_ie - 2, wpa_ie_len + 2, &group_cipher, &pairwise_cipher, &akm, &mfp_opt, &spp_opt) == _SUCCESS) {
 			sta->dot8021xalg = 1;/* psk, todo:802.1x */
 			sta->wpa_psk |= BIT(1);
 
@@ -4800,6 +4812,12 @@ u16 rtw_ap_parse_sta_security_ie(_adapter *adapter, struct sta_info *sta, struct
 	} else {
 		wpa_ie = NULL;
 		wpa_ie_len = 0;
+	}
+
+	if (sec->dot11PrivacyAlgrthm != _NO_PRIVACY_) {
+		/*check if amsdu is allowed */
+		if (rtw_check_amsdu_disable(adapter->registrypriv.amsdu_mode, spp_opt) == _TRUE)
+			sta->flags |= WLAN_STA_AMSDU_DISABLE;
 	}
 
 #ifdef CONFIG_RTW_MESH

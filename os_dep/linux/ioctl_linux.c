@@ -1006,6 +1006,8 @@ static int wpa_set_encryption(struct net_device *dev, struct ieee_param *param, 
 						rtw_p2p_set_state(pwdinfo, P2P_STATE_PROVISIONING_DONE);
 #endif /* CONFIG_P2P */
 
+					/* WPA/WPA2 key-handshake has completed */
+					clr_fwstate(pmlmepriv, WIFI_UNDER_KEY_HANDSHAKE);
 				}
 			}
 
@@ -1085,7 +1087,7 @@ static int rtw_set_wpa_ie(_adapter *padapter, char *pie, unsigned short ielen)
 			_rtw_memcpy(padapter->securitypriv.supplicant_ie, &buf[0], ielen);
 		}
 
-		if (rtw_parse_wpa2_ie(buf, ielen, &group_cipher, &pairwise_cipher, NULL, &mfp_opt) == _SUCCESS) {
+		if (rtw_parse_wpa2_ie(buf, ielen, &group_cipher, &pairwise_cipher, NULL, &mfp_opt, NULL) == _SUCCESS) {
 			padapter->securitypriv.dot11AuthAlgrthm = dot11AuthAlgrthm_8021X;
 			padapter->securitypriv.ndisauthtype = Ndis802_11AuthModeWPA2PSK;
 			_rtw_memcpy(padapter->securitypriv.supplicant_ie, &buf[0], ielen);
@@ -7421,9 +7423,16 @@ static int rtw_set_encryption(struct net_device *dev, struct ieee_param *param, 
 				psta->dot11txpn.val = RTW_GET_LE64(param->u.crypt.seq);
 				psta->dot11rxpn.val = RTW_GET_LE64(param->u.crypt.seq);
 				psta->ieee8021x_blocked = _FALSE;
-				psta->bpairwise_key_installed = _TRUE;
-				rtw_ap_set_pairwise_key(padapter, psta);
 
+				if (psta->dot118021XPrivacy != _NO_PRIVACY_) {
+					psta->bpairwise_key_installed = _TRUE;
+
+					/* WPA2 key-handshake has completed */
+					if (psecuritypriv->ndisauthtype == Ndis802_11AuthModeWPA2PSK)
+						psta->state &= (~WIFI_UNDER_KEY_HANDSHAKE);
+				}
+
+				rtw_ap_set_pairwise_key(padapter, psta);
 			} else {
 				RTW_WARN(FUNC_ADPT_FMT" set group key of "MAC_FMT", not support\n"
 					, FUNC_ADPT_ARG(padapter), MAC_ARG(psta->cmn.mac_addr));

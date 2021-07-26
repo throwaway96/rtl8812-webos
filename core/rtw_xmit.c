@@ -986,7 +986,7 @@ static void update_attrib_phy_info(_adapter *padapter, struct pkt_attrib *pattri
 
 }
 
-static s32 update_attrib_sec_info(_adapter *padapter, struct pkt_attrib *pattrib, struct sta_info *psta)
+static s32 update_attrib_sec_info(_adapter *padapter, struct pkt_attrib *pattrib, struct sta_info *psta, enum eap_type eapol_type)
 {
 	sint res = _SUCCESS;
 	struct mlme_priv	*pmlmepriv = &padapter->mlmepriv;
@@ -997,7 +997,22 @@ static s32 update_attrib_sec_info(_adapter *padapter, struct pkt_attrib *pattrib
 	_rtw_memset(pattrib->dot11tkiptxmickey.skey,  0, 16);
 	pattrib->mac_id = psta->cmn.mac_id;
 
-	if (psta->ieee8021x_blocked == _TRUE) {
+	/* Comment by Owen at 2020/05/19
+	 * Issue: RTK STA sends encrypted 4-way 4/4 when AP thinks the 4-way incomplete
+	 * In TCL pressure test, AP may resend 4-way 3/4 with new replay counter in 2 ms.
+	 * In this situation, STA sends unencrypted 4-way 4/4 with old replay counter after more
+	 * than 2 ms, followed by the encrypted 4-way 4/4 with new replay counter. Because the
+	 * AP only accepts unencrypted 4-way 4/4 with a new play counter, and the STA encrypts
+	 * each 4-way 4/4 at this time, the 4-way handshake cannot be completed.
+	 * So we modified that after STA receives unencrypted 4-way 1/4 and 4-way 3/4,
+	 * 4-way 2/4 and 4-way 4/4 sent by STA in the next 100 ms are not encrypted.
+	 */
+	if (psta->ieee8021x_blocked == _TRUE ||
+		((eapol_type == EAPOL_2_4 || eapol_type == EAPOL_4_4) &&
+		rtw_get_passing_time_ms(psta->resp_nonenc_eapol_key_starttime) <= 100)) {
+
+		if (eapol_type == EAPOL_2_4 || eapol_type == EAPOL_4_4)
+			RTW_INFO("Respond unencrypted eapol key\n");
 
 		pattrib->encrypt = 0;
 
@@ -1125,6 +1140,9 @@ static s32 update_attrib_sec_info(_adapter *padapter, struct pkt_attrib *pattrib
 #endif
 
 exit:
+
+	if ((pattrib->encrypt) && (eapol_type == EAPOL_4_4))
+		pattrib->bswenc = _TRUE;
 
 	return res;
 
@@ -1257,7 +1275,7 @@ s32 update_tdls_attrib(_adapter *padapter, struct pkt_attrib *pattrib)
 	}
 
 	/* TODO:_lock */
-	if (update_attrib_sec_info(padapter, pattrib, psta) == _FAIL) {
+	if (update_attrib_sec_info(padapter, pattrib, psta, NON_EAPOL) == _FAIL) {
 		res = _FAIL;
 		goto exit;
 	}
@@ -1299,7 +1317,7 @@ static s32 update_attrib(_adapter *padapter, _pkt *pkt, struct pkt_attrib *pattr
 	struct qos_priv		*pqospriv = &pmlmepriv->qospriv;
 	struct xmit_priv		*pxmitpriv = &padapter->xmitpriv;
 	sint res = _SUCCESS;
-
+	enum eap_type eapol_type = NON_EAPOL;
 
 	DBG_COUNTER(padapter->tx_logs.core_tx_upd_attrib);
 
@@ -1445,7 +1463,7 @@ get_sta_info:
 		}
 
 	} else if (0x888e == pattrib->ether_type)
-		RTW_PRINT("send eapol packet\n");
+		eapol_type = parsing_eapol_packet(padapter, pktfile.cur_addr, psta, 1);
 
 	if ((pattrib->ether_type == 0x888e) || (pattrib->dhcp_pkt == 1))
 		rtw_mi_set_scan_deny(padapter, 3000);
@@ -1475,7 +1493,7 @@ get_sta_info:
 #endif
 
 	/* TODO:_lock */
-	if (update_attrib_sec_info(padapter, pattrib, psta) == _FAIL) {
+	if (update_attrib_sec_info(padapter, pattrib, psta, eapol_type) == _FAIL) {
 		DBG_COUNTER(padapter->tx_logs.core_tx_upd_attrib_err_sec);
 		res = _FAIL;
 		goto exit;
@@ -2285,6 +2303,7 @@ u32 rtw_calculate_wlan_pkt_size_by_attribue(struct pkt_attrib *pattrib)
 s32 check_amsdu(struct xmit_frame *pxmitframe)
 {
 	struct pkt_attrib *pattrib;
+	struct sta_info *psta = NULL;
 	s32 ret = _TRUE;
 
 	if (!pxmitframe)
@@ -2292,6 +2311,11 @@ s32 check_amsdu(struct xmit_frame *pxmitframe)
 
 	pattrib = &pxmitframe->attrib;
 
+	psta = rtw_get_stainfo(&pxmitframe->padapter->stapriv, &pattrib->ra[0]);
+	if (psta) {
+		if (psta->flags & WLAN_STA_AMSDU_DISABLE)
+			ret =_FALSE;
+	}
 	if (IS_MCAST(pattrib->ra))
 		ret = _FALSE;
 

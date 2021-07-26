@@ -82,6 +82,7 @@ enum {
 #define WLAN_STA_WPS BIT(12)
 #define WLAN_STA_MAYBE_WPS BIT(13)
 #define WLAN_STA_VHT BIT(14)
+#define WLAN_STA_AMSDU_DISABLE BIT(17)
 #define WLAN_STA_NONERP BIT(31)
 
 #endif
@@ -192,6 +193,48 @@ extern u8 WLAN_AKM_FT_FILS_SHA384[];
 #define WPA_KEY_RSC_LEN 8
 #define WPA_GMK_LEN 32
 #define WPA_GTK_MAX_LEN 32
+
+/* IEEE 802.11, 8.5.2 EAPOL-Key frames */
+#define WPA_KEY_INFO_TYPE_MASK ((u16) (BIT(0) | BIT(1) | BIT(2)))
+#define WPA_KEY_INFO_TYPE_AKM_DEFINED 0
+#define WPA_KEY_INFO_TYPE_HMAC_MD5_RC4 BIT(0)
+#define WPA_KEY_INFO_TYPE_HMAC_SHA1_AES BIT(1)
+#define WPA_KEY_INFO_TYPE_AES_128_CMAC 3
+#define WPA_KEY_INFO_KEY_TYPE BIT(3) /* 1 = Pairwise, 0 = Group key */
+/* bit4..5 is used in WPA, but is reserved in IEEE 802.11i/RSN */
+#define WPA_KEY_INFO_KEY_INDEX_MASK (BIT(4) | BIT(5))
+#define WPA_KEY_INFO_KEY_INDEX_SHIFT 4
+#define WPA_KEY_INFO_INSTALL BIT(6) /* pairwise */
+#define WPA_KEY_INFO_TXRX BIT(6) /* group */
+#define WPA_KEY_INFO_ACK BIT(7)
+#define WPA_KEY_INFO_MIC BIT(8)
+#define WPA_KEY_INFO_SECURE BIT(9)
+#define WPA_KEY_INFO_ERROR BIT(10)
+#define WPA_KEY_INFO_REQUEST BIT(11)
+#define WPA_KEY_INFO_ENCR_KEY_DATA BIT(12) /* IEEE 802.11i/RSN only */
+#define WPA_KEY_INFO_SMK_MESSAGE BIT(13)
+
+struct ieee802_1x_hdr {
+	u8 version;
+	u8 type;
+	u16 length;
+	/* followed by length octets of data */
+};
+
+struct wpa_eapol_key {
+	u8 type;
+	/* Note: key_info, key_length, and key_data_length are unaligned */
+	u8 key_info[2]; /* big endian */
+	u8 key_length[2]; /* big endian */
+	u8 replay_counter[WPA_REPLAY_COUNTER_LEN];
+	u8 key_nonce[WPA_NONCE_LEN];
+	u8 key_iv[16];
+	u8 key_rsc[WPA_KEY_RSC_LEN];
+	u8 key_id[8]; /* Reserved in IEEE 802.11i/RSN */
+	u8 key_mic[16];
+	u8 key_data_length[2]; /* big endian */
+	/* followed by key_data_length bytes of key_data */
+};
 
 typedef enum _RATEID_IDX_ {
 	RATEID_IDX_BGN_40M_2SS = 0,
@@ -504,12 +547,21 @@ struct eapol {
 
 
 
+/* Some IEEE 802.11x packet types are corresponding to parsing_eapol_packet() */
 enum eap_type {
 	EAP_PACKET = 0,
+	NON_EAPOL,
 	EAPOL_START,
 	EAPOL_LOGOFF,
 	EAPOL_KEY,
-	EAPOL_ENCAP_ASF_ALERT
+	EAPOL_ENCAP_ASF_ALERT,
+	EAPOL_PACKET,
+	EAPOL_WPA_GROUP_KEY_1_2,
+	EAPOL_WPA_GROUP_KEY_2_2,
+	EAPOL_1_4,
+	EAPOL_2_4,
+	EAPOL_3_4,
+	EAPOL_4_4,
 };
 
 #define IEEE80211_3ADDR_LEN 24
@@ -2040,6 +2092,18 @@ void rtw_set_supported_rate(u8 *SupportedRates, uint mode) ;
 #define MFP_OPTIONAL	2
 #define MFP_REQUIRED	3
 
+/*For amsdu mode */
+#define GET_RSN_CAP_SPP_OPT(cap)	LE_BITS_TO_2BYTE(((u8 *)(cap)), 10, 2)
+#define SET_RSN_CAP_SPP(cap, spp)	SET_BITS_TO_LE_2BYTE(((u8 *)(cap)), 10, 2, spp)
+#define SPP_CAP BIT(0)
+#define SPP_REQ BIT(1)
+
+enum rtw_amsdu_mode {
+	RTW_AMSDU_MODE_NON_SPP	= 0,
+	RTW_AMSDU_MODE_SPP	= 1,
+	RTW_AMSDU_MODE_ALL_DROP	= 2,
+};
+
 struct rsne_info {
 	u8 *gcs;
 	u16 pcs_cnt;
@@ -2061,7 +2125,7 @@ int rtw_get_wpa_cipher_suite(u8 *s);
 int rtw_get_wpa2_cipher_suite(u8 *s);
 int rtw_get_wapi_ie(u8 *in_ie, uint in_len, u8 *wapi_ie, u16 *wapi_len);
 int rtw_parse_wpa_ie(u8 *wpa_ie, int wpa_ie_len, int *group_cipher, int *pairwise_cipher, u32 *akm);
-int rtw_parse_wpa2_ie(u8 *wpa_ie, int wpa_ie_len, int *group_cipher, int *pairwise_cipher, u32 *akm, u8 *mfp_opt);
+int rtw_parse_wpa2_ie(u8 *wpa_ie, int wpa_ie_len, int *group_cipher, int *pairwise_cipher, u32 *akm, u8 *mfp_opt, u8* spp_opt);
 
 int rtw_get_sec_ie(u8 *in_ie, uint in_len, u8 *rsn_ie, u16 *rsn_len, u8 *wpa_ie, u16 *wpa_len);
 
@@ -2156,5 +2220,8 @@ void macstr2num(u8 *dst, u8 *src);
 u8 convert_ip_addr(u8 hch, u8 mch, u8 lch);
 int wifirate2_ratetbl_inx(unsigned char rate);
 
+/* For amsdu mode. */
+/* void rtw_set_spp_amsdu_mode(u8 mode, u8 *rsn_ie, int rsn_ie_len); */
+u8 rtw_check_amsdu_disable(u8 mode, u8 spp_opt);
 
 #endif /* IEEE80211_H */

@@ -3295,16 +3295,15 @@ u8 roch_stay_in_cur_chan(_adapter *padapter)
 		if (iface) {
 			pmlmepriv = &iface->mlmepriv;
 
-			if (check_fwstate(pmlmepriv, _FW_UNDER_LINKING | WIFI_UNDER_WPS) == _TRUE) {
-				RTW_ERR(ADPT_FMT"- _FW_UNDER_LINKING |WIFI_UNDER_WPS (mlme state:0x%x)\n",
+			if (check_fwstate(pmlmepriv, _FW_UNDER_LINKING | WIFI_UNDER_WPS | WIFI_UNDER_KEY_HANDSHAKE) == _TRUE) {
+				RTW_INFO(ADPT_FMT"- _FW_UNDER_LINKING |WIFI_UNDER_WPS | WIFI_UNDER_KEY_HANDSHAKE (mlme state:0x%x)\n",
 						ADPT_ARG(iface), get_fwstate(&iface->mlmepriv));
 				rst = _TRUE;
 				break;
 			}
 			#ifdef CONFIG_AP_MODE
 			if (MLME_IS_AP(iface) || MLME_IS_MESH(iface)) {
-				if (rtw_ap_sta_linking_state_check(iface) == _TRUE) {
-					RTW_ERR(ADPT_FMT"- SoftAP/Mesh -have sta under linking\n", ADPT_ARG(iface));
+				if (rtw_ap_sta_states_check(iface) == _TRUE) {
 					rst = _TRUE;
 					break;
 				}

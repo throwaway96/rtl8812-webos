@@ -93,7 +93,7 @@ void rtw_update_bmc_sta_tx_rate(_adapter *adapter);
 void rtw_process_ht_action_smps(_adapter *padapter, u8 *ta, u8 ctrl_field);
 void rtw_process_public_act_bsscoex(_adapter *padapter, u8 *pframe, uint frame_len);
 int rtw_ht_operation_update(_adapter *padapter);
-u8 rtw_ap_sta_linking_state_check(_adapter *adapter);
+u8 rtw_ap_sta_states_check(_adapter *adapter);
 
 #ifdef CONFIG_SWTIMER_BASED_TXBCN
 void tx_beacon_handlder(struct dvobj_priv *pdvobj);

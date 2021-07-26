@@ -1279,7 +1279,7 @@ static int rtw_cfg80211_ap_set_encryption(struct net_device *dev, struct ieee_pa
 	u32 wep_key_idx, wep_key_len, wep_total_len;
 	struct sta_info *psta = NULL, *pbcmc_sta = NULL;
 	_adapter *padapter = (_adapter *)rtw_netdev_priv(dev);
-	struct mlme_priv	*pmlmepriv = &padapter->mlmepriv;
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
 	struct security_priv *psecuritypriv = &(padapter->securitypriv);
 	struct sta_priv *pstapriv = &padapter->stapriv;
 
@@ -1465,9 +1465,16 @@ static int rtw_cfg80211_ap_set_encryption(struct net_device *dev, struct ieee_pa
 			psta->dot11txpn.val = RTW_GET_LE64(param->u.crypt.seq);
 			psta->dot11rxpn.val = RTW_GET_LE64(param->u.crypt.seq);
 			psta->ieee8021x_blocked = _FALSE;
-			psta->bpairwise_key_installed = _TRUE;
-			rtw_ap_set_pairwise_key(padapter, psta);
 
+			if (psta->dot118021XPrivacy != _NO_PRIVACY_) {
+				psta->bpairwise_key_installed = _TRUE;
+
+				/* WPA2 key-handshake has completed */
+				if (psecuritypriv->ndisauthtype == Ndis802_11AuthModeWPA2PSK)
+					psta->state &= (~WIFI_UNDER_KEY_HANDSHAKE);
+			}
+
+			rtw_ap_set_pairwise_key(padapter, psta);
 		} else {
 			/* peer's group key, RX only */
 			#ifdef CONFIG_RTW_MESH
@@ -1666,6 +1673,9 @@ static int rtw_cfg80211_set_encryption(struct net_device *dev, struct ieee_param
 							rtw_p2p_set_state(pwdinfo, P2P_STATE_PROVISIONING_DONE);
 					}
 #endif /* CONFIG_P2P */
+
+					/* WPA/WPA2 key-handshake has completed */
+					clr_fwstate(pmlmepriv, WIFI_UNDER_KEY_HANDSHAKE);
 
 				}
 			}
@@ -3476,7 +3486,7 @@ static int rtw_cfg80211_set_wpa_ie(_adapter *padapter, u8 *pie, size_t ielen)
 
 	pwpa2 = rtw_get_wpa2_ie(buf, &wpa2_ielen, ielen);
 	if (pwpa2 && wpa2_ielen > 0) {
-		if (rtw_parse_wpa2_ie(pwpa2, wpa2_ielen + 2, &group_cipher, &pairwise_cipher, NULL, &mfp_opt) == _SUCCESS) {
+		if (rtw_parse_wpa2_ie(pwpa2, wpa2_ielen + 2, &group_cipher, &pairwise_cipher, NULL, &mfp_opt, NULL) == _SUCCESS) {
 			padapter->securitypriv.dot11AuthAlgrthm = dot11AuthAlgrthm_8021X;
 			padapter->securitypriv.ndisauthtype = Ndis802_11AuthModeWPA2PSK;
 			_rtw_memcpy(padapter->securitypriv.supplicant_ie, &pwpa2[0], wpa2_ielen + 2);

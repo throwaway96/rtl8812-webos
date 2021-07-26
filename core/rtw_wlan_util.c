@@ -2276,7 +2276,7 @@ int rtw_get_bcn_keys(ADAPTER *Adapter, u8 *pframe, u32 packet_len,
 		recv_beacon->encryp_protocol = ENCRYP_PROTOCOL_WPA2;
 		rtw_parse_wpa2_ie(elems.rsn_ie - 2, elems.rsn_ie_len + 2,
 			&recv_beacon->group_cipher, &recv_beacon->pairwise_cipher,
-				  &recv_beacon->akm, NULL);
+				  &recv_beacon->akm, NULL, NULL);
 	}
 	/* checking WPA secon */
 	else if (elems.wpa_ie && elems.wpa_ie_len) {
@@ -2695,6 +2695,65 @@ void process_csa_ie(_adapter *padapter, u8 *pframe, uint pkt_len)
 	}
 }
 #endif /* CONFIG_DFS */
+
+enum eap_type parsing_eapol_packet(_adapter *padapter, u8 *key_payload, struct sta_info *psta, u8 trx_type)
+{
+	struct security_priv *psecuritypriv = &(padapter->securitypriv);
+	struct mlme_priv *pmlmepriv = &(padapter->mlmepriv);
+	struct sta_priv *pstapriv = &(padapter->stapriv);
+	struct ieee802_1x_hdr *hdr;
+	struct wpa_eapol_key *key;
+	u16 key_info, key_data_length;
+	char *trx_msg = trx_type ? "send" : "recv";
+	enum eap_type eapol_type;
+
+	hdr = (struct ieee802_1x_hdr *) key_payload;
+
+	 /* WPS - eapol start packet */
+	if (hdr->type == 1 && hdr->length == 0) {
+		RTW_INFO("%s eapol start packet\n", trx_msg);
+		return EAPOL_START;
+	}
+
+	if (hdr->type == 0) { /* WPS - eapol packet */
+		RTW_INFO("%s eapol packet\n", trx_msg);
+		return EAPOL_START;
+	}
+
+	key = (struct wpa_eapol_key *) (hdr + 1);
+	key_info = be16_to_cpu(*((u16 *)(key->key_info)));
+	key_data_length = be16_to_cpu(*((u16 *)(key->key_data_length)));
+
+	if (!(key_info & WPA_KEY_INFO_KEY_TYPE)) { /* WPA group key handshake */
+		if (key_info & WPA_KEY_INFO_ACK) {
+			RTW_PRINT("%s eapol packet - WPA Group Key 1/2\n", trx_msg);
+			eapol_type = EAPOL_WPA_GROUP_KEY_1_2;
+		} else {
+			RTW_PRINT("%s eapol packet - WPA Group Key 2/2\n", trx_msg);
+			eapol_type = EAPOL_WPA_GROUP_KEY_2_2;
+
+			/* WPA key-handshake has completed */
+			if (psecuritypriv->ndisauthtype == Ndis802_11AuthModeWPAPSK)
+				psta->state &= (~WIFI_UNDER_KEY_HANDSHAKE);
+		}
+	} else if (key_info & WPA_KEY_INFO_MIC) {
+		if (key_data_length == 0) {
+			RTW_PRINT("%s eapol packet 4/4\n", trx_msg);
+			eapol_type = EAPOL_4_4;
+		} else if (key_info & WPA_KEY_INFO_ACK) {
+			RTW_PRINT("%s eapol packet 3/4\n", trx_msg);
+			eapol_type = EAPOL_3_4;
+		} else {
+			RTW_PRINT("%s eapol packet 2/4\n", trx_msg);
+			eapol_type = EAPOL_2_4;
+		}
+	} else {
+		RTW_PRINT("%s eapol packet 1/4\n", trx_msg);
+		eapol_type = EAPOL_1_4;
+	}
+
+	return eapol_type;
+}
 
 unsigned int is_ap_in_tkip(_adapter *padapter)
 {

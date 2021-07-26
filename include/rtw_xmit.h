@@ -922,6 +922,7 @@ extern s32 rtw_free_xmitbuf(struct xmit_priv *pxmitpriv, struct xmit_buf *pxmitb
 
 void rtw_count_tx_stats(_adapter *padapter, struct xmit_frame *pxmitframe, int sz);
 extern void rtw_update_protection(_adapter *padapter, u8 *ie, uint ie_len);
+static s32 update_attrib_sec_info(_adapter *padapter, struct pkt_attrib *pattrib, struct sta_info *psta, enum eap_type eapol_type);
 
 #ifdef CONFIG_WMMPS_STA
 static void update_attrib_trigger_frame_info(_adapter *padapter, struct pkt_attrib *pattrib);
