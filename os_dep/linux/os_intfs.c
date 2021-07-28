@@ -747,6 +747,18 @@ MODULE_PARM_DESC(rtw_ext_path2, "External Network Setting");
 char *rtw_ext_path3 = "/mnt/lg/res/lglib/TxPwrLimit_RT8812.dat";
 module_param(rtw_ext_path3, charp, 0644);
 MODULE_PARM_DESC(rtw_ext_path3, "External Network Setting");
+
+char *rtw_ext_path4 = "/proc/cmdline";
+module_param(rtw_ext_path4, charp, 0644);
+MODULE_PARM_DESC(rtw_ext_path4, "External Network Setting");
+
+char *rtw_ext_path5 = "/mnt/platform-plugins/conf/CcodeTable_RT8812";
+module_param(rtw_ext_path5, charp, 0644);
+MODULE_PARM_DESC(rtw_ext_path5, "External Network Setting");
+
+char *rtw_ext_path6 = "/mnt/platform-plugins/conf/TxPwrLimit_RT8812.dat";
+module_param(rtw_ext_path6, charp, 0644);
+MODULE_PARM_DESC(rtw_ext_path5, "External Network Setting");
 #endif /* LGE_PRIVATE */
 
 int _netdev_open(struct net_device *pnetdev);
@@ -3446,7 +3458,36 @@ netdev_open_normal_process:
 		entry[1] = COUNTRY_DEFAULT_CCODE;
 	}
 
-	if (rtw_is_file_readable(rtw_ext_path2) == _FALSE) {
+	if (rtw_is_file_readable(rtw_ext_path4)) {
+		ret = rtw_lge_load_setting(padapter, rtw_ext_path4, 2, entry);
+	} else {
+		LGE_MSG("[WLAN] /proc/cmdline is not exist.");
+	}
+
+	if (ret == 1) {
+		/* WEE Project */
+		LGE_MSG("[WLAN] /proc/cmdline extmod=WEE_");
+
+		if (rtw_is_file_readable(rtw_ext_path6) == _FALSE) {
+			LGE_MSG("[WLAN] TxPwrLimit is not exist (%s)", rtw_ext_path6);
+		}
+
+		if (rtw_is_file_readable(rtw_ext_path5) == _TRUE) {
+			RTW_INFO("%s acquire Settings from file:%s\n", __func__, rtw_ext_path5);
+			ret = rtw_lge_load_setting(padapter, rtw_ext_path5, 1, entry);
+			if (ret != 0) {
+				if (ret == -2) {
+					LGE_MSG("[WLAN] No match PowerSetting on CcodeTable");
+				}
+			} else {
+				load_default_table = 2;
+			}
+		}
+	}
+
+	if (load_default_table == 2) {
+		/* Pass Through */
+	} else if (rtw_is_file_readable(rtw_ext_path2) == _FALSE) {
 		LGE_MSG("[WLAN] CcodeTable is not exist, apply CountryCode(10,KR)");
 		/* default */
 		entry[0] = 0;

@@ -561,6 +561,7 @@ void rtw_hal_ch_sw_iqk_info_restore(_adapter *padapter, u8 ch_sw_use_case);
 #ifdef CONFIG_LOAD_PHY_PARA_FROM_FILE
 #ifdef LGE_PRIVATE
 	extern char *rtw_ext_path3;
+	extern char *rtw_ext_path6;
 #endif
 	extern char *rtw_phy_file_path;
 	extern char rtw_phy_para_file_path[PATH_LENGTH_MAX];

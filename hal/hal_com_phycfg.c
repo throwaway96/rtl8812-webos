@@ -5344,9 +5344,23 @@ PHY_ConfigRFWithPowerLimitTableParaFile(
 	if (pHalData->rf_tx_pwr_lmt == NULL) {
 		rtw_get_phy_file_path(Adapter, pFileName);
 #ifdef LGE_PRIVATE
-		if (rtw_is_file_readable(rtw_ext_path3) == _TRUE) {
+		if (rtw_is_file_readable(rtw_ext_path6) == _TRUE) {
+			rlen = rtw_retrieve_from_file(rtw_ext_path6, pHalData->para_file_buf, MAX_PARA_FILE_BUF_LEN);
+			if (rlen > 0) {
+				LGE_MSG("[WLAN] Tx Power Table is exist %s ", rtw_ext_path6);
+				rtStatus = _SUCCESS;
+				pHalData->rf_tx_pwr_lmt = rtw_zvmalloc(rlen);
+				if (pHalData->rf_tx_pwr_lmt) {
+					_rtw_memcpy(pHalData->rf_tx_pwr_lmt, pHalData->para_file_buf, rlen);
+					pHalData->rf_tx_pwr_lmt_len = rlen;
+				} else
+					RTW_INFO("%s rf_tx_pwr_lmt alloc fail !\n", __FUNCTION__);
+			}
+		} else if (rtw_is_file_readable(rtw_ext_path3) == _TRUE) {
 			rlen = rtw_retrieve_from_file(rtw_ext_path3, pHalData->para_file_buf, MAX_PARA_FILE_BUF_LEN);
 			if (rlen > 0) {
+				LGE_MSG("[WLAN] Tx Power Table is exist %s ", rtw_ext_path3);
+
 				rtStatus = _SUCCESS;
 				pHalData->rf_tx_pwr_lmt = rtw_zvmalloc(rlen);
 				if (pHalData->rf_tx_pwr_lmt) {

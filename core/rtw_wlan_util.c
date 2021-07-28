@@ -4920,6 +4920,30 @@ static int rtw_lge_parse_country(_adapter *padapter, u8 *list_str, u8 *entry)
 	return 0;
 }
 
+static int rtw_lge_parse_cmdline(_adapter *padapter, u8 *list_str, u8 *entry)
+{
+	char *pch, *pnext, *pend;
+	int ret = 0;
+
+	pch = list_str;
+
+	if (list_str == NULL) {
+		RTW_INFO("%s error paramters\n", __func__);
+		return -1;
+	}
+
+	while (strlen(pch) != 0) {
+		pnext = strstr(pch, "extmod=WEE_");
+		if (pnext != NULL) {
+			ret = 1;
+			break;
+		} else
+			break;
+	}
+
+	return ret;
+}
+
 static u8* _rtw_lge_parse_ext_channel(int band, u8 *list_str, u8 *ch_list, u8 *bw)
 {
 	char *pch, *ptch, *pnext, *pend;
@@ -5192,6 +5216,13 @@ int rtw_lge_load_setting(_adapter *padapter, char *path, int mode, u8 *entry)
 			} else {
 				entry[0] = 2;
 			}
+		} else if (mode == 2) {
+			/* check the /proc/cmdline
+			 * return
+			 * 0: unknow, or 'extmod=LGTV'
+			 * 1: found 'extmod=WEE_'
+			 */
+			ret = rtw_lge_parse_cmdline(padapter, source, entry);
 		}
 	}
 
