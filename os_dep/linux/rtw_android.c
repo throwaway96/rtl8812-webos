@@ -1126,6 +1126,8 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 		kobject_uevent_env(&padapter->pnetdev->dev.kobj, KOBJ_CHANGE, envp);
 #endif
 		LGE_MSG("[WLAN] WIFI_STATUS=suspend");
+
+		adapter_wdev_data(padapter)->suspending = _TRUE;
 	}
 		break;
 	case LGE_PRIVATE_CMD_WOWL_ACTIVATE:

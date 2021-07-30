@@ -6072,6 +6072,11 @@ void rtw_cfg80211_rx_probe_request(_adapter *adapter, union recv_frame *rframe)
 	s32 freq;
 	u8 ch, sch = rtw_get_oper_ch(adapter);
 
+#ifdef LGE_PRIVATE
+	if (adapter_wdev_data(adapter)->suspending == _TRUE) 
+		return;
+#endif /* LGE_PRIVATE */
+
 	wiphy = adapter->rtw_wdev->wiphy;
 
 #if defined(RTW_DEDICATED_P2P_DEVICE)
@@ -6701,6 +6706,16 @@ static s32 cfg80211_rtw_remain_on_channel(struct wiphy *wiphy,
 
 	/* under site survey */
 	if (rtw_mi_check_fwstate(padapter, _FW_UNDER_SURVEY)) {
+		err = -EBUSY;
+		goto exit;
+	}
+
+	if (adapter_wdev_data(padapter)->suspending == _TRUE) {
+		err = -EBUSY;
+		goto exit;
+	}
+
+	if (adapter_to_pwrctl(padapter)->bInSuspend == _TRUE) {
 		err = -EBUSY;
 		goto exit;
 	}
@@ -10139,6 +10154,7 @@ int rtw_wdev_alloc(_adapter *padapter, struct wiphy *wiphy)
 	pwdev_priv->idle_mode = _FALSE;
 	pwdev_priv->delay_disconnect = _FALSE;
 	pwdev_priv->delay_disconnect_scan_ch = 0;
+	pwdev_priv->suspending = _FALSE;
 #endif /* LGE_PRIVATE */
 
 #ifdef CONFIG_CONCURRENT_MODE

@@ -5293,6 +5293,7 @@ int rtw_resume_common(_adapter *padapter)
 	adapter_wdev_data(padapter)->wowl_activate = _FALSE;
 	adapter_wdev_data(padapter)->idle_mode = _FALSE;
 	adapter_wdev_data(padapter)->block_scan = _FALSE;
+	adapter_wdev_data(padapter)->suspending = _FALSE;
 
 	_clr_fwstate_(pmlmepriv, WIFI_UNDER_DISCONNTING);
 
