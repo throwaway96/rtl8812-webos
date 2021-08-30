@@ -143,7 +143,7 @@ enum h2c_cmd {
 #define H2C_BTMP_OPER_LEN			5
 #define H2C_WOWLAN_LEN			7
 #define H2C_REMOTE_WAKE_CTRL_LEN	3
-#define H2C_AOAC_GLOBAL_INFO_LEN	2
+#define H2C_AOAC_GLOBAL_INFO_LEN	4
 #define H2C_AOAC_RSVDPAGE_LOC_LEN	7
 #define H2C_SCAN_OFFLOAD_CTRL_LEN	4
 #define H2C_BT_FW_PATCH_LEN			6
@@ -535,6 +535,12 @@ s32 rtw_hal_customer_str_write(_adapter *adapter, const u8 *cs);
 /* AOAC_GLOBAL_INFO_0x82 */
 #define SET_H2CCMD_AOAC_GLOBAL_INFO_PAIRWISE_ENC_ALG(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE(__pH2CCmd, 0, 8, __Value)
 #define SET_H2CCMD_AOAC_GLOBAL_INFO_GROUP_ENC_ALG(__pH2CCmd, __Value)		SET_BITS_TO_LE_1BYTE((__pH2CCmd)+1, 0, 8, __Value)
+#ifdef CONFIG_IEEE80211W
+#define SET_H2CCMD_AOAC_GLOBAL_INFO_11W_GROUP_ENC_ALG(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE((__pH2CCmd)+2, 0, 8, __Value)
+#endif
+#ifdef CONFIG_GTK_OL
+#define SET_H2CCMD_AOAC_GLOBAL_INFO_IEEE_AKM_SUITE_TYPE(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE((__pH2CCmd)+3, 0, 8, __Value)
+#endif
 
 /* AOAC_RSVDPAGE_LOC_0x83 */
 #define SET_H2CCMD_AOAC_RSVDPAGE_LOC_REMOTE_WAKE_CTRL_INFO(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE((__pH2CCmd), 0, 8, __Value)
@@ -556,6 +562,16 @@ s32 rtw_hal_customer_str_write(_adapter *adapter, const u8 *cs);
 #endif
 #define SET_H2CCMD_AOAC_RSVDPAGE_LOC_AOAC_REPORT(__pH2CCmd, __Value) \
 	SET_BITS_TO_LE_1BYTE((__pH2CCmd) + 1, 0, 8, __Value)
+#ifdef CONFIG_IEEE80211W
+#define SET_H2CCMD_AOAC_RSVDPAGE_LOC_IEEE80211W_INFO(__pH2CCmd, __Value) \
+	SET_BITS_TO_LE_1BYTE((__pH2CCmd) + 4, 0, 8, __Value)
+#define SET_H2CCMD_AOAC_RSVDPAGE_LOC_SA_QUERY(__pH2CCmd, __Value) \
+	SET_BITS_TO_LE_1BYTE((__pH2CCmd) + 5, 0, 8, __Value)
+#endif
+#ifdef CONFIG_GTK_OL
+#define SET_H2CCMD_AOAC_RSVDPAGE_LOC_GTKINFO_V2(__pH2CCmd, __Value) \
+	SET_BITS_TO_LE_1BYTE((__pH2CCmd) + 6, 0, 8, __Value)
+#endif
 
 #ifdef CONFIG_PNO_SUPPORT
 /* D0_Scan_Offload_Info_0x86 */
@@ -609,6 +625,7 @@ typedef struct _RSVDPAGE_LOC {
 	u8 LocNetList;
 #ifdef CONFIG_GTK_OL
 	u8 LocGTKEXTMEM;
+	u8 LocGTKInfoV2;
 #endif /* CONFIG_GTK_OL */
 	u8 LocNDPInfo;
 	u8 LocAOACReport;
@@ -630,6 +647,10 @@ typedef struct _RSVDPAGE_LOC {
 #ifdef DBG_FW_DEBUG_MSG_PKT
 	u8 loc_fw_dbg_msg_pkt;
 #endif /*DBG_FW_DEBUG_MSG_PKT*/
+#ifdef CONFIG_IEEE80211W
+	u8 LocIeee80211w_Info;
+	u8 LocSaQuery;
+#endif
 } RSVDPAGE_LOC, *PRSVDPAGE_LOC;
 
 #endif

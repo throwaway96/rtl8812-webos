@@ -319,6 +319,9 @@ struct aoac_report {
 	u8 reserved[4];
 	u8 rxptk_iv[8];
 	u8 rxgtk_iv[4][8];
+	u8 igtk_keyid[2];
+	u8 igtk_pkt_num[6];
+	u8 igtk[2][32];
 };
 
 struct pwrctrl_priv {

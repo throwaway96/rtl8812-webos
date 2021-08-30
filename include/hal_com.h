@@ -417,6 +417,7 @@ void rtw_sec_read_cam_ent(_adapter *adapter, u8 id, u8 *ctrl, u8 *mac, u8 *key);
 void rtw_sec_write_cam_ent(_adapter *adapter, u8 id, u16 ctrl, u8 *mac, u8 *key);
 void rtw_sec_clr_cam_ent(_adapter *adapter, u8 id);
 bool rtw_sec_read_cam_is_gk(_adapter *adapter, u8 id);
+u8 rtw_sec_search_camid(_adapter *adapter, u8 key_id, u8 is_gtk);
 
 u8 rtw_hal_rcr_check(_adapter *adapter, u32 check_bit);
 

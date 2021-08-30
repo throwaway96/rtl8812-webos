@@ -808,10 +808,19 @@ Default: 00b.
 /* ----------------------------------------------------------------------------
  * CAM Config Setting (offset 0x680, 1 byte)
  * ----------------------------------------------------------------------------			 */
+#define CAM_MIC_KEY				BIT(5)
+#define CAM_GROUP_KEY				BIT(6)
+#define CAM_EXT_SEC_KEY				BIT(9)
+#define CAM_MGNT_KEY				BIT(10)
 #define CAM_VALID				BIT(15)
 #define CAM_NOTVALID			0x0000
 #define CAM_USEDK				BIT(5)
 
+#define CAM_KEY_ID_BIT_MASK			0x03
+#define CAM_SEC_TYPE_BIT_MASK			0x07
+
+#define CAM_KEY_ID_BIT_LEN			2
+#define CAM_CTRL_SIZE				2
 #define CAM_CONTENT_COUNT	8
 
 #define CAM_NONE				0x0
