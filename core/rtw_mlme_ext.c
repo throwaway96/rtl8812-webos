@@ -13353,7 +13353,7 @@ u8 chk_tdls_peer_sta_is_alive(_adapter *padapter, struct sta_info *psta)
 	return _TRUE;
 }
 
-void linked_status_chk_tdls(_adapter *padapter)
+void linked_status_chk_tdls(_adapter *padapter, bool force_down)
 {
 	struct candidate_pool {
 		struct sta_info *psta;
@@ -13388,6 +13388,19 @@ void linked_status_chk_tdls(_adapter *padapter)
 				plist = get_next(plist);
 
 				if (psta->tdls_sta_state & TDLS_LINKED_STATE) {
+					if (force_down) {
+						_rtw_memcpy(teardown[num_teardown].addr, psta->cmn.mac_addr, ETH_ALEN);
+						teardown[num_teardown].psta = psta;
+						num_teardown++;
+
+						if (num_teardown >= MAX_ALLOWED_TDLS_STA_NUM) {
+							tdls_sta_max = _TRUE;
+							break;
+						}
+
+						continue;
+					}
+
 					psta->alive_count++;
 					if (psta->alive_count >= ALIVE_MIN) {
 						if (chk_tdls_peer_sta_is_alive(padapter, psta) == _FALSE) {
@@ -13543,7 +13556,7 @@ void linked_status_chk(_adapter *padapter, u8 from_timer)
 #endif /* CONFIG_TDLS_CH_SW */
 
 #ifdef CONFIG_TDLS_AUTOCHECKALIVE
-		linked_status_chk_tdls(padapter);
+		linked_status_chk_tdls(padapter, 0);
 #endif /* CONFIG_TDLS_AUTOCHECKALIVE */
 #endif /* CONFIG_TDLS */
 

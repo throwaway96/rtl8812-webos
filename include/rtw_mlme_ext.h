@@ -424,6 +424,7 @@ enum TDLS_option {
 	maxTDLS,
 };
 
+void linked_status_chk_tdls(_adapter *padapter, bool force_down);
 #endif /* CONFIG_TDLS */
 
 typedef enum {

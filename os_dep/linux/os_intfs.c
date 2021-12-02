@@ -5300,6 +5300,8 @@ int rtw_resume_common(_adapter *padapter)
 	/* Recovery Receive Multicast */
 	rtw_write32(padapter, REG_RCR, rtw_read32(padapter, REG_RCR) | (RCR_AM));
 
+	if (padapter->tdlsinfo.link_established == _TRUE)
+		linked_status_chk_tdls(padapter, 1);
 	LGE_MSG("WiFi resume done");
 #endif /* LGE_PRIVATE */
 
