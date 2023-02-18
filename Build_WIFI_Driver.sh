@@ -7,6 +7,6 @@ export CHIP_NAME=k8
 export ARCH=arm64
 aarch=arm64
 
-cd wifidrv-rtk
+#cd wifidrv-rtk
 make clean
 make -j4
